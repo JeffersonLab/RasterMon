@@ -7,13 +7,24 @@
 cmake_minimum_required(VERSION 3.5)
 project(RasterMon)
 
-find_package(EvioTool CONFIG REQUIRED)  # EvioTool will also find fEvio.
-#include($ENV{HOME}/cmake/cmake_debug_properties.cmake)
-#print_target_properties(EvioTool)
-get_target_property(EvioTool_DIR EvioTool INTERFACE_INCLUDE_DIRECTORIES)
-message(STATUS "EvioTool found at ${EvioTool_DIR}")
+#
+
+find_package(EvioTool CONFIG)  # EvioTool will also find fEvio.
+
+if(${EvioTool_FOUND})
+    include($ENV{HOME}/cmake/cmake_debug_properties.cmake)
+    print_target_properties(EvioTool)
+
+    get_target_property(EvioTool_DIR EvioTool INTERFACE_INCLUDE_DIRECTORIES)
+    message(STATUS "EvioTool found at ${EvioTool_DIR}")
+else()
+    message(STATUS "EvioTool not found. Will build locally.")
+    add_subdirectory(EvioTool)
+endif()
+
 #---Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
 # This *must* come after EvioTool, because EvioTool imports ROOT without the Gui component.
+
 find_package(ROOT REQUIRED COMPONENTS Core Gui)
 message(STATUS "ROOT found at: ${ROOT_DIR}")
 
@@ -32,17 +43,8 @@ include(${ROOT_USE_FILE})
 # For dictionary compile step to find include files.
 # The target properties for include directories need to be explicitly added to the include_directories.
 include_directories(${PROJECT_SOURCE_DIR})
-get_target_property(EvioTool_INCLUDE_DIR EvioTool INTERFACE_INCLUDE_DIRECTORIES)
-message(STATUS "Adding ${EvioTool_INCLUDE_DIR}")
-include_directories(${EvioTool_INCLUDE_DIR})
-get_target_property(evio_INCLUDE_DIR evio INTERFACE_INCLUDE_DIRECTORIES)
-message(STATUS "Adding ${evio_INCLUDE_DIR}")
-include_directories(${evio_INCLUDE_DIR})
-get_target_property(et_INCLUDE_DIR et INTERFACE_INCLUDE_DIRECTORIES)
-message(STATUS "Adding ${et_INCLUDE_DIR}")
-include_directories(${et_INCLUDE_DIR})
 
-ROOT_GENERATE_DICTIONARY(RasterLib_dict RasterLib.h LINKDEF RasterLibLinkDef.h)
+ROOT_GENERATE_DICTIONARY(RasterLib_dict RasterLib.h DEPENDENCIES EvioTool LINKDEF RasterLibLinkDef.h)
 
 set(SOURCE_FILES
         RasterMonGui.cxx
