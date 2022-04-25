@@ -12,11 +12,20 @@ project(RasterMon)
 find_package(EvioTool CONFIG)  # EvioTool will also find fEvio.
 
 if(${EvioTool_FOUND})
-    include($ENV{HOME}/cmake/cmake_debug_properties.cmake)
-    print_target_properties(EvioTool)
-
+    message(STATUS "Found an existing installation of EvioTool. Will use that.")
     get_target_property(EvioTool_DIR EvioTool INTERFACE_INCLUDE_DIRECTORIES)
     message(STATUS "EvioTool found at ${EvioTool_DIR}")
+    get_target_property(evio_DIR evio INTERFACE_INCLUDE_DIRECTORIES)
+    message(STATUS "evio found at ${evio_DIR}")
+    get_target_property(et_DIR et INTERFACE_INCLUDE_DIRECTORIES)
+    message(STATUS "et found at ${et_DIR}")
+    #
+    # The RootMacros.cmake is broken. It adds the INCLUDE_DIRECTORIES for a target, not the INTERFACE_INCLUDE_DIRECTORIES
+    #
+    set_target_properties(EvioTool PROPERTIES INCLUDE_DIRECTORIES ${EvioTool_DIR})
+    set_target_properties(evio PROPERTIES INCLUDE_DIRECTORIES ${evio_DIR})
+    set_target_properties(et PROPERTIES INCLUDE_DIRECTORIES ${et_DIR})
+
 else()
     message(STATUS "EvioTool not found. Will build locally.")
     add_subdirectory(EvioTool)
@@ -44,7 +53,7 @@ include(${ROOT_USE_FILE})
 # The target properties for include directories need to be explicitly added to the include_directories.
 include_directories(${PROJECT_SOURCE_DIR})
 
-ROOT_GENERATE_DICTIONARY(RasterLib_dict RasterLib.h DEPENDENCIES EvioTool LINKDEF RasterLibLinkDef.h)
+ROOT_GENERATE_DICTIONARY(RasterLib_dict RasterLib.h DEPENDENCIES EvioTool evio et LINKDEF RasterLibLinkDef.h)
 
 set(SOURCE_FILES
         RasterMonGui.cxx
