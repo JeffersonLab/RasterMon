@@ -80,7 +80,7 @@ void RasterMonGui::AddControlBar(){
    hframe->AddFrame(go, new TGLayoutHints(kLHintsCenterX,
                                           5,5,3,4));
 
-   fPauseButton = new TGTextButton(hframe,"&Pause");
+   fPauseButton = new TGTextButton(hframe," &Pause ");
    fPauseButton->Connect("Clicked()","RasterMonGui",this,"Pause()");
    hframe->AddFrame(fPauseButton, new TGLayoutHints(kLHintsCenterX,
                                              5,5,3,4));
@@ -133,15 +133,17 @@ void RasterMonGui::StatusBarUpdate(){
    fStatusBar->SetText( text1, 1);
    sprintf(text1,"Nevt: %'12ld",fEvio->fNEventsProcessed);
    auto delta_evt = fEvio->fNEventsProcessed - last_event_count;
+   last_event_count = fEvio->fNEventsProcessed;
    auto time2 = std::chrono::system_clock::now();
    auto delta_t = std::chrono::duration_cast<std::chrono::microseconds>(time2-time1);
-   auto total_t = std::chrono::duration_cast<std::chrono::microseconds>(time2-time1);
+   auto total_t = std::chrono::duration_cast<std::chrono::microseconds>(time2-time0);
+   time1 = time2;
    if(fDebug){
       printf("Events processed:   %'10ld    delta: %5ld     Update #%5d\n", fEvio->fNEventsProcessed, delta_evt, n_updates);
       auto in_time_t = std::chrono::system_clock::to_time_t(time2);
       printf("Time elapsed total: %'10lld   delta t: %5lld\n", total_t.count(), delta_t.count());
-      printf("Average rate:       %'10.1f Hz  Current rate: %'10.1f Hz\n",
-             1000000.*fEvio->fNEventsProcessed/total_t.count() ,1000000.*delta_evt/delta_t.count());
+      printf("Average rate:       %8.3f kHz  Current rate: %8.3f kHz\n",
+             1000.*fEvio->fNEventsProcessed/total_t.count() ,1000.*delta_evt/delta_t.count());
    }
 }
 
@@ -247,4 +249,35 @@ void RasterMonGui::DoDraw() {
       fRHists->DrawCanvas(i);
    }
    if( !fRHists->isworking()) fPause=true;  // Pause if you detect the worker threads ended.
+}
+
+void RasterMonGui::Pause(int set_state){
+   // Pause or unpause, there is no try.
+   // If set_state == 1  then go to pause state -- for stop()
+   // If set_state == -1 then go to unpause state -- for go()
+   if(set_state == 0){
+      if(fRHists->isworking()) {
+         if (fPause) set_state = -1;
+      }
+      else{
+         if(fDebug) std::cout << "Cannot pause when I am not working. \n";
+         return;
+      }
+   }
+
+   if(set_state == -1){
+      // Unpause
+      fPauseButton->SetText("&Pause");
+      if(fDebug>1) std::cout << "Un-Pause \n";
+      fHistUpdateTimer->TurnOn();
+      fPause = false;
+      fRHists->unpause();
+   }else{
+      // Pause
+      if(set_state == 0) fPauseButton->SetText("&UnPause");
+      if(fDebug>1) std::cout << "Pause \n";
+      fHistUpdateTimer->TurnOff();
+      fRHists->pause();
+      fPause = true;
+   }
 }

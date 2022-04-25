@@ -93,31 +93,15 @@ public:
 
    void Go(){
       if(fDebug>1) std::cout << "Go \n";
-      fPause = false;
-      fHistUpdateTimer->TurnOn();
+      Pause(-1);
       fRHists->go();
    };
 
-   void Pause(){
-      if(fPause){
-         fPauseButton->SetText("&Pause");
-         if(fDebug>1) std::cout << "Un-Pause \n";
-         fHistUpdateTimer->TurnOn();
-         fPause = false;
-         fRHists->unpause();
-      }else{
-         fPauseButton->SetText("&UnPause");
-         if(fDebug>1) std::cout << "Pause \n";
-         fHistUpdateTimer->TurnOff();
-         fPause = true;
-         fRHists->pause();
-      }
-   };
+   void Pause(int set_state=0);  // set_state: -1 = go, 0=toggle, 1 = pause;
 
    void Stop(){
       if(fDebug>1) std::cout << "Stop \n";
-      fHistUpdateTimer->TurnOff();
-      fPause = true;
+      Pause(1);
       fRHists->stop();
    };
 
