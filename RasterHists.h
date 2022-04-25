@@ -57,7 +57,7 @@ private:
    bool fKeepWorking = false;  // Set to true in Go();
    bool fPause = true;
 
-   int fNWorkers = 5;
+   int fNWorkers = 1;
    std::vector<std::thread> fWorkers;
    std::mutex fEvioReadLock;
 
