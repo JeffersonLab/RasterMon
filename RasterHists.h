@@ -51,6 +51,8 @@ private:
    std::unique_ptr<THStack> fHelicity_stack;
    std::unique_ptr<TLegend> fHelicity_legend;
 
+   double fRasterScale[2] = {0.004, 0.004};
+   double fRasterOffset[2] = {-8., -8.};
 
    // For the worker fill threads.
    int  fDebug = 0;

@@ -24,15 +24,17 @@ void RasterHists::Setup_Histograms(TCanvas *canvas) {
          fHRaster_X = std::make_unique<TH1D>("Raster_X", "Raster x;x (mm);counts", 400, -10., 10.);
          fHRaster_XY = std::make_unique<TH2D>("Raster_XY", "Raster (x,y); x(mm); y(mm)", 200, -15., 15.,
                                 200, -15., 15.);
+         fHRaster_XY->SetStats(false);
          fHRaster_Y = std::make_unique<TH1D>("Raster_Y", "Raster y;y (mm);counts", 400, -10., 10.);
          fHRaster_R = std::make_unique<TH1D>("Raster_R", "Raster r;r (mm);counts", 400, 0., 15.);
          break;
       case 1:
          canvas->Divide(2, 2);
-         fHRaw_X = std::make_unique<TH1D>("Raster_Raw_X", "Raster x;x (ADC);counts", 400, 0., 4095.);
+         fHRaw_X = std::make_unique<TH1D>("Raster_Raw_X", "Raster x;x (ADC);counts", 4100, -0.5, 4099.5);
          fHRaw_XY = std::make_unique<TH2D>("Raster_Raw_XY", "Raster (x,y); x(ADC); y(ADC)", 200, 0., 4095.,
                                 200, 0., 4095.);
-         fHRaw_Y = std::make_unique<TH1D>("Raster_Raw_Y", "Raster y;y (ADC);counts", 400, 0., 4095.);
+         fHRaw_XY->SetStats(false);
+         fHRaw_Y = std::make_unique<TH1D>("Raster_Raw_Y", "Raster y;y (ADC);counts", 4100, -0.5, 4099.5);
 
          break;
       case 2:
@@ -88,7 +90,7 @@ void RasterHists::DrawCanvas(int hist_no) {
             canvas->cd(1);
             fHRaw_Y->Draw("");
             canvas->cd(2);
-            fHRaw_XY->Draw("");
+            fHRaw_XY->Draw("colz");
             canvas->cd(3);
             canvas->cd(4);
             fHRaw_X->Draw("");
@@ -155,6 +157,8 @@ void RasterHists::HistFillWorker(int thread_num){
    double time = 0;
    double r = 0.1;
    double theta = 0;
+   double helicity[3];
+   double raster_raw[2];
 
    if(fDebug>0) std::cout << "RasterHists::HistFillWorker - Start thread "<< thread_num << "\n";
 
@@ -167,19 +171,40 @@ void RasterHists::HistFillWorker(int thread_num){
             fEvioReadLock.unlock();
             break;
          }
-         if(fEvio->GetEventNumber() == 0){
+         if(fEvio->GetEventNumber() == 0){  // Event number = 0 does not have useful data for us.
             fEvioReadLock.unlock();
             continue;
          }
+         fEvio->fMostRecentEventNumber = fEvio->GetEventNumber(); // For GUI to always show a useful number.
 
-         // Helicity Histograms
+         // Copy Helicity and Raster data.
          for(int i=0; i<fHelicity_raw.size(); ++i){
-            fHelicity_raw[i].Fill(fEvio->GetHelicity(i));
-            if( fEvio->GetHelicity(i) > 1500.) fHelicity[i].Fill(1);
-            else fHelicity[i].Fill(-1);
+            helicity[i] = fEvio->GetHelicity(i);
          }
+         raster_raw[0] = fEvio->GetRaster(0);
+         raster_raw[1] = fEvio->GetRaster(1 );
 
          fEvioReadLock.unlock();
+
+         for(int i=0; i<fHelicity_raw.size(); ++i){
+            fHelicity_raw[i].Fill(helicity[i]);
+            if( helicity[i] > 1500.) fHelicity[i].Fill(1);
+            else fHelicity[i].Fill(-1);
+         }
+         // std::this_thread::sleep_for(std::chrono::microseconds(30));
+
+#ifndef FAKE_DATA_FOR_TESTING
+         fHRaw_X->Fill(raster_raw[0]);
+         fHRaw_Y->Fill(raster_raw[1]);
+         fHRaw_XY->Fill(raster_raw[0], raster_raw[1]);
+         double x = raster_raw[0]*fRasterScale[0] + fRasterOffset[0];
+         double y = raster_raw[1]*fRasterScale[1] + fRasterOffset[1];
+         fHRaster_X->Fill(x);
+         fHRaster_Y->Fill(y);
+         fHRaster_XY->Fill(x,y);
+         double r = sqrt(x*x + y*y);
+         fHRaster_R->Fill(r);
+#else
          // FAKE DATA -- FOR TESTING.
          double x = r*cos(theta);
          double y = r*sin(theta);
@@ -202,7 +227,7 @@ void RasterHists::HistFillWorker(int thread_num){
             r= 0.1;
             theta =0;
          }
-         //std::this_thread::sleep_for(std::chrono::microseconds(10));
+#endif
       }else{
          std::this_thread::sleep_for(std::chrono::milliseconds(250));
        }
@@ -212,6 +237,15 @@ void RasterHists::HistFillWorker(int thread_num){
 
 void RasterHists::SavePDF(const string &file, bool overwrite){
    // Save the canvesses as PDF file
+   if(fCanvases.size()>1) {
+      fCanvases[0]->Print((file+"(").c_str());
+      for (int i = 1; i < fCanvases.size() - 1; ++i) {
+         fCanvases[i]->Print(file.c_str());
+      }
+      fCanvases[fCanvases.size() - 1]->Print((file+")").c_str());
+   }else{
+      fCanvases[0]->Print(file.c_str());
+   }
 };
 
 void RasterHists::SaveRoot(const string &file, bool overwrite){

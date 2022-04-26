@@ -109,7 +109,7 @@ void RasterMonGui::AddControlBar(){
 
 void RasterMonGui::AddStatusBar() {
    // status bar
-   Int_t parts[] = {10, 25, 15, 30, 20};
+   Int_t parts[] = {10, 20, 20, 35, 15};
    fStatusBar = std::make_unique<TGStatusBar>(this, 50, 10, kVerticalFrame);
    fStatusBar->SetParts(parts, 5);
    fStatusBar->Draw3DCorner(kFALSE);
@@ -128,19 +128,24 @@ void RasterMonGui::StatusBarUpdate(){
    char text0[10];
    sprintf(text0, "%'8d", n_updates);
    fStatusBar->SetText( text0, 0);
-   char text1[40];
-   sprintf(text1,"Current event %'10d",fEvio->GetEventNumber());
+   char text1[100];
+   sprintf(text1,"Current event: %'10ld",fEvio->fMostRecentEventNumber);
    fStatusBar->SetText( text1, 1);
    sprintf(text1,"Nevt: %'12ld",fEvio->fNEventsProcessed);
+   fStatusBar->SetText( text1, 2);
+
    auto delta_evt = fEvio->fNEventsProcessed - last_event_count;
    last_event_count = fEvio->fNEventsProcessed;
    auto time2 = std::chrono::system_clock::now();
    auto delta_t = std::chrono::duration_cast<std::chrono::microseconds>(time2-time1);
    auto total_t = std::chrono::duration_cast<std::chrono::microseconds>(time2-time0);
+   sprintf(text1,"<rate> = %8.3f kHz i: %8.3f kHz",
+          1000.*fEvio->fNEventsProcessed/total_t.count() ,1000.*delta_evt/delta_t.count());
+   fStatusBar->SetText( text1, 3);
+
    time1 = time2;
    if(fDebug){
       printf("Events processed:   %'10ld    delta: %5ld     Update #%5d\n", fEvio->fNEventsProcessed, delta_evt, n_updates);
-      auto in_time_t = std::chrono::system_clock::to_time_t(time2);
       printf("Time elapsed total: %'10lld   delta t: %5lld\n", total_t.count(), delta_t.count());
       printf("Average rate:       %8.3f kHz  Current rate: %8.3f kHz\n",
              1000.*fEvio->fNEventsProcessed/total_t.count() ,1000.*delta_evt/delta_t.count());
@@ -248,7 +253,7 @@ void RasterMonGui::DoDraw() {
    for( int i=0; i< fCanvases.size(); ++i) {
       fRHists->DrawCanvas(i);
    }
-   if( !fRHists->isworking()) fPause=true;  // Pause if you detect the worker threads ended.
+   if( !fRHists->isworking()) Stop();  // Stop if you detect the worker threads ended.
 }
 
 void RasterMonGui::Pause(int set_state){

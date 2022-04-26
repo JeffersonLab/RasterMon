@@ -41,47 +41,55 @@ int main(int argc, char **argv) {
 
    options.parse_positional({"inputfiles"});
 
-   auto args = options.parse(argc, argv);
-   if(args.count("help")){
+   try {
+      auto args = options.parse(argc, argv);
+      if (args.count("help")) {
+         std::cout << options.help() << std::endl;
+         exit(0);
+      }
+
+      int debug = args.count("debug");       // Debug: 0 = info,  1 = more info, 2+ debug info.
+      if (args.count("quiet") > 0) debug = -1; // Debug: -1 = no info.
+
+      TApplication theApp("App", &argc, argv);
+
+      auto evio = new RasterEvioTool();
+      if (debug == 1) evio->fDebug = 0;
+      if (debug > 1) evio->fDebug = EvioTool::EvioTool_Debug_Info;
+      if (debug > 2) evio->fDebug += EvioTool::EvioTool_Debug_Info2;
+      if (debug > 3) evio->fDebug += EvioTool::EvioTool_Debug_L1;
+      if (debug > 4) evio->fDebug += EvioTool::EvioTool_Debug_L2;
+
+      // Add the commandline files to the RasterEvioTool
+      if (args.count("inputfiles")) {
+         auto &infiles = args["inputfiles"].as<std::vector<std::string>>();
+         for (auto &v: infiles) {
+            if (debug) cout << "Adding " << v << " \n";
+            evio->AddFile(v.c_str());
+         }
+      }
+
+      if (args.count("et")) {
+         if (debug)
+            cout << "Using the ET system with host: " << host << ", port: " << port << " , et file: " << etname
+                 << ". \n";
+         int stat = evio->OpenEt("RasterMon", etname, host, port);
+         if (stat != 0) {
+            cout << "ERROR -- could not attach to ET system. abort. \n";
+            return (3);
+         }
+      }
+
+      auto RHists = new RasterHists(evio);
+      RHists->SetDebug(debug);
+      auto rastermon = new RasterMonGui(RHists, gClient->GetRoot(), 800, 600);
+      rastermon->fDebug = debug;
+      theApp.Run();
+   }catch(exception e){
+      cout << e.what() << endl;
       std::cout << options.help() << std::endl;
-      exit(0);
+      return 1;
    }
 
-   int  debug = args.count("debug");       // Debug: 0 = info,  1 = more info, 2+ debug info.
-   if(args.count("quiet") > 0) debug = -1; // Debug: -1 = no info.
-
-   TApplication theApp("App", &argc, argv);
-
-   auto evio = new RasterEvioTool();
-   if( debug == 1) evio->fDebug = 0;
-   if( debug > 1) evio->fDebug = EvioTool::EvioTool_Debug_Info;
-   if( debug > 2) evio->fDebug += EvioTool::EvioTool_Debug_Info2;
-   if( debug > 3) evio->fDebug += EvioTool::EvioTool_Debug_L1;
-   if( debug > 4) evio->fDebug += EvioTool::EvioTool_Debug_L2;
-
-   // Add the commandline files to the RasterEvioTool
-   if( args.count("inputfiles")) {
-      auto &infiles = args["inputfiles"].as<std::vector<std::string>>();
-      for (auto &v: infiles) {
-         if(debug) cout << "Adding " << v << " \n";
-         evio->AddFile(v.c_str());
-      }
-   }
-
-   if( args.count("et")){
-      if(debug) cout << "Using the ET system with host: " << host << ", port: " << port << " , et file: " << etname << ". \n";
-      int stat = evio->OpenEt("RasterMon",  etname, host, port);
-      if(stat != 0){
-         cout << "ERROR -- could not attach to ET system. abort. \n";
-         return(3);
-      }
-   }
-
-
-   auto RHists = new RasterHists(evio);
-   RHists->SetDebug(debug);
-   auto rastermon = new RasterMonGui(RHists, gClient->GetRoot(), 800, 600);
-   rastermon->fDebug = debug;
-   theApp.Run();
    return 0;
 }

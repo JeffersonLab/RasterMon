@@ -5,7 +5,10 @@
 # Author: Maurik Holtrop
 #
 cmake_minimum_required(VERSION 3.5)
-project(RasterMon)
+project(RasterMon VERSION 0.1 LANGUAGES CXX)
+set(CMAKE_EXPORT_NO_PACKAGE_REGISTRY True)
+
+set(CMAKE_CXX_STANDARD 17)
 
 #
 
