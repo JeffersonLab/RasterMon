@@ -72,9 +72,6 @@ target_link_libraries(RasterMon RasterLib )
 
 add_executable(test test_evio.cpp)
 target_link_libraries(test RasterLib)
-add_executable(test_destructor test_destructor.cpp)
-target_link_libraries(test_destructor RasterLib)
-
 
 install(TARGETS RasterLib  LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 install(FILES ${PROJECT_BINARY_DIR}/libRasterLib_dict_rdict.pcm  DESTINATION lib)
