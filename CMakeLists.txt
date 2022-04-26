@@ -70,9 +70,6 @@ target_link_libraries(RasterLib ${ROOT_LIBRARIES} EvioTool evio)
 add_executable(RasterMon RasterMon.cxx)
 target_link_libraries(RasterMon RasterLib )
 
-add_executable(test test_evio.cpp)
-target_link_libraries(test RasterLib)
-
 install(TARGETS RasterLib  LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 install(FILES ${PROJECT_BINARY_DIR}/libRasterLib_dict_rdict.pcm  DESTINATION lib)
 install(TARGETS RasterMon DESTINATION bin)
