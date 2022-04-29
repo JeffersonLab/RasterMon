@@ -14,6 +14,7 @@ RasterEvioTool::RasterEvioTool(string infile) : EvioTool(infile) {
    fEvioHead = AddLeaf<unsigned int>("fEvioHead", 49152, 0, "Evio Event Header Info");
    fRasterHead =  new RasterMonEventInfo(this);  // Calls AddBank internally.
    fRasterCrate = AddBank("Raster", fRasterCrateNum, 0, "Raster fRasterFADC banks");
+   fRasterCrateTI = fRasterCrate->AddLeaf<unsigned int>("RasterCrateTI", 57610, 0, "Raster Crate TI info");
    fRasterFADC = fRasterCrate->AddLeaf<FADCdata>("fRasterFADC", 57601, 0, "Raster fRasterFADC");
    fHelicityCrate = AddBank("Helicity", fHelicityCrateNum, 0, "Raster fRasterFADC banks");
    fHelicityFADC = fHelicityCrate->AddLeaf<FADCdata>("fHelicityFADC", 57601, 0, "Raster fRasterFADC");

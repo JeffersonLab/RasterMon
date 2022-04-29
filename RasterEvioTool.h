@@ -26,10 +26,11 @@ public:
    unsigned long fNEventsProcessed=0;
    // Sub banks.
    // Note on mem: The memory will be managed by TObjArray. So no delete to be called.
-   Leaf<unsigned int>  *fEvioHead = nullptr;
-   unsigned long fMostRecentEventNumber;  // Number of last actual event that was read.
-   RasterMonEventInfo *fRasterHead = nullptr;
+   Leaf<unsigned int>  *fEvioHead = nullptr;  // EvioHead is tag=49152 and is always there.
+   unsigned long fMostRecentEventNumber;      // Number of last actual event that was read.
+   RasterMonEventInfo *fRasterHead = nullptr; // RasterHead is tag=
    Bank   *fRasterCrate = nullptr;
+   Leaf<unsigned int> *fRasterCrateTI = nullptr; // Raster Crate trigger info bank.
    Leaf<FADCdata> *fRasterFADC = nullptr;
    Bank   *fHelicityCrate = nullptr;
    Leaf<FADCdata> *fHelicityFADC = nullptr;
@@ -65,6 +66,17 @@ public:
    }
    unsigned int GetRunNumber() const {return(fRasterHead->GetRunNumber());}
    unsigned int GetTimeStamp() const {return(fRasterHead->GetTimeStamp());}
+   unsigned long GetTimeRasterCrate() const {
+      if(fRasterCrateTI && fRasterCrateTI->size()>=5)
+         return fRasterCrateTI->GetData(2) +  ((unsigned long) (fRasterCrateTI->GetData(3) & 0x0000ffff) << 32);
+      else return 0;
+   }
+   unsigned long GetEventNumberRasterCrate() const {
+      if(fRasterCrateTI && fRasterCrateTI->size()>=5)
+         return fRasterCrateTI->GetData(1);
+// This seems not activated (labelled optional in clonbanks.xml : +  ((unsigned long) (fRasterCrateTI->GetData(3) & 0xffff0000) << 16);
+      else return 0;
+   }
    double GetHelicity(int i){ if(i >=0 && i<3){ return fHelicityChannel_data[i];} else return 0;}
    double GetRaster(int i){ if(i >=0 && i<2){ return fRasterChannel_data[i];} else return 0;}
 
