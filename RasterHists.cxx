@@ -19,7 +19,7 @@ void RasterHists::Setup_Histograms(TCanvas *canvas) {
    std::vector<string> helicity_names = {"Helicity","Sync","Quartet"};
    TVirtualPad *pad;
    switch(tab_num) {
-      case 0:
+      case 0:  // These are the calibrated x-y plots for the raster readback current.
          canvas->Divide(2, 2);
          fHRaster_X = std::make_unique<TH1D>("Raster_X", "Raster x;x (mm);counts", 400, -10., 10.);
          fHRaster_XY = std::make_unique<TH2D>("Raster_XY", "Raster (x,y); x(mm); y(mm)", 200, -15., 15.,
@@ -28,16 +28,32 @@ void RasterHists::Setup_Histograms(TCanvas *canvas) {
          fHRaster_Y = std::make_unique<TH1D>("Raster_Y", "Raster y;y (mm);counts", 400, -10., 10.);
          fHRaster_R = std::make_unique<TH1D>("Raster_R", "Raster r;r (mm);counts", 400, 0., 15.);
          break;
-      case 1:
+      case 1: // These are the uncalibrated raw ADC values for the raster readback current.
          canvas->Divide(2, 2);
-         fHRaw_X = std::make_unique<TH1D>("Raster_Raw_X", "Raster x;x (ADC);counts", 4100, -0.5, 4099.5);
-         fHRaw_XY = std::make_unique<TH2D>("Raster_Raw_XY", "Raster (x,y); x(ADC); y(ADC)", 200, 0., 4095.,
+         fHRaw_X = std::make_unique<TH1D>("Raster_Raw_X", "Raster Current Readback x;x (ADC);counts", 4100, -0.5, 4099.5);
+         fHRaw_XY = std::make_unique<TH2D>("Raster_Raw_XY", "Raster Current Readback (x,y); x(ADC); y(ADC)", 200, 0., 4095.,
                                 200, 0., 4095.);
          fHRaw_XY->SetStats(false);
-         fHRaw_Y = std::make_unique<TH1D>("Raster_Raw_Y", "Raster y;y (ADC);counts", 4100, -0.5, 4099.5);
+         fHRaw_Y = std::make_unique<TH1D>("Raster_Raw_Y", "Raster Current Readback y;y (ADC);counts", 4100, -0.5, 4099.5);
+
+         fHRaw2_vs_Raw1_x = std::make_unique<TH2D>("Raw2_vs_Raw1_x", "Raw2 vs Raw1 (x)", 2048, -0.5, 4095.5,
+                                                   2048, -0.5, 4095.5);
+         fHRaw2_vs_Raw1_x->SetStats(false);
 
          break;
-      case 2:
+      case 2: // These are the uncalibrated raw ADC values for the raster powersupply input.
+         canvas->Divide(2, 2);
+         fHRaw2_X = std::make_unique<TH1D>("Raster2_Raw_X", "Raster Generator x;x (ADC);counts", 4100, -0.5, 4099.5);
+         fHRaw2_XY = std::make_unique<TH2D>("Raster2_Raw_XY", "Raster Generator (x,y); x(ADC); y(ADC)", 200, 0., 4095.,
+                                           200, 0., 4095.);
+         fHRaw2_XY->SetStats(false);
+         fHRaw2_Y = std::make_unique<TH1D>("Raster2_Raw_Y", "Raster Generator y;y (ADC);counts", 4100, -0.5, 4099.5);
+
+         fHRaw2_vs_Raw1_y = std::make_unique<TH2D>("Raw2_vs_Raw1_y", "Raw2 vs Raw1 (y)", 2048, -0.5, 4095.5,
+                                                   2048, -0.5, 4095.5);
+         fHRaw2_vs_Raw1_y->SetStats(false);
+         break;
+      case 3:
          canvas->Divide(2, 2);
          pad = canvas->cd(1);
          pad->SetLogy(1);
@@ -62,6 +78,7 @@ void RasterHists::Setup_Histograms(TCanvas *canvas) {
          }
 
          break;
+
       default:
          cout << "ERROR - setting up a tab too many.\n";
    }
@@ -73,7 +90,7 @@ void RasterHists::Setup_Histograms(TCanvas *canvas) {
 
 void RasterHists::DrawCanvas(int hist_no) {
    {
-      // Draws function graphics in randomly chosen interval
+      // Draw the histograms on the selected canvas.
       auto canvas = fCanvases[hist_no];
       switch(hist_no){
          case 0:
@@ -92,13 +109,25 @@ void RasterHists::DrawCanvas(int hist_no) {
             canvas->cd(2);
             fHRaw_XY->Draw("colz");
             canvas->cd(3);
+            fHRaw2_vs_Raw1_x->Draw("colz");
             canvas->cd(4);
             fHRaw_X->Draw("");
             break;
          case 2:
             canvas->cd(1);
+            fHRaw2_Y->Draw("");
+            canvas->cd(2);
+            fHRaw2_XY->Draw("colz");
+            canvas->cd(3);
+            fHRaw2_vs_Raw1_y->Draw("colz");
+            canvas->cd(4);
+            fHRaw2_X->Draw("");
+            break;
+
+         case 3:
+            canvas->cd(1);
             fHelicity_raw[0].Draw();
-           canvas->cd(2);
+            canvas->cd(2);
             fHelicity_stack->Draw("nostackb");
             fHelicity_legend->Draw();
             canvas->cd(3);
@@ -146,6 +175,10 @@ void RasterHists::clear(){
    fHRaw_X->Reset();
    fHRaw_XY->Reset();
    fHRaw_Y->Reset();
+   fHRaw2_X->Reset();
+   fHRaw2_XY->Reset();
+   fHRaw2_Y->Reset();
+
    for(auto &h: fHelicity ) h.Reset();
    for(auto &h: fHelicity_raw ) h.Reset();
    DoDraw();    // Draw so that even during a pause the display is updated.
@@ -158,7 +191,7 @@ void RasterHists::HistFillWorker(int thread_num){
    double r = 0.1;
    double theta = 0;
    double helicity[3];
-   double raster_raw[2];
+   double raster_raw[4];
 
    if(fDebug>0) std::cout << "RasterHists::HistFillWorker - Start thread "<< thread_num << "\n";
 
@@ -178,11 +211,12 @@ void RasterHists::HistFillWorker(int thread_num){
          fEvio->fMostRecentEventNumber = fEvio->GetEventNumber(); // For GUI to always show a useful number.
 
          // Copy Helicity and Raster data.
-         for(int i=0; i<fHelicity_raw.size(); ++i){
+         for(int i=0; i<fEvio->GetHelicitySize(); ++i){
             helicity[i] = fEvio->GetHelicity(i);
          }
-         raster_raw[0] = fEvio->GetRaster(0);
-         raster_raw[1] = fEvio->GetRaster(1 );
+         for(int i=0; i<fEvio->GetRasterSize(); ++i) {
+            raster_raw[i] = fEvio->GetRaster(i);
+         }
 
          fEvioReadLock.unlock();
 
@@ -197,6 +231,14 @@ void RasterHists::HistFillWorker(int thread_num){
          fHRaw_X->Fill(raster_raw[0]);
          fHRaw_Y->Fill(raster_raw[1]);
          fHRaw_XY->Fill(raster_raw[0], raster_raw[1]);
+
+         fHRaw2_X->Fill(raster_raw[2]);
+         fHRaw2_Y->Fill(raster_raw[3]);
+         fHRaw2_XY->Fill(raster_raw[2], raster_raw[3]);
+
+         fHRaw2_vs_Raw1_x->Fill( raster_raw[0], raster_raw[2]);
+         fHRaw2_vs_Raw1_y->Fill( raster_raw[1], raster_raw[3]);
+
          double x = raster_raw[0]*fRasterScale[0] + fRasterOffset[0];
          double y = raster_raw[1]*fRasterScale[1] + fRasterOffset[1];
          fHRaster_X->Fill(x);

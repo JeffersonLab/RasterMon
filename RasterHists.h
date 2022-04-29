@@ -45,7 +45,15 @@ private:
    std::unique_ptr<TH1D> fHRaw_X = nullptr;
    std::unique_ptr<TH1D> fHRaw_Y = nullptr;
    std::unique_ptr<TH2D> fHRaw_XY = nullptr;
-   // Tab 2  -- 3 channels for helicity.
+   // Tab 2
+   std::unique_ptr<TH1D> fHRaw2_X = nullptr;
+   std::unique_ptr<TH1D> fHRaw2_Y = nullptr;
+   std::unique_ptr<TH2D> fHRaw2_XY = nullptr;
+
+   std::unique_ptr<TH2D> fHRaw2_vs_Raw1_x = nullptr;
+   std::unique_ptr<TH2D> fHRaw2_vs_Raw1_y = nullptr;
+
+   // Tab 3  -- 3 channels for helicity.
    std::vector<TH1I> fHelicity;
    std::vector<TH1D> fHelicity_raw;
    std::unique_ptr<THStack> fHelicity_stack;

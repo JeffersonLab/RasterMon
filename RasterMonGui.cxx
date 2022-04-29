@@ -155,7 +155,7 @@ void RasterMonGui::StatusBarUpdate(){
 void RasterMonGui::AddTabArea(UInt_t w, UInt_t h) {
    //--------- create the Tab widget
 
-   std::vector<string> tab_names = {"Raster", "Raw", "Helicity"};
+   std::vector<string> tab_names = {"Raster", "Raw", "Raw2", "Helicity"};
 
    TGTab *fTab = new TGTab(this, 1, 1);
    AddFrame(fTab, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY,
@@ -228,7 +228,7 @@ void RasterMonGui::HandleMenu(int choice) {
          break;
 
       case M_HELP_ABOUT:
-         hd = new TRootHelpDialog(this, "About Drag and Drop...", 550, 250);
+         hd = new TRootHelpDialog(this, "About RasterMon ...", 550, 250);
          hd->SetText(""
                      "===============  RasterMonGui ===============\n"
                      "This is a simple GUI program to monitor the Raster in the RGC run.\n"

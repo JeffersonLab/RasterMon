@@ -42,8 +42,8 @@ public:
 
    int fRasterCrateNum = 59;
    int fRasterSlot = 19;
-   std::vector<int> fRasterChannels = {1, 3};
-   std::vector<double> fRasterChannel_data = {-1., -1.}; // reserve 2 slots for the data.
+   std::vector<int> fRasterChannels = {1, 3, 1, 3};
+   std::vector<double> fRasterChannel_data = {-1., -1., -1., -1.}; // reserve slots for the data.
 
 
 
@@ -77,8 +77,10 @@ public:
 // This seems not activated (labelled optional in clonbanks.xml : +  ((unsigned long) (fRasterCrateTI->GetData(3) & 0xffff0000) << 16);
       else return 0;
    }
-   double GetHelicity(int i){ if(i >=0 && i<3){ return fHelicityChannel_data[i];} else return 0;}
-   double GetRaster(int i){ if(i >=0 && i<2){ return fRasterChannel_data[i];} else return 0;}
+   unsigned int GetHelicitySize(){ return fHelicityChannel_data.size(); }
+   double GetHelicity(int i){ if(i >=0 && i<fHelicityChannel_data.size()){ return fHelicityChannel_data[i];} else return 0;}
+   unsigned int GetRasterSize(){ return fRasterChannel_data.size(); }
+   double GetRaster(int i){ if(i >=0 && i<fRasterChannel_data.size()){ return fRasterChannel_data[i];} else return 0;}
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Winconsistent-missing-override"
