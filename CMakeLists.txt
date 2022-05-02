@@ -73,3 +73,7 @@ target_link_libraries(RasterMon RasterLib )
 install(TARGETS RasterLib  LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 install(FILES ${PROJECT_BINARY_DIR}/libRasterLib_dict_rdict.pcm  DESTINATION lib)
 install(TARGETS RasterMon DESTINATION bin)
+
+ROOT_GENERATE_DICTIONARY(RootFrame_dict RootFrame.h LINKDEF RootFrameLinkDef.h)
+add_executable(test_buffer test_buffer.cpp RootFrame_dict.cxx)
+target_link_libraries(test_buffer ${ROOT_LIBRARIES})

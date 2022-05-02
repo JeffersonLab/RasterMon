@@ -9,7 +9,8 @@
 #include <EvioTool.h>
 #include <FADCdata.h>
 #include <Leaf.h>
-#include <RasterMonEventInfo.h>
+#include "RasterMonEventInfo.h"
+#include "CircularBuffer.h"
 #include <mutex>
 
 class RasterEvioTool: public EvioTool{
@@ -23,6 +24,21 @@ public:
 
    std::vector<string> fInputFiles;
    int fiInputFile = -1;
+
+   string fETStationName = "RasterMon";
+   int    fETPort = 11111;
+   string fETHost = "clondaq6";
+   string fETName = "/tmp/clasprod";
+
+
+   // clondaq2  - 129.57.167.109
+   // clondaq3  - 129.57.167.226
+   // clondaq4  - 129.57.167.227
+   // clondaq5  - 129.57.167.41
+   // clondaq6  - 129.57.167.60
+   // clondaq7  - 129.57.167.20
+
+
    unsigned long fNEventsProcessed=0;
    // Sub banks.
    // Note on mem: The memory will be managed by TObjArray. So no delete to be called.
@@ -45,9 +61,11 @@ public:
    std::vector<int> fRasterChannels = {1, 3, 1, 3};
    std::vector<double> fRasterChannel_data = {-1., -1., -1., -1.}; // reserve slots for the data.
 
-
-
    std::mutex fFileLock;   // Because the Next() has a next file build in.
+
+   size_t fN_buf = 5000;
+   std::vector< CircularBuffer<double> > fRasterTimeBuf;
+   std::vector< CircularBuffer<double> > fRasterAdcBuf;
 
 public:
    explicit RasterEvioTool(string infile="");
@@ -81,6 +99,14 @@ public:
    double GetHelicity(int i){ if(i >=0 && i<fHelicityChannel_data.size()){ return fHelicityChannel_data[i];} else return 0;}
    unsigned int GetRasterSize(){ return fRasterChannel_data.size(); }
    double GetRaster(int i){ if(i >=0 && i<fRasterChannel_data.size()){ return fRasterChannel_data[i];} else return 0;}
+
+   void SetETHost(string host) { fETHost = host; }
+   string GetETHost() const { return fETHost;}
+   void SetETPort(int port){ fETPort = port;}
+   int GetETPort() const { return fETPort; }
+   void SetETName(string name){ fETName = name;}
+   string GetETName() const {return fETName;}
+
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Winconsistent-missing-override"

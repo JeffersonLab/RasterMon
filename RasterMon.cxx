@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
       ("q,quiet", "Run extra quiet.")
       ("t,et", "Connect to ET instead of reading from file. ")
       ("h, host", "Host computer for the ET system, default: localhost",
-            cxxopts::value(host)->default_value("localhost"))
+            cxxopts::value(host)->default_value("clondaq6"))
       ("p, port", "Port to use for the ET system, default: 11111",
             cxxopts::value(port))
       ("f, etname", "filename for ET system direct reads, default: /et/clasprod",
@@ -54,6 +54,10 @@ int main(int argc, char **argv) {
       TApplication theApp("App", &argc, argv);
 
       auto evio = new RasterEvioTool();
+      evio->SetETHost(host);
+      evio->SetETPort(port);
+      evio->SetETName(etname);
+
       if (debug == 1) evio->fDebug = 0;
       if (debug > 1) evio->fDebug = EvioTool::EvioTool_Debug_Info;
       if (debug > 2) evio->fDebug += EvioTool::EvioTool_Debug_Info2;
@@ -73,7 +77,7 @@ int main(int argc, char **argv) {
          if (debug)
             cout << "Using the ET system with host: " << host << ", port: " << port << " , et file: " << etname
                  << ". \n";
-         int stat = evio->OpenEt("RasterMon", etname, host, port);
+         int stat = evio->OpenEt();
          if (stat != 0) {
             cout << "ERROR -- could not attach to ET system. abort. \n";
             return (3);

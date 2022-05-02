@@ -29,7 +29,7 @@ void RasterMonGui::Init(UInt_t w, UInt_t h){
    fSaveFileInfo.fFileTypes = gfFileSaveTypes;
    fSaveFileInfo.SetFilename("RasterMonHists.root");
    SetupGUI(w, h);
-   fHistUpdateTimer = std::make_unique<TTimer>(this, 500) ;
+   fHistUpdateTimer = std::make_unique<TTimer>(this, fUpdateRate) ;
    for(int i=0; i<fCanvases.size(); ++i) {
       fRHists->Setup_Histograms(fCanvases[i]->GetCanvas());
    }
@@ -144,7 +144,7 @@ void RasterMonGui::StatusBarUpdate(){
    fStatusBar->SetText( text1, 3);
 
    time1 = time2;
-   if(fDebug){
+   if(fDebug>1){
       printf("Events processed:   %'10ld    delta: %5ld     Update #%5d\n", fEvio->fNEventsProcessed, delta_evt, n_updates);
       printf("Time elapsed total: %'10lld   delta t: %5lld\n", total_t.count(), delta_t.count());
       printf("Average rate:       %8.3f kHz  Current rate: %8.3f kHz\n",
@@ -155,14 +155,14 @@ void RasterMonGui::StatusBarUpdate(){
 void RasterMonGui::AddTabArea(UInt_t w, UInt_t h) {
    //--------- create the Tab widget
 
-   std::vector<string> tab_names = {"Raster", "Raw", "Raw2", "Helicity"};
+   std::vector<string> tab_names = {"Raster", "Raw", "Raw2", "Scope", "Helicity"};
 
-   TGTab *fTab = new TGTab(this, 1, 1);
-   AddFrame(fTab, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY,
-                                    2, 2, 5, 1));
+   fTabAreaTabs = new TGTab(this, 1, 1);
+   AddFrame(fTabAreaTabs, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY,
+                                            2, 2, 5, 1));
 
    for( auto tab_name: tab_names) {
-      TGCompositeFrame *tab = fTab->AddTab(tab_name.c_str());
+      TGCompositeFrame *tab = fTabAreaTabs->AddTab(tab_name.c_str());
       // Note: Cannot use "emplace_back", because the copy constructor for TEmbeddedCanvas has been explicitly deleted.
       // This forces us to create the canvas with new.
       fCanvases.push_back(new TRootEmbeddedCanvas(tab_name.c_str(), tab, w, h));
@@ -237,6 +237,7 @@ void RasterMonGui::HandleMenu(int choice) {
          hd->Popup();
          break;
       case M_ET_CONNECT:
+         HandleETConnectDialog();
          break;
       case M_CONFIGURE:
          break;
@@ -249,11 +250,21 @@ void RasterMonGui::HandleMenu(int choice) {
    }
 }
 
+void RasterMonGui::HandleETConnectDialog(){
+   // Handle the input for making the ET ring "work".
+   
+}
+
 void RasterMonGui::DoDraw() {
-   for( int i=0; i< fCanvases.size(); ++i) {
-      fRHists->DrawCanvas(i);
+   // This is a Draw for the tab selected canvas.
+   if(fUpdateSelectedTabOnly){
+      int current_tab = fTabAreaTabs->GetCurrent();
+      fRHists->DoDraw(current_tab);
+   }else {
+      fRHists->DoDraw(-1);
    }
-   if( !fRHists->isworking()) Stop();  // Stop if you detect the worker threads ended.
+   if (!fRHists->isworking() && !fPause) Stop();  // Stop if you detect the worker threads ended.
+   // But not if Paused, because Pause calls DoDraw to make sure canvasses are updated, and we don't want to loop.
 }
 
 void RasterMonGui::Pause(int set_state){
@@ -282,7 +293,10 @@ void RasterMonGui::Pause(int set_state){
       if(set_state == 0) fPauseButton->SetText("&UnPause");
       if(fDebug>1) std::cout << "Pause \n";
       fHistUpdateTimer->TurnOff();
-      fRHists->pause();
+      // fRHists->pause();
       fPause = true;
+      fUpdateSelectedTabOnly = false;  // Update all the canvases, so they show something.
+      DoDraw();
+      fUpdateSelectedTabOnly = true;
    }
 }

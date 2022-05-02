@@ -6,6 +6,22 @@
 RasterHists::~RasterHists(){
 // Cleanup.
 }
+void RasterHists::SubPadResized() {
+   // If the lower pad (fPadBot) is zoomed by the user using the cursor, a signal is send calling this method.
+   // Here we read the new limits from the bottom x graph, and then set those limits on the top x graph,
+   // causing both pads to have the same x scale.
+   //
+   // ToDo: This has a glitch if the second, bottom, pad is empty. Then zooming on that second pad will not work as expected.
+   if (fIsUpdating) return;  // This is to make sure we don't call this twice too quickly.
+   fIsUpdating = true;
+   auto xax = fGRaw2_x->GetXaxis();
+   double low = xax->GetBinLowEdge(xax->GetFirst());
+   double high = xax->GetBinUpEdge(xax->GetLast());
+   auto xax2 = fGRaw_x->GetXaxis();
+   xax2->SetLimits(low, high);
+   fPadTop->Modified(); // Make sure the pad updates.
+   fIsUpdating = false;
+}
 
 void RasterHists::Setup_Histograms(TCanvas *canvas) {
    // Create the histograms and the corresponding tab.
@@ -18,6 +34,8 @@ void RasterHists::Setup_Histograms(TCanvas *canvas) {
    std::vector<int> colors = {kRed, kGreen, kBlue};
    std::vector<string> helicity_names = {"Helicity","Sync","Quartet"};
    TVirtualPad *pad;
+   TLegend *legend;
+
    switch(tab_num) {
       case 0:  // These are the calibrated x-y plots for the raster readback current.
          canvas->Divide(2, 2);
@@ -53,7 +71,49 @@ void RasterHists::Setup_Histograms(TCanvas *canvas) {
                                                    2048, -0.5, 4095.5);
          fHRaw2_vs_Raw1_y->SetStats(false);
          break;
-      case 3:
+      case 3: // Here we setup the TGraphs for the "scope" function, ADC versus time.
+         canvas->Divide(1,2, 0, 0);
+         fPadTop = dynamic_cast<TPad *>(canvas->cd(1));
+         // fPadTop->SetName("ADC, current read back.");
+         fPadTop->SetGrid();
+         fPadBot = dynamic_cast<TPad *>(canvas->cd(2));
+         // fPadBot->SetName("ADC2, readout from driver.");
+         fPadBot->Connect("Resized()", "RasterHists", this, "SubPadResized()");
+         fPadBot->SetGrid();
+
+         fGRaw_x = std::make_unique<TGraph>(fEvio->fN_buf);
+         fGRaw_x->SetLineWidth(2);
+         fGRaw_x->SetLineColor(kRed);
+         fGRaw_x->SetTitle("");
+         fGRaw_y = std::make_unique<TGraph>(fEvio->fN_buf);
+         fGRaw_y->SetLineWidth(2);
+         fGRaw_y->SetLineColor(kGreen);
+         fGRaw_y->SetTitle("");
+         fGRaw2_x = std::make_unique<TGraph>(fEvio->fN_buf);
+         fGRaw2_x->SetLineWidth(2);
+         fGRaw2_x->SetLineColor(kOrange);
+         fGRaw2_x->SetTitle("");
+         fGRaw2_y = std::make_unique<TGraph>(fEvio->fN_buf);
+         fGRaw2_y->SetLineWidth(2);
+         fGRaw2_y->SetLineColor(kBlue);
+         fGRaw2_y->SetTitle("");
+         fPadTop->cd();
+         fGRaw_x->Draw();
+         fGRaw_y->Draw("same");
+         fPadBot->cd();
+         fGRaw2_x->Draw();
+         fGRaw2_y->Draw("same");
+         canvas->cd();
+         legend = new TLegend(0.9,0.85,1.0,1.0);
+         legend->AddEntry(fGRaw_x.get(), "I readback x");
+         legend->AddEntry(fGRaw_y.get(),"I readback y");
+         legend->AddEntry(fGRaw2_x.get(),"Generator x");
+         legend->AddEntry(fGRaw2_y.get(), "Generator y");
+         legend->Draw();
+         fPadTop->Modified();
+
+         break;
+      case 4:
          canvas->Divide(2, 2);
          pad = canvas->cd(1);
          pad->SetLogy(1);
@@ -86,6 +146,14 @@ void RasterHists::Setup_Histograms(TCanvas *canvas) {
    canvas->Draw();
    DrawCanvas(tab_num);
 
+}
+
+void RasterHists::TopUpBuffer(CircularBuffer<double> &buf){
+   if(!buf.full() && !buf.empty()){
+      for(int i=buf.size(); i< buf.capacity(); ++i){
+         buf.push_back(buf.back());
+      }
+   }
 }
 
 void RasterHists::DrawCanvas(int hist_no) {
@@ -123,8 +191,36 @@ void RasterHists::DrawCanvas(int hist_no) {
             canvas->cd(4);
             fHRaw2_X->Draw("");
             break;
-
          case 3:
+            if(!fEvio->fRasterTimeBuf[0].full()){
+               for(int i=0; i< fEvio->fRasterTimeBuf.size(); ++i) {
+                  TopUpBuffer(fEvio->fRasterTimeBuf[i]);
+                  TopUpBuffer(fEvio->fRasterAdcBuf[i]);
+               }
+            }
+            for(int i=0; i< fEvio->fRasterTimeBuf[0].size(); ++i)
+               fGRaw_x->SetPoint(i, fEvio->fRasterTimeBuf[0].at(i), fEvio->fRasterAdcBuf[0].at(i));
+            for(int i=0; i< fEvio->fRasterTimeBuf[1].size(); ++i)
+               fGRaw_y->SetPoint(i, fEvio->fRasterTimeBuf[1].at(i), fEvio->fRasterAdcBuf[1].at(i));
+            for(int i=0; i< fEvio->fRasterTimeBuf[2].size(); ++i)
+               fGRaw2_x->SetPoint(i, fEvio->fRasterTimeBuf[2].at(i), fEvio->fRasterAdcBuf[2].at(i));
+            for(int i=0; i< fEvio->fRasterTimeBuf[3].size(); ++i)
+               fGRaw2_y->SetPoint(i, fEvio->fRasterTimeBuf[3].at(i), fEvio->fRasterAdcBuf[3].at(i));
+            fGRaw_x->SetMinimum(0);
+            fGRaw_x->SetMaximum(4096);
+            fGRaw2_x->SetMinimum(0);
+            fGRaw2_x->SetMaximum(4096);
+
+            fPadTop->cd();
+            fGRaw_x->Draw();
+            fGRaw_y->Draw("same");
+
+            fPadBot->cd();
+            fGRaw2_x->Draw();
+            fGRaw2_y->Draw("same");
+
+            break;
+         case 4:
             canvas->cd(1);
             fHelicity_raw[0].Draw();
             canvas->cd(2);
@@ -159,9 +255,13 @@ void RasterHists::go(){
    }
 }
 
-void RasterHists::DoDraw(){
-   for( int i=0; i< fCanvases.size(); ++i) {
-      DrawCanvas(i);
+void RasterHists::DoDraw(int active_tab){
+   if(active_tab == -1) {
+      for (int i = 0; i < fCanvases.size(); ++i) {
+         DrawCanvas(i);
+      }
+   }else{
+      DrawCanvas(active_tab);
    }
 }
 
@@ -178,6 +278,8 @@ void RasterHists::clear(){
    fHRaw2_X->Reset();
    fHRaw2_XY->Reset();
    fHRaw2_Y->Reset();
+   fHRaw2_vs_Raw1_x->Reset();
+   fHRaw2_vs_Raw1_y->Reset();
 
    for(auto &h: fHelicity ) h.Reset();
    for(auto &h: fHelicity_raw ) h.Reset();
@@ -279,6 +381,8 @@ void RasterHists::HistFillWorker(int thread_num){
 
 void RasterHists::SavePDF(const string &file, bool overwrite){
    // Save the canvesses as PDF file
+   DoDraw();
+
    if(fCanvases.size()>1) {
       fCanvases[0]->Print((file+"(").c_str());
       for (int i = 1; i < fCanvases.size() - 1; ++i) {

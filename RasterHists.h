@@ -18,6 +18,7 @@
 #include <TGFrame.h>
 #include <TH1D.h>
 #include <TH2D.h>
+#include <TGraph.h>
 #include <THStack.h>
 #include <TLegend.h>
 #include <TTimer.h>
@@ -49,17 +50,28 @@ private:
    std::unique_ptr<TH1D> fHRaw2_X = nullptr;
    std::unique_ptr<TH1D> fHRaw2_Y = nullptr;
    std::unique_ptr<TH2D> fHRaw2_XY = nullptr;
-
    std::unique_ptr<TH2D> fHRaw2_vs_Raw1_x = nullptr;
    std::unique_ptr<TH2D> fHRaw2_vs_Raw1_y = nullptr;
+   // Tab 3  -- Scope
+   std::unique_ptr<TGraph> fGRaw_x = nullptr;
+   std::unique_ptr<TGraph> fGRaw_y = nullptr;
+   std::unique_ptr<TGraph> fGRaw2_x = nullptr;
+   std::unique_ptr<TGraph> fGRaw2_y = nullptr;
 
-   // Tab 3  -- 3 channels for helicity.
+   TPad *fPadTop= nullptr;
+   TPad *fPadBot= nullptr;
+   bool fIsUpdating = false;
+
+   std::vector<TCanvas *> fCanvases;
+
+
+   // Tab 4  -- 3 channels for helicity.
    std::vector<TH1I> fHelicity;
    std::vector<TH1D> fHelicity_raw;
    std::unique_ptr<THStack> fHelicity_stack;
    std::unique_ptr<TLegend> fHelicity_legend;
 
-   double fRasterScale[2] = {0.004, 0.004};
+   double fRasterScale[2] = {0.004, 0.004};  // ToDo: Fill these with a fetch from the CCDB.
    double fRasterOffset[2] = {-8., -8.};
 
    // For the worker fill threads.
@@ -70,8 +82,6 @@ private:
    int fNWorkers = 1;
    std::vector<std::thread> fWorkers;
    std::mutex fEvioReadLock;
-
-   std::vector<TCanvas *> fCanvases;
 
 public:
    RasterHists(){};
@@ -87,8 +97,11 @@ public:
    void go();
    void stop();
    void clear();
-   void DoDraw();
+   void DoDraw(int active_tab=-1);
    bool isworking(){return(fKeepWorking);}
+
+   void SubPadResized();
+   void TopUpBuffer(CircularBuffer<double> &buf);
 
    void SetDebug(int level){ fDebug = level;}
    int GetDebug(){ return(fDebug);}

@@ -46,6 +46,7 @@ private:
       M_HELP_ABOUT
    };
 
+   TGTab *fTabAreaTabs = nullptr;
    std::vector<TRootEmbeddedCanvas *> fCanvases;
    std::unique_ptr<TGMenuBar> fMenuBar = nullptr;
    std::unique_ptr<TGStatusBar> fStatusBar = nullptr;
@@ -57,6 +58,9 @@ private:
    RasterEvioTool *fEvio = nullptr;  // Not an object we own, just a handy pointer.
    TGFileInfo fFileInfo;             // Contains file(s) chosen by Open dialog or populated from command line.
    TGFileInfo fSaveFileInfo;         // Contains info for Histogram Save dialog.
+   unsigned int fUpdateRate=100;     // Update rate in ms.
+
+   bool fUpdateSelectedTabOnly = true;
 
 public:
    int fDebug = 0;
@@ -90,6 +94,7 @@ public:
    void AddStatusBar();
    void StatusBarUpdate();
    void HandleMenu(int choice);
+   void HandleETConnectDialog();
 
    void Go(){
       if(fDebug>1) std::cout << "Go \n";

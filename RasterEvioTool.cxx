@@ -3,8 +3,10 @@
 //
 
 #include "RasterEvioTool.h"
+#include <thread>
+#include <chrono>
 
-RasterEvioTool::RasterEvioTool(string infile) : EvioTool(infile) {
+RasterEvioTool::RasterEvioTool(string infile) : EvioTool(infile){
    // Basic setup of the EvioTool Class
 
    fAutoAdd = false;  // Do not add every bank in the file automatically.
@@ -18,6 +20,12 @@ RasterEvioTool::RasterEvioTool(string infile) : EvioTool(infile) {
    fRasterFADC = fRasterCrate->AddLeaf<FADCdata>("fRasterFADC", 57601, 0, "Raster fRasterFADC");
    fHelicityCrate = AddBank("Helicity", fHelicityCrateNum, 0, "Raster fRasterFADC banks");
    fHelicityFADC = fHelicityCrate->AddLeaf<FADCdata>("fHelicityFADC", 57601, 0, "Raster fRasterFADC");
+
+   for(int i=0; i<fRasterChannels.size(); ++i){
+      fRasterTimeBuf.emplace_back(fN_buf);
+      fRasterAdcBuf.emplace_back(fN_buf);
+   }
+
 }
 
 void RasterEvioTool::Clear(Option_t *opt) {
@@ -61,7 +69,7 @@ int RasterEvioTool::Next() {
                for(int k=0; k < fHelicityFADC->GetData(i).GetSampleSize(); ++k){
                   sum += (double) fHelicityFADC->GetData(i).GetSample(k);
                }
-               fHelicityChannel_data[j] = sum / fHelicityFADC->GetData(i).GetSampleSize();
+               fHelicityChannel_data[j] = sum / (double)fHelicityFADC->GetData(i).GetSampleSize();
             }
          }
       }
@@ -75,11 +83,17 @@ int RasterEvioTool::Next() {
                for(int k=0; k < fRasterFADC->GetData(i).GetSampleSize(); ++k){
                   sum += (double) fRasterFADC->GetData(i).GetSample(k);
                }
-               fRasterChannel_data[j] = sum / fRasterFADC->GetData(i).GetSampleSize();
+               fRasterChannel_data[j] = sum / (double)fRasterFADC->GetData(i).GetSampleSize();
+               unsigned long time = fRasterFADC->GetData(i).GetRefTime();
+               if(time>0) {
+                  fRasterTimeBuf[j].push_back(5.*(double)time/1.e9);   // Convert to second
+                  fRasterAdcBuf[j].push_back(fRasterChannel_data[j]);
+               }
             }
          }
       }
    }
+   // std::this_thread::sleep_for(std::chrono::microseconds(500));
    return(EvioTool_Status_OK);
 }
 
