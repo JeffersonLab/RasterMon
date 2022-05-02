@@ -13,6 +13,16 @@
 #include "CircularBuffer.h"
 #include <mutex>
 
+#ifndef ET_DEFAULT_PORT
+#define ET_DEFAULT_PORT 11111
+#endif
+#ifndef ET_DEFAULT_NAME
+#define ET_DEFAULT_NAME "/tmp/clasprod"
+#endif
+#ifndef ET_DEFAULT_HOST
+#define ET_DEFAULT_HOST "clondaq6"
+#endif
+
 class RasterEvioTool: public EvioTool{
 
 public:
@@ -26,18 +36,9 @@ public:
    int fiInputFile = -1;
 
    string fETStationName = "RasterMon";
-   int    fETPort = 11111;
-   string fETHost = "clondaq6";
-   string fETName = "/tmp/clasprod";
-
-
-   // clondaq2  - 129.57.167.109
-   // clondaq3  - 129.57.167.226
-   // clondaq4  - 129.57.167.227
-   // clondaq5  - 129.57.167.41
-   // clondaq6  - 129.57.167.60
-   // clondaq7  - 129.57.167.20
-
+   int    fETPort = ET_DEFAULT_PORT;
+   string fETHost = ET_DEFAULT_HOST;
+   string fETName = ET_DEFAULT_NAME;
 
    unsigned long fNEventsProcessed=0;
    // Sub banks.

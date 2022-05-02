@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
          if (debug)
             cout << "Using the ET system with host: " << host << ", port: " << port << " , et file: " << etname
                  << ". \n";
-         int stat = evio->OpenEt();
+         int stat = evio->OpenEt("RasterMon",etname, host, port);
          if (stat != 0) {
             cout << "ERROR -- could not attach to ET system. abort. \n";
             return (3);

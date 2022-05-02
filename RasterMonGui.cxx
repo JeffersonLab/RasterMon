@@ -190,6 +190,7 @@ void RasterMonGui::SetupGUI(UInt_t w, UInt_t h){
 void RasterMonGui::HandleMenu(int choice) {
    // Handle the menu choices.
    TRootHelpDialog *hd;
+   ETConnectionConfig *et_dialog;
 
    switch (choice) {
       case M_FILE_OPEN:
@@ -237,8 +238,10 @@ void RasterMonGui::HandleMenu(int choice) {
          hd->Popup();
          break;
       case M_ET_CONNECT:
-         HandleETConnectDialog();
+         et_dialog = new ETConnectionConfig(this, fEvio);
+         et_dialog->Run();
          break;
+
       case M_CONFIGURE:
          break;
 
@@ -248,11 +251,6 @@ void RasterMonGui::HandleMenu(int choice) {
          break;
 
    }
-}
-
-void RasterMonGui::HandleETConnectDialog(){
-   // Handle the input for making the ET ring "work".
-   
 }
 
 void RasterMonGui::DoDraw() {

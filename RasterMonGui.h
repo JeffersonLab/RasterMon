@@ -7,19 +7,18 @@
 
 #include <TROOT.h>
 #include <TSystem.h>
-#include <TApplication.h>
-#include <TGClient.h>
 #include <TCanvas.h>
 #include <TRandom3.h>
-#include <TGButton.h>
 #include <TRootEmbeddedCanvas.h>
-#include <TGFrame.h>
-#include <TGMenu.h>
-#include <TGTab.h>
 #include <TH1D.h>
 #include <TH2D.h>
 #include <TTimer.h>
 #include <TObjString.h>
+#include <TGClient.h>
+#include <TGButton.h>
+#include <TGFrame.h>
+#include <TGMenu.h>
+#include <TGTab.h>
 #include <TGFileDialog.h>
 #include <TGStatusBar.h>
 #include <TRootHelpDialog.h>
@@ -32,6 +31,7 @@
 
 #include "RasterHists.h"
 #include "RasterEvioTool.h"
+#include "ETConnectionConfig.h"
 
 class RasterMonGui : public TGMainFrame {
 
@@ -94,7 +94,6 @@ public:
    void AddStatusBar();
    void StatusBarUpdate();
    void HandleMenu(int choice);
-   void HandleETConnectDialog();
 
    void Go(){
       if(fDebug>1) std::cout << "Go \n";
