@@ -4,7 +4,6 @@
 
 #ifndef RASTERMON_ETCONNECTIONCONFIG_H
 #define RASTERMON_ETCONNECTIONCONFIG_H
-#include "RasterEvioTool.h"
 #include "TObject.h"
 #include "TGCanvas.h"
 #include "TGFrame.h"
@@ -17,6 +16,8 @@
 #include <iostream>
 #include <string>
 #include <map>
+
+#include "RasterEvioTool.h"
 
 class ETConnectionConfig {
 
@@ -53,7 +54,10 @@ public:
 
 
 public:
-   ETConnectionConfig(const TGWindow *parent_window, RasterEvioTool *evio);
+   ETConnectionConfig(const TGWindow *parent_window, RasterEvioTool *evio): fParentWindow(parent_window), fEvio(evio) {
+      // Handle the user input for making the ET ring "work".
+      // See the tutorial/gui/guitest.C class TestDialog for examples on building dialogs.
+   };
    virtual ~ETConnectionConfig(){};
 
    void Run();
@@ -68,7 +72,6 @@ public:
       fEtDialog->CloseWindow();
       fIsOK = true;
       fEvio->fETStationName = fTextEntryStationName->GetText();
-      cout << "before: " << fEvio->fETHost << endl;
       fEvio->fETHost = HostNameToIP(fTextEntryHostName->GetText());
       fEvio->fETPort = fNumberEntryPort->GetIntNumber();
       fEvio->fETName = fTextEntryBufName->GetText();
@@ -128,12 +131,6 @@ public:
    }
 };
 
-inline ETConnectionConfig::ETConnectionConfig(const TGWindow *parent_window, RasterEvioTool *evio):
-      fParentWindow(parent_window), fEvio(evio) {
-   // Handle the user input for making the ET ring "work".
-   // See the tutorial/gui/guitest.C class TestDialog for examples on building dialogs.
-}
-
 inline void ETConnectionConfig::Run(){
    // Pop up the window and process user input.
    int label_width = 100;
@@ -180,7 +177,7 @@ inline void ETConnectionConfig::Run(){
       // cout << "Adding " << it->first << " - " << it->second << endl;
       fPredefCombo->AddEntry(it->first.c_str(), i++);
    }
-   int select = HostNameToChoice(fEvio->fETHost);
+   int select = HostNameToChoice(fEvio->fETHost) + 1;
    if(select >=0 ) fPredefCombo->Select(select, kFALSE);
    fPredefCombo->Connect("Selected(const char *)","ETConnectionConfig", this, "HandleETDefault(char *)");
 

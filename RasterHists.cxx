@@ -22,6 +22,43 @@ void RasterHists::SubPadResized() {
    fPadTop->Modified(); // Make sure the pad updates.
    fIsUpdating = false;
 }
+void RasterHists::CreateScopeGraphs(TCanvas *canvas) {
+   // Setup the scope graphs.
+   fPadTop->cd();
+   fGRaw_x = std::make_unique<TGraph>(fEvio->fN_buf);
+   fGRaw_x->SetLineWidth(2);
+   fGRaw_x->SetLineColor(kRed);
+   fGRaw_x->SetTitle("");
+   fGRaw_y = std::make_unique<TGraph>(fEvio->fN_buf);
+   fGRaw_y->SetLineWidth(2);
+   fGRaw_y->SetLineColor(kGreen);
+   fGRaw_y->SetTitle("");
+   fPadBot->cd();
+   fGRaw2_x = std::make_unique<TGraph>(fEvio->fN_buf);
+   fGRaw2_x->SetLineWidth(2);
+   fGRaw2_x->SetLineColor(kOrange);
+   fGRaw2_x->SetTitle("");
+   fGRaw2_y = std::make_unique<TGraph>(fEvio->fN_buf);
+   fGRaw2_y->SetLineWidth(2);
+   fGRaw2_y->SetLineColor(kBlue);
+   fGRaw2_y->SetTitle("");
+   fPadTop->cd();
+   fGRaw_x->Draw();
+   fGRaw_y->Draw("same");
+   fPadBot->cd();
+   fGRaw2_x->Draw();
+   fGRaw2_y->Draw("same");
+   fPadTop->Modified();
+   fPadBot->Modified();
+   canvas->cd();
+   auto legend = new TLegend(0.9,0.85,1.0,1.0);
+   legend->AddEntry(fGRaw_x.get(), "I readback x");
+   legend->AddEntry(fGRaw_y.get(),"I readback y");
+   legend->AddEntry(fGRaw2_x.get(),"Generator x");
+   legend->AddEntry(fGRaw2_y.get(), "Generator y");
+   legend->Draw();
+
+}
 
 void RasterHists::Setup_Histograms(TCanvas *canvas) {
    // Create the histograms and the corresponding tab.
@@ -81,37 +118,7 @@ void RasterHists::Setup_Histograms(TCanvas *canvas) {
          fPadBot->Connect("Resized()", "RasterHists", this, "SubPadResized()");
          fPadBot->SetGrid();
 
-         fGRaw_x = std::make_unique<TGraph>(fEvio->fN_buf);
-         fGRaw_x->SetLineWidth(2);
-         fGRaw_x->SetLineColor(kRed);
-         fGRaw_x->SetTitle("");
-         fGRaw_y = std::make_unique<TGraph>(fEvio->fN_buf);
-         fGRaw_y->SetLineWidth(2);
-         fGRaw_y->SetLineColor(kGreen);
-         fGRaw_y->SetTitle("");
-         fGRaw2_x = std::make_unique<TGraph>(fEvio->fN_buf);
-         fGRaw2_x->SetLineWidth(2);
-         fGRaw2_x->SetLineColor(kOrange);
-         fGRaw2_x->SetTitle("");
-         fGRaw2_y = std::make_unique<TGraph>(fEvio->fN_buf);
-         fGRaw2_y->SetLineWidth(2);
-         fGRaw2_y->SetLineColor(kBlue);
-         fGRaw2_y->SetTitle("");
-         fPadTop->cd();
-         fGRaw_x->Draw();
-         fGRaw_y->Draw("same");
-         fPadBot->cd();
-         fGRaw2_x->Draw();
-         fGRaw2_y->Draw("same");
-         canvas->cd();
-         legend = new TLegend(0.9,0.85,1.0,1.0);
-         legend->AddEntry(fGRaw_x.get(), "I readback x");
-         legend->AddEntry(fGRaw_y.get(),"I readback y");
-         legend->AddEntry(fGRaw2_x.get(),"Generator x");
-         legend->AddEntry(fGRaw2_y.get(), "Generator y");
-         legend->Draw();
-         fPadTop->Modified();
-
+         CreateScopeGraphs(canvas);
          break;
       case 4:
          canvas->Divide(2, 2);

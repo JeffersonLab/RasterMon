@@ -89,6 +89,18 @@ public:
    virtual ~RasterHists();
 
    void Setup_Histograms(TCanvas *canvas);
+   void CreateScopeGraphs(TCanvas *canvas);
+   TCanvas *GetCanvas(int i){return fCanvases[i]->GetCanvas();}
+   void ResizeScopeGraphs(unsigned long size){
+      fGRaw_x->Expand(size);
+      fGRaw_x->Set(size);
+      fGRaw_y->Expand(size);
+      fGRaw_y->Set(size);
+      fGRaw2_x->Expand(size);
+      fGRaw2_x->Set(size);
+      fGRaw2_y->Expand(size);
+      fGRaw2_y->Set(size);
+   }
    void DrawCanvas(int hist_no);
    void HistFillWorker(int seed=0);
    RasterEvioTool *GetEvioPtr(){return fEvio;}

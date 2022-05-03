@@ -32,10 +32,11 @@
 #include "RasterHists.h"
 #include "RasterEvioTool.h"
 #include "ETConnectionConfig.h"
+#include "RasterMonConfig.h"
 
 class RasterMonGui : public TGMainFrame {
 
-private:
+public:
 
    enum EMyMessageTypes {
       M_FILE_OPEN,
@@ -58,8 +59,9 @@ private:
    RasterEvioTool *fEvio = nullptr;  // Not an object we own, just a handy pointer.
    TGFileInfo fFileInfo;             // Contains file(s) chosen by Open dialog or populated from command line.
    TGFileInfo fSaveFileInfo;         // Contains info for Histogram Save dialog.
-   unsigned int fUpdateRate=100;     // Update rate in ms.
+   unsigned int fUpdateRate=1000;     // Update rate in ms.
 
+   RasterMonConfig *fConfig = nullptr;
    bool fUpdateSelectedTabOnly = true;
 
 public:
@@ -94,6 +96,22 @@ public:
    void AddStatusBar();
    void StatusBarUpdate();
    void HandleMenu(int choice);
+   void DoConfigure();
+
+   void SetUpdateRate(){
+      unsigned long rate=1000;
+      if(fConfig){
+         rate = fConfig->fNumberEntryRate->GetIntNumber();
+         if(fDebug) std::cout << "Set update rate to: " << rate << std::endl;
+         fUpdateRate = rate;
+         fHistUpdateTimer->SetTime(rate);
+      }else{
+         if(fDebug) std::cout << "Rate not updates.\n";
+      }
+
+
+   }
+   unsigned int GetUpdateRate() const {return fUpdateRate;}
 
    void Go(){
       if(fDebug>1) std::cout << "Go \n";

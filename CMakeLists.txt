@@ -57,6 +57,7 @@ include(${ROOT_USE_FILE})
 include_directories(${PROJECT_SOURCE_DIR})
 
 ROOT_GENERATE_DICTIONARY(RasterLib_dict RasterLib.h DEPENDENCIES EvioTool evio et LINKDEF RasterLibLinkDef.h)
+list(APPEND ADDITIONAL_CLEAN_FILES RasterLib_dict.cxx)
 
 set(SOURCE_FILES
         RasterMonGui.cxx
@@ -75,5 +76,6 @@ install(FILES ${PROJECT_BINARY_DIR}/libRasterLib_dict_rdict.pcm  DESTINATION lib
 install(TARGETS RasterMon DESTINATION bin)
 
 ROOT_GENERATE_DICTIONARY(RootFrame_dict RootFrame.h LINKDEF RootFrameLinkDef.h)
+list(APPEND ADDITIONAL_CLEAN_FILES RootFrame_dict.cxx)
 add_executable(test_buffer test_buffer.cpp RootFrame_dict.cxx)
 target_link_libraries(test_buffer ${ROOT_LIBRARIES})

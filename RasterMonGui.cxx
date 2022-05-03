@@ -105,6 +105,9 @@ void RasterMonGui::AddControlBar(){
                                             5,5,3,4));
    AddFrame(hframe,new TGLayoutHints(kLHintsCenterX,2,2,2,2));
 
+   auto *config = new TGTextButton( hframe, "Config");
+   config->Connect("Clicked()","RasterMonGui", this, "DoConfigure()");
+   hframe->AddFrame(config, new TGLayoutHints(kLHintsRight, 50,5,3,4));
 }
 
 void RasterMonGui::AddStatusBar() {
@@ -191,6 +194,7 @@ void RasterMonGui::HandleMenu(int choice) {
    // Handle the menu choices.
    TRootHelpDialog *hd;
    ETConnectionConfig *et_dialog;
+   RasterMonConfig    *config_dialog;
 
    switch (choice) {
       case M_FILE_OPEN:
@@ -243,6 +247,8 @@ void RasterMonGui::HandleMenu(int choice) {
          break;
 
       case M_CONFIGURE:
+         // Stop();
+         DoConfigure();
          break;
 
       case M_FILE_EXIT:
@@ -251,6 +257,15 @@ void RasterMonGui::HandleMenu(int choice) {
          break;
 
    }
+}
+
+void RasterMonGui::DoConfigure(){
+   cout << "Start Configure dialog.";
+   fConfig = new RasterMonConfig(this, fEvio, fRHists.get());
+   fConfig->fRasGui = this;
+   fConfig->fRefreshRate = fUpdateRate;
+   fConfig->Run();
+   cout << "Config Run() is done.\n";
 }
 
 void RasterMonGui::DoDraw() {

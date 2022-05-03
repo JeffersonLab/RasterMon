@@ -101,6 +101,15 @@ public:
    unsigned int GetRasterSize(){ return fRasterChannel_data.size(); }
    double GetRaster(int i){ if(i >=0 && i<fRasterChannel_data.size()){ return fRasterChannel_data[i];} else return 0;}
 
+   void UpdateRasterBufferSize(unsigned long bufsize){
+      std::lock_guard<std::mutex> _lck(fFileLock);
+      std::cout << "Resizing buffers.\n";
+      for(int i=0; i< fRasterTimeBuf.size(); ++i) fRasterTimeBuf[i] = CircularBuffer<double>(bufsize);
+      for(int i=0; i< fRasterAdcBuf.size(); ++i) fRasterAdcBuf[i] = CircularBuffer<double>(bufsize);
+      fN_buf = bufsize;
+      std::cout << "Done Resizing buffers.\n";
+   }
+
    void SetETHost(string host) { fETHost = host; }
    string GetETHost() const { return fETHost;}
    void SetETPort(int port){ fETPort = port;}
