@@ -117,7 +117,7 @@ void RasterHists::Setup_Histograms(TCanvas *canvas) {
          fPadTop->SetGrid();
          fPadBot = dynamic_cast<TPad *>(canvas->cd(2));
          // fPadBot->SetName("ADC2, readout from driver.");
-         fPadBot->Connect("Resized()", "RasterHists", this, "SubPadResized()");
+         fPadBot->Connect("RangeChanged()", "RasterHists", this, "SubPadResized()");
          fPadBot->SetGrid();
 
          CreateScopeGraphs(canvas);
