@@ -92,6 +92,7 @@ public:
    void CreateScopeGraphs(TCanvas *canvas);
    TCanvas *GetCanvas(int i){return fCanvases[i]->GetCanvas();}
    void ResizeScopeGraphs(unsigned long size){
+      if(fDebug>1) std::cout << "Resizing the oscilloscope graphs to: " << size << std::endl;
       fGRaw_x->Expand(size);
       fGRaw_x->Set(size);
       fGRaw_y->Expand(size);

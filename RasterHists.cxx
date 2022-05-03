@@ -12,11 +12,13 @@ void RasterHists::SubPadResized() {
    // causing both pads to have the same x scale.
    //
    // ToDo: This has a glitch if the second, bottom, pad is empty. Then zooming on that second pad will not work as expected.
+   if(fDebug>2) std::cout << "RasterHists::SubPadResized() - Resizing pads.\n";
    if (fIsUpdating) return;  // This is to make sure we don't call this twice too quickly.
    fIsUpdating = true;
    auto xax = fGRaw2_x->GetXaxis();
    double low = xax->GetBinLowEdge(xax->GetFirst());
    double high = xax->GetBinUpEdge(xax->GetLast());
+   if(fDebug>2) std::cout << "RasterHists::SubPadResized() ==> low: "<< low << " high: " << high << "\n";
    auto xax2 = fGRaw_x->GetXaxis();
    xax2->SetLimits(low, high);
    fPadTop->Modified(); // Make sure the pad updates.
