@@ -124,7 +124,7 @@ public:
          fEvio->fETHost = fETSysKnown[selection];
          fTextEntryHostName->SetText(fEvio->fETHost.c_str());
          fEvio->fETPort = ET_DEFAULT_PORT;
-         fNumberEntryPort->SetIntNumber(fEvio->fETPort, false);
+         fNumberEntryPort->SetIntNumber(fEvio->fETPort);
          fEvio->fETName = ET_DEFAULT_NAME;
          fTextEntryBufName->SetText(fEvio->fETName.c_str());
       }
@@ -211,7 +211,7 @@ inline void ETConnectionConfig::Run(){
    fNumberEntryPort = new TGNumberEntry(h_frame4, fEvio->fETPort, 5, 1, TGNumberFormat::kNESInteger, TGNumberFormat::kNEAPositive);
    h_frame4->AddFrame(fNumberEntryPort, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsCenterY , 10, 10, 5, 5));
    fNumberEntryPort->Resize(field_width, 25);
-   fNumberEntryPort->SetIntNumber(fEvio->fETPort, false);
+   fNumberEntryPort->SetIntNumber(fEvio->fETPort);
    
    auto *h_frame5 = new TGHorizontalFrame(Frame2);
    Frame2->AddFrame(h_frame5, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY, 10, 2, 20, 2));
