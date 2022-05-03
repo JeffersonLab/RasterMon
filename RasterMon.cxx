@@ -28,12 +28,12 @@ int main(int argc, char **argv) {
       ("d,debug", "Increase debug level")
       ("q,quiet", "Run extra quiet.")
       ("t,et", "Connect to ET instead of reading from file. ")
-      ("h, host", "Host computer for the ET system, default: localhost",
-            cxxopts::value(host)->default_value("clondaq6"))
-      ("p, port", "Port to use for the ET system, default: 11111",
-            cxxopts::value(port))
-      ("f, etname", "filename for ET system direct reads, default: /et/clasprod",
-            cxxopts::value(etname)->default_value("/tmp/ETBuffer"))
+      ("h, host", "Host computer for the ET system, default: " ET_DEFAULT_HOST,
+            cxxopts::value(host)->default_value(ET_DEFAULT_HOST))
+      ("p, port", "Port to use for the ET system, default: " + to_string(ET_DEFAULT_PORT),
+            cxxopts::value(port)->default_value(to_string(ET_DEFAULT_PORT)))
+      ("f, etname", "filename for ET system direct reads, default: " ET_DEFAULT_NAME,
+            cxxopts::value(etname)->default_value(ET_DEFAULT_NAME))
       ("i,inputfiles","List of input evio files. The -i is optional. ",
             cxxopts::value<std::vector<std::string>>())
       ("help", "Print help")

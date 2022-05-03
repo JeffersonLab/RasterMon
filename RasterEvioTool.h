@@ -17,7 +17,7 @@
 #define ET_DEFAULT_PORT 11111
 #endif
 #ifndef ET_DEFAULT_NAME
-#define ET_DEFAULT_NAME "/tmp/clasprod"
+#define ET_DEFAULT_NAME "/et/clasprod"
 #endif
 #ifndef ET_DEFAULT_HOST
 #define ET_DEFAULT_HOST "clondaq6"
