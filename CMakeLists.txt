@@ -12,7 +12,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 #
 
-find_package(EvioTool CONFIG)  # EvioTool will also find fEvio.
+# find_package(EvioTool CONFIG)  # EvioTool will also find fEvio.
 
 if(${EvioTool_FOUND})
     message(STATUS "Found an existing installation of EvioTool. Will use that.")
