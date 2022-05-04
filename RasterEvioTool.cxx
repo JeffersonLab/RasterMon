@@ -15,10 +15,10 @@ RasterEvioTool::RasterEvioTool(string infile) : EvioTool(infile){
    tag_masks = {0x80}; // Any event with bit 6 set  2<<6
    fEvioHead = AddLeaf<unsigned int>("fEvioHead", 49152, 0, "Evio Event Header Info");
    fRasterHead =  new RasterMonEventInfo(this);  // Calls AddBank internally.
-   fRasterCrate = AddBank("Raster", fRasterCrateNum, 0, "Raster fRasterFADC banks");
+   fRasterCrate = AddBank("Raster", fRasterBankTag, 0, "Raster fRasterFADC banks");
    fRasterCrateTI = fRasterCrate->AddLeaf<unsigned int>("RasterCrateTI", 57610, 0, "Raster Crate TI info");
    fRasterFADC = fRasterCrate->AddLeaf<FADCdata>("fRasterFADC", 57601, 0, "Raster fRasterFADC");
-   fHelicityCrate = AddBank("Helicity", fHelicityCrateNum, 0, "Raster fRasterFADC banks");
+   fHelicityCrate = AddBank("Helicity", fHelicityBankTag, 0, "Raster fRasterFADC banks");
    fHelicityFADC = fHelicityCrate->AddLeaf<FADCdata>("fHelicityFADC", 57601, 0, "Raster fRasterFADC");
 
    for(int i=0; i<fRasterChannels.size(); ++i){
@@ -62,7 +62,7 @@ int RasterEvioTool::Next() {
    fNEventsProcessed++;
    // Here we parse the expected fRasterFADC data to make for easy access.
    for(int i=0; i < fHelicityFADC->size(); ++i){
-      if(fHelicityFADC->GetData(i).GetCrate() == fHelicityCrateNum && fHelicityFADC->GetData(i).GetSlot() == fHelicitySlot){
+      if(fHelicityFADC->GetData(i).GetCrate() == fHelicityBankTag && fHelicityFADC->GetData(i).GetSlot() == fHelicitySlot){
          for(int j=0; j < fHelicityChannels.size(); ++j){
             if(fHelicityFADC->GetData(i).GetChan() == fHelicityChannels[j]){
                double sum = 0.;
@@ -76,18 +76,20 @@ int RasterEvioTool::Next() {
    }
 
    for(int i=0; i < fRasterFADC->size(); ++i){
-      if(fRasterFADC->GetData(i).GetCrate() == fRasterCrateNum && fRasterFADC->GetData(i).GetSlot() == fRasterSlot){
+      if(fRasterFADC->GetData(i).GetCrate() == fRasterBankTag && fRasterFADC->GetData(i).GetSlot() == fRasterSlot){
          for(int j=0; j < fRasterChannels.size(); ++j){
             if(fRasterFADC->GetData(i).GetChan() == fRasterChannels[j]){
                double sum = 0.;
-               for(int k=0; k < fRasterFADC->GetData(i).GetSampleSize(); ++k){
+               size_t N = fRasterFADC->GetData(i).GetSampleSize();
+               for(size_t k=0; k < N; ++k){
                   sum += (double) fRasterFADC->GetData(i).GetSample(k);
                }
-               fRasterChannel_data[j] = sum / (double)fRasterFADC->GetData(i).GetSampleSize();
-               unsigned long time = fRasterFADC->GetData(i).GetRefTime();
-               if(time>0) {
-                  fRasterTimeBuf[j].push_back(5.*(double)time/1.e9);   // Convert to second
-                  fRasterAdcBuf[j].push_back(fRasterChannel_data[j]);
+               sum = sum / (double) N;
+               fRasterChannel_data[j] = sum;
+               double time = 5.e-9*(double)fRasterFADC->GetData(i).GetRefTime();
+               if(time>0) { // If time == 0, then this is not data so skip it.
+                  fRasterTimeBuf[j].push_back(time);   // Convert to second
+                  fRasterAdcBuf[j].push_back(sum);
                }
             }
          }

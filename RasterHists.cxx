@@ -6,41 +6,120 @@
 RasterHists::~RasterHists(){
 // Cleanup.
 }
-void RasterHists::SubPadResized() {
+
+void RasterHists::InitalizeScopeChannels() {
+   // Setup the channels for the scope with a default layout.
+   //
+
+}
+
+TAxis * RasterHists::CollectAxesPad(TPad *pad){
+   // Collect the axes from a pad and return them in a vector.
+   // Note that the returned object is
+   TAxis * axes;
+   auto prims1 = pad->GetListOfPrimitives();
+   std::cout << "Scanning pad: " << pad->GetName() << std::endl;
+   for(int i=0; i< prims1->GetEntries(); ++i){
+      if(strncmp(prims1->At(i)->ClassName(),"TGr",3) == 0){
+         std::cout << "Object at " << i << " is TGraph.\n";
+         auto graph = (TGraph *)prims1->At(i);
+         axes = graph->GetXaxis();
+         break;
+      }else if(strncmp(prims1->At(i)->ClassName(),"TH1",3) == 0){
+         std::cout << "Object at " << i << " is TH1F\n";
+         auto histo = (TH1 *)prims1->At(i);
+         axes = histo->GetXaxis();
+         break;
+      }
+   }
+   return axes;
+}
+
+void RasterHists::SubPadCopyRange(TPad *one, TPad *two){
+// Set the X axis of TPad two to be the same as that for TPad one.
+// Here we assume that each histogram or TGraph has the same number of bins in one and two.
+//
+   if (fPadSizeIsUpdating) return;  // This is to make sure we don't call this twice too quickly.
+   fPadSizeIsUpdating = true;
+   auto axis1 = CollectAxesPad(one);
+   auto axis2 = CollectAxesPad(two);
+   if(axis1 == nullptr) return;
+   if(axis2 == nullptr) return;
+   double ax1lo = axis1->GetBinLowEdge(axis1->GetFirst());
+   double ax1hi = axis1->GetBinUpEdge(axis1->GetLast());
+   double ax2lo = axis2->GetBinLowEdge(axis2->GetFirst());
+   double ax2hi = axis2->GetBinUpEdge(axis2->GetLast());
+
+   if(axis1->GetFirst() == axis2->GetFirst() && axis1->GetLast() == axis2->GetLast() &&
+         abs(ax1lo - ax2lo ) < 1E5 && abs(ax1hi - ax2hi ) < 1E5 ){
+      std::cout << "Axes already the same.\n";
+   }
+   // These allow for zooming, but not unzooming. The graph is re-written.
+   // axis2->SetLimits(ax1lo, ax1hi);
+   // axis2->SetRangeUser( ax1lo, ax1hi);
+
+   // This zooms and un-zooms okay. BUT, if one graph has no data, the labels do not update the same.
+   // Note: The mouse based zooming occurs in "TPad::ExecuteEventAxis". The final mouse up action does axis->SetRange()
+   axis2->SetRange(axis1->GetFirst(), axis1->GetLast());
+   two->Modified();
+
+   fPadSizeIsUpdating = false;
+}
+void RasterHists::SubPadTopResized() {
+   // If the lower pad (fPadTop) is zoomed by the user using the cursor, a signal is send calling this method.
+   // Here we read the new limits from the bottom x graph, and then set those limits on the top x graph,
+   // causing both pads to have the same x scale.
+   //
+   std::cout << "RasterHists::SubPadTopResized() - \n";
+   SubPadCopyRange(fPadTop, fPadBot);
+
+}
+
+void RasterHists::SubPadBotResized() {
    // If the lower pad (fPadBot) is zoomed by the user using the cursor, a signal is send calling this method.
    // Here we read the new limits from the bottom x graph, and then set those limits on the top x graph,
    // causing both pads to have the same x scale.
    //
-   // ToDo: This has a glitch if the second, bottom, pad is empty. Then zooming on that second pad will not work as expected.
-   if(fDebug>2) std::cout << "RasterHists::SubPadResized() - Resizing pads.\n";
-   if (fIsUpdating) return;  // This is to make sure we don't call this twice too quickly.
-   fIsUpdating = true;
-   auto xax = fGRaw2_x->GetXaxis();
-   double low = xax->GetBinLowEdge(xax->GetFirst());
-   double high = xax->GetBinUpEdge(xax->GetLast());
-   if(fDebug>2) std::cout << "RasterHists::SubPadResized() ==> low: "<< low << " high: " << high << "\n";
-   auto xax2 = fGRaw_x->GetXaxis();
-   xax2->SetLimits(low, high);
-   fPadTop->Modified(); // Make sure the pad updates.
-   fIsUpdating = false;
+   std::cout << "RasterHists::SubPadBotResized() - \n";
+   SubPadCopyRange(fPadBot, fPadTop);
+
 }
-void RasterHists::CreateScopeGraphs(TCanvas *canvas) {
+
+void RasterHists::ResizeScopeGraphs(unsigned long size){
+   if(fDebug>1) std::cout << "Resizing the oscilloscope graphs to: " << size << std::endl;
+   fGRaw_x->Expand(size);
+//   fGRaw_x->Set(size);
+   fGRaw_y->Expand(size);
+//   fGRaw_y->Set(size);
+   fGRaw2_x->Expand(size);
+//   fGRaw2_x->Set(size);
+   fGRaw2_y->Expand(size);
+//   fGRaw2_y->Set(size);
+}
+
+void RasterHists::CreateScopeGraphs(TCanvas *canvas, int nbins) {
    // Setup the scope graphs.
-   fPadTop->cd();
-   fGRaw_x = std::make_unique<TGraph>(fEvio->fN_buf);
+   fGRaw_x = std::make_unique<TGraph>();
+   fGRaw_x->Expand(nbins);
+   fGRaw_x->AddPoint(0,0);
    fGRaw_x->SetLineWidth(2);
    fGRaw_x->SetLineColor(kRed);
    fGRaw_x->SetTitle("");
-   fGRaw_y = std::make_unique<TGraph>(fEvio->fN_buf);
+   fGRaw_y = std::make_unique<TGraph>();
+   fGRaw_y->Expand(nbins);
+   fGRaw_y->AddPoint(0,0);
    fGRaw_y->SetLineWidth(2);
    fGRaw_y->SetLineColor(kGreen);
    fGRaw_y->SetTitle("");
-   fPadBot->cd();
-   fGRaw2_x = std::make_unique<TGraph>(fEvio->fN_buf);
+   fGRaw2_x = std::make_unique<TGraph>();
+   fGRaw2_x->Expand(nbins);
+   fGRaw2_x->AddPoint(0,0);
    fGRaw2_x->SetLineWidth(2);
    fGRaw2_x->SetLineColor(kOrange);
    fGRaw2_x->SetTitle("");
-   fGRaw2_y = std::make_unique<TGraph>(fEvio->fN_buf);
+   fGRaw2_y = std::make_unique<TGraph>();
+   fGRaw2_y->Expand(nbins);
+   fGRaw2_y->AddPoint(0,0);
    fGRaw2_y->SetLineWidth(2);
    fGRaw2_y->SetLineColor(kBlue);
    fGRaw2_y->SetTitle("");
@@ -54,20 +133,19 @@ void RasterHists::CreateScopeGraphs(TCanvas *canvas) {
    fPadBot->Modified();
    canvas->cd();
    auto legend = new TLegend(0.9,0.85,1.0,1.0);
-   legend->AddEntry(fGRaw_x.get(), "I readback x");
-   legend->AddEntry(fGRaw_y.get(),"I readback y");
-   legend->AddEntry(fGRaw2_x.get(),"Generator x");
-   legend->AddEntry(fGRaw2_y.get(), "Generator y");
+   legend->AddEntry(fGRaw_x.get(), "I_x");
+   legend->AddEntry(fGRaw_y.get(),"I_y");
+   legend->AddEntry(fGRaw2_x.get(),"G(x)");
+   legend->AddEntry(fGRaw2_y.get(), "G(y)");
    legend->Draw();
 
 }
 
-void RasterHists::Setup_Histograms(TCanvas *canvas) {
+void RasterHists::Setup_Histograms(TCanvas *canvas, int tab_num) {
    // Create the histograms and the corresponding tab.
 
-   fCanvases.push_back(canvas);
+   fCanvases[tab_num] = canvas;
    canvas->cd();
-   int tab_num = fCanvases.size()-1;
    string name = "Helicity";
    string name_raw = "Helicity_raw";
    std::vector<int> colors = {kRed, kGreen, kBlue};
@@ -111,17 +189,23 @@ void RasterHists::Setup_Histograms(TCanvas *canvas) {
          fHRaw2_vs_Raw1_y->SetStats(false);
          break;
       case 3: // Here we setup the TGraphs for the "scope" function, ADC versus time.
-         canvas->Divide(1,2, 0, 0);
+         canvas->Divide(1,2);
          fPadTop = dynamic_cast<TPad *>(canvas->cd(1));
+         fPadTop->Connect("RangeChanged()", "RasterHists", this, "SubPadTopResized()");
          // fPadTop->SetName("ADC, current read back.");
          fPadTop->SetGrid();
+         fPadTop->SetBit(TPad::kCannotMove);
          fPadBot = dynamic_cast<TPad *>(canvas->cd(2));
          // fPadBot->SetName("ADC2, readout from driver.");
-         fPadBot->Connect("RangeChanged()", "RasterHists", this, "SubPadResized()");
+         fPadBot->Connect("RangeChanged()", "RasterHists", this, "SubPadBotResized()");
+         // fPadBot->Connect("Resized()", "RasterHists", this, "SignalTest()"); // Signal that is called when pad *size* changes.
          fPadBot->SetGrid();
+         fPadBot->SetBit(TPad::kCannotMove);
 
-         CreateScopeGraphs(canvas);
+         if(fEvio) CreateScopeGraphs(canvas, fEvio->fN_buf);
+         else CreateScopeGraphs(canvas, 10000);
          break;
+
       case 4:
          canvas->Divide(2, 2);
          pad = canvas->cd(1);
@@ -130,7 +214,6 @@ void RasterHists::Setup_Histograms(TCanvas *canvas) {
          pad->SetLogy(1);
          pad = canvas->cd(4);
          pad->SetLogy(1);
-
 
          fHelicity_stack = std::make_unique<THStack>("Helicity_stack","Helicity Histograms");
          for(int i=0; i<3; ++i){
@@ -145,7 +228,6 @@ void RasterHists::Setup_Histograms(TCanvas *canvas) {
             fHelicity_stack->Add( &(fHelicity[i]));
             fHelicity_legend->AddEntry(&(fHelicity[i]));
          }
-
          break;
 
       default:
@@ -158,6 +240,10 @@ void RasterHists::Setup_Histograms(TCanvas *canvas) {
 }
 
 void RasterHists::TopUpBuffer(CircularBuffer<double> &buf){
+   // This function is used to fill the buffer with the same points until the end.
+   // Doing so avoids the graphs from having zeros that distort the picture.
+   // ToDo: Check if it is better to resize the TGraph each time.
+
    if(!buf.full() && !buf.empty()){
       for(int i=buf.size(); i< buf.capacity(); ++i){
          buf.push_back(buf.back());
@@ -201,20 +287,20 @@ void RasterHists::DrawCanvas(int hist_no) {
             fHRaw2_X->Draw("");
             break;
          case 3:
-            if(!fEvio->fRasterTimeBuf[0].full()){
-               for(int i=0; i< fEvio->fRasterTimeBuf.size(); ++i) {
-                  TopUpBuffer(fEvio->fRasterTimeBuf[i]);
-                  TopUpBuffer(fEvio->fRasterAdcBuf[i]);
+            if(fEvio){
+               for (int i = 0; i < fEvio->fRasterTimeBuf[0].size(); ++i){
+                  fGRaw_x->SetPoint(i, fEvio->fRasterTimeBuf[0].at(i), fEvio->fRasterAdcBuf[0].at(i));
+                  if(fEvio->fRasterTimeBuf[1].empty()) fGRaw_y->SetPoint(i, fEvio->fRasterTimeBuf[0].at(i), 0.);
+                  if(fEvio->fRasterTimeBuf[2].empty()) fGRaw2_x->SetPoint(i, fEvio->fRasterTimeBuf[0].at(i), 0.);
+                  if(fEvio->fRasterTimeBuf[3].empty()) fGRaw2_y->SetPoint(i, fEvio->fRasterTimeBuf[0].at(i), 0.);
                }
+               for (int i = 0; i < fEvio->fRasterTimeBuf[1].size(); ++i)
+                  fGRaw_y->SetPoint(i, fEvio->fRasterTimeBuf[1].at(i), fEvio->fRasterAdcBuf[1].at(i));
+               for (int i = 0; i < fEvio->fRasterTimeBuf[2].size(); ++i)
+                  fGRaw2_x->SetPoint(i, fEvio->fRasterTimeBuf[2].at(i), fEvio->fRasterAdcBuf[2].at(i));
+               for (int i = 0; i < fEvio->fRasterTimeBuf[3].size(); ++i)
+                  fGRaw2_y->SetPoint(i, fEvio->fRasterTimeBuf[3].at(i), fEvio->fRasterAdcBuf[3].at(i));
             }
-            for(int i=0; i< fEvio->fRasterTimeBuf[0].size(); ++i)
-               fGRaw_x->SetPoint(i, fEvio->fRasterTimeBuf[0].at(i), fEvio->fRasterAdcBuf[0].at(i));
-            for(int i=0; i< fEvio->fRasterTimeBuf[1].size(); ++i)
-               fGRaw_y->SetPoint(i, fEvio->fRasterTimeBuf[1].at(i), fEvio->fRasterAdcBuf[1].at(i));
-            for(int i=0; i< fEvio->fRasterTimeBuf[2].size(); ++i)
-               fGRaw2_x->SetPoint(i, fEvio->fRasterTimeBuf[2].at(i), fEvio->fRasterAdcBuf[2].at(i));
-            for(int i=0; i< fEvio->fRasterTimeBuf[3].size(); ++i)
-               fGRaw2_y->SetPoint(i, fEvio->fRasterTimeBuf[3].at(i), fEvio->fRasterAdcBuf[3].at(i));
             fGRaw_x->SetMinimum(0);
             fGRaw_x->SetMaximum(4096);
             fGRaw2_x->SetMinimum(0);
@@ -222,11 +308,11 @@ void RasterHists::DrawCanvas(int hist_no) {
 
             fPadTop->cd();
             fGRaw_x->Draw();
-            fGRaw_y->Draw("same");
+            if(fGRaw_y->GetN()) fGRaw_y->Draw("same");
 
             fPadBot->cd();
             fGRaw2_x->Draw();
-            fGRaw2_y->Draw("same");
+            if(fGRaw2_y->GetN()) fGRaw2_y->Draw("same");
 
             break;
          case 4:

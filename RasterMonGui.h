@@ -48,6 +48,7 @@ public:
    };
 
    TGTab *fTabAreaTabs = nullptr;
+   std::vector<string> fTabNames = {"Raster", "Raw", "Raw2", "Scope", "Helicity"};
    std::vector<TRootEmbeddedCanvas *> fCanvases;
    std::unique_ptr<TGMenuBar> fMenuBar = nullptr;
    std::unique_ptr<TGStatusBar> fStatusBar = nullptr;

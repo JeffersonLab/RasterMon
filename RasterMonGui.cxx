@@ -30,8 +30,9 @@ void RasterMonGui::Init(UInt_t w, UInt_t h){
    fSaveFileInfo.SetFilename("RasterMonHists.root");
    SetupGUI(w, h);
    fHistUpdateTimer = std::make_unique<TTimer>(this, fUpdateRate) ;
+   fRHists->ReserveCanvasSpace(fTabNames.size());
    for(int i=0; i<fCanvases.size(); ++i) {
-      fRHists->Setup_Histograms(fCanvases[i]->GetCanvas());
+      fRHists->Setup_Histograms(fCanvases[i]->GetCanvas(), i);
    }
    fEvio = fRHists->GetEvioPtr();
 }
@@ -158,13 +159,11 @@ void RasterMonGui::StatusBarUpdate(){
 void RasterMonGui::AddTabArea(UInt_t w, UInt_t h) {
    //--------- create the Tab widget
 
-   std::vector<string> tab_names = {"Raster", "Raw", "Raw2", "Scope", "Helicity"};
-
    fTabAreaTabs = new TGTab(this, 1, 1);
    AddFrame(fTabAreaTabs, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY,
                                             2, 2, 5, 1));
 
-   for( auto tab_name: tab_names) {
+   for( auto tab_name: fTabNames) {
       TGCompositeFrame *tab = fTabAreaTabs->AddTab(tab_name.c_str());
       // Note: Cannot use "emplace_back", because the copy constructor for TEmbeddedCanvas has been explicitly deleted.
       // This forces us to create the canvas with new.

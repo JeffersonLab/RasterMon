@@ -34,7 +34,24 @@
 
 class RasterHists : public TQObject, public TObject{
 
-private:
+public:
+   struct ScopeGraphs_t {   // Object to hold the information for each scope channel for FADC readout.
+      unsigned char bank_tag = 59;
+      unsigned char slot = 19;
+      unsigned char adc_chan;  // Channel for the slot of the FADC module.
+      unsigned char tab_number; // Number of the tab where graphs are to be shown.
+      unsigned char pad_number; // Number of the pad in the canvas (tab). 0 is top. Max is 3, for 4 pads.
+      string  name;        // Name for the TGraph.
+      string  title;       // Title. Set to "" to not show title on graph.
+      string  legend;      // Legend entry.
+      unsigned int color=2;  // Line color, as in kRed = 632.
+      unsigned char width=1; // Line width
+      bool show = true;      // Set false to not draw the TGraph, but still accumulate the data.
+      std::unique_ptr<TGraph> graph = nullptr; // The TGraph object that actually contains the data.
+   };
+
+
+public:
    RasterEvioTool *fEvio = nullptr;
 
    // Tab 0
@@ -60,7 +77,9 @@ private:
 
    TPad *fPadTop= nullptr;
    TPad *fPadBot= nullptr;
-   bool fIsUpdating = false;
+   bool fPadSizeIsUpdating = false;  // To lock for asynchronous resizing.
+   bool fPadTopResizing = false;     // To avoid pingpong resizing
+   bool fPadBotResizing = false;
 
    std::vector<TCanvas *> fCanvases;
 
@@ -88,20 +107,12 @@ public:
    RasterHists(RasterEvioTool *evio): fEvio(evio) {};
    virtual ~RasterHists();
 
-   void Setup_Histograms(TCanvas *canvas);
-   void CreateScopeGraphs(TCanvas *canvas);
+   void InitalizeScopeChannels();
+   void ReserveCanvasSpace(int n) { fCanvases.reserve(n);}
+   void Setup_Histograms(TCanvas *canvas, int tab_num);
+   void CreateScopeGraphs(TCanvas *canvas, int nbins);
    TCanvas *GetCanvas(int i){return fCanvases[i]->GetCanvas();}
-   void ResizeScopeGraphs(unsigned long size){
-      if(fDebug>1) std::cout << "Resizing the oscilloscope graphs to: " << size << std::endl;
-      fGRaw_x->Expand(size);
-      fGRaw_x->Set(size);
-      fGRaw_y->Expand(size);
-      fGRaw_y->Set(size);
-      fGRaw2_x->Expand(size);
-      fGRaw2_x->Set(size);
-      fGRaw2_y->Expand(size);
-      fGRaw2_y->Set(size);
-   }
+   void ResizeScopeGraphs(unsigned long size);
    void DrawCanvas(int hist_no);
    void HistFillWorker(int seed=0);
    RasterEvioTool *GetEvioPtr(){return fEvio;}
@@ -113,7 +124,15 @@ public:
    void DoDraw(int active_tab=-1);
    bool isworking(){return(fKeepWorking);}
 
-   void SubPadResized();
+   TAxis * CollectAxesPad(TPad *pad);
+   void SubPadCopyRange(TPad *one, TPad *two);
+   void SubPadTopResized();
+   void SubPadBotResized();
+   void SignalTest1(){ cout << "Signal test 1. \n";}
+   void SignalTest2(){ cout << "Signal test 2. \n";}
+   void SignalTest3(){ cout << "Signal test 3. \n";}
+   void SignalTest4(){ cout << "Signal test 4. \n";}
+
    void TopUpBuffer(CircularBuffer<double> &buf);
 
    void SetDebug(int level){ fDebug = level;}
