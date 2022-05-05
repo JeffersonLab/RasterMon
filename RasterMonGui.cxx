@@ -22,7 +22,7 @@ void RasterMonGui::Init(UInt_t w, UInt_t h){
 
    static const char *gfFileSaveTypes [] = {"ROOT File", "*.root", "PDF File", "*.pdf"};
 
-   fFileInfo.SetIniDir("/data/CLAS12/data");
+   fFileInfo.SetIniDir("/data");
    fFileInfo.fFileTypes = gfFileTypes;
    fFileInfo.SetMultipleSelection(true);
    fSaveFileInfo.SetIniDir(".");
@@ -30,10 +30,6 @@ void RasterMonGui::Init(UInt_t w, UInt_t h){
    fSaveFileInfo.SetFilename("RasterMonHists.root");
    SetupGUI(w, h);
    fHistUpdateTimer = std::make_unique<TTimer>(this, fUpdateRate) ;
-   fRHists->ReserveCanvasSpace(fTabNames.size());
-   for(int i=0; i<fCanvases.size(); ++i) {
-      fRHists->Setup_Histograms(fCanvases[i]->GetCanvas(), i);
-   }
    fEvio = fRHists->GetEvioPtr();
 }
 
@@ -168,8 +164,12 @@ void RasterMonGui::AddTabArea(UInt_t w, UInt_t h) {
       // Note: Cannot use "emplace_back", because the copy constructor for TEmbeddedCanvas has been explicitly deleted.
       // This forces us to create the canvas with new.
       fCanvases.push_back(new TRootEmbeddedCanvas(tab_name.c_str(), tab, w, h));
-      tab->AddFrame(fCanvases[fCanvases.size()-1], new TGLayoutHints(kLHintsBottom | kLHintsExpandX |
+      tab->AddFrame(fCanvases.back(), new TGLayoutHints(kLHintsBottom | kLHintsExpandX |
                                                      kLHintsExpandY, 5, 5, 5, 1));
+   }
+   fRHists->ReserveCanvasSpace(fTabNames.size());
+   for(int i=0; i<fCanvases.size(); ++i) {
+      fRHists->Setup_Histograms(fCanvases[i]->GetCanvas(), i);
    }
 }
 

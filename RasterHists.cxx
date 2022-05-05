@@ -7,13 +7,66 @@ RasterHists::~RasterHists(){
 // Cleanup.
 }
 
-void RasterHists::InitalizeScopeChannels() {
-   // Setup the channels for the scope with a default layout.
+void RasterHists::InitChannels() {
+   // Setup the channels for the scope and histograms with a default layout.
    //
+   // Init with:  (bank_tag, slot, adc_chan, tab_number, pad_number, name, title, legend, color, width, show)
+   // Or with:    (adc_chan, tab_number, pad_number, name, title, legend, color, width)
+
+   // TAB 0 == Histograms that are NOT raw.
+   int tab = 0;
+   fHists.emplace_back(tab, 3, 59, 19, 1, "Raster_Ix", "Raster Pos x", 400, -10., 10.);
+   fHists.emplace_back(tab, 0, 59, 19, 1, "Raster_Iy", "Raster Pos y", 400, -10., 10.);
+   fHists.emplace_back(tab, 1, 59, 19, 1,  59, 19, 1,
+                       "Raster_Ixy", "Raster Pos y vs x", 400, -10., 10.,  400, -10., 10.);
+
+   // TAB 1
+   tab++;
+   fHists.emplace_back(tab, 3, 59, 19, 1, "RawIx", "Raw ADC 3, I_x", 4096, -0.5, 4095.5);
+   fHists.emplace_back(tab, 0, 59, 19, 3, "RawIy", "Raw ADC 1, I_y", 4096, -0.5, 4095.5);
+   fHists.emplace_back(tab, 1, 59, 19, 1, 59, 19, 3,
+                       "RawIxy", "Raw ADC 3-2, I_y vs I_x", 409, -0.5, 4095.5, 409, -0.5, 4095.5);
+   fHists.emplace_back(tab, 2, 59, 19, 5, 59, 19, 1,
+                       "RawIxy", "Raw ADC 3-2, G(x) vs I_x", 409, -0.5, 4095.5, 409, -0.5, 4095.5);
+
+   // TAB 2
+   tab++;
+   fHists.emplace_back(tab,3,59, 19, 5, "RawGx", "Raw ADC 5, G(x)", 4096, -0.5, 4095.5);
+   fHists.emplace_back(tab, 0, 59, 19, 7, "RawGy", "Raw ADC 7, G(y)", 4096, -0.5, 4095.5);
+   fHists.emplace_back(tab,1,59, 19, 5, 59, 19, 7,
+                       "RawGxy", "Raw ADC 7-5, G(y) vs G(x)", 409, -0.5, 4095.5, 409, -0.5, 4095.5);
+   fHists.emplace_back(tab,2,59, 19, 3, 59, 19, 7,
+                       "RawGxy", "Raw ADC 7-5, G(y) vs I_y", 409, -0.5, 4095.5, 409, -0.5, 4095.5);
+
+
+   // TAB 3 Scope
+   tab++;
+   fScope.emplace_back(tab, 0, 59, 19, 1, "X0", "", "I_x", kRed+1, 2, true);
+   fScope.emplace_back(tab, 0, 59, 19, 3, "Y0", "", "I_y", kGreen+1, 2, true);
+   fScope.emplace_back(tab, 1,59, 19, 5, "X1", "", "G(x)", kBlue+1, 2, true);
+   fScope.emplace_back(tab, 1, 59, 19, 6, "Y1", "", "G(y)", kMagenta+1, 2, true);
+
+   // Tab4 Helicity
+   tab++;
+   fHists.emplace_back(tab, 0, 19, 19, 1,
+                       "Helicity1", "Helicity raw", 256, -2, 4097.);
+   fHists.emplace_back(tab, 2, 19, 19, 1,
+                       "Helicity1", "Helicity raw", 256, -2, 4097.);
+   fHists.emplace_back(tab, 3, 19, 19, 1,
+                       "Helicity1", "Helicity raw", 256, -2, 4097.);
+   fHists.emplace_back(tab, 1, 0, 0, 0,              // Special - do not fill with raw info.
+                       "Helicity", "Helicity", 3, -1.5, 1.5);
+   fHists.back().hist->SetFillColor(kRed);
+   fHists.emplace_back(tab, 1, 0, 0, 0,              // Special - do not fill with raw info.
+                       "Hel_Sync", "Sync", 3, -1.5, 1.5);
+   fHists.back().hist->SetFillColor(kGreen);
+   fHists.emplace_back(tab, 1, 0, 0, 0,              // Special - do not fill with raw info.
+                       "Hel_Quartet", "Quartet", 3, -1.5, 1.5);
+   fHists.back().hist->SetFillColor(kBlue);
 
 }
 
-TAxis * RasterHists::CollectAxesPad(TPad *pad){
+TAxis * RasterHists::GetTopAxisFromPad(TPad *pad){
    // Collect the axes from a pad and return them in a vector.
    // Note that the returned object is
    TAxis * axes;
@@ -41,8 +94,8 @@ void RasterHists::SubPadCopyRange(TPad *one, TPad *two){
 //
    if (fPadSizeIsUpdating) return;  // This is to make sure we don't call this twice too quickly.
    fPadSizeIsUpdating = true;
-   auto axis1 = CollectAxesPad(one);
-   auto axis2 = CollectAxesPad(two);
+   auto axis1 = GetTopAxisFromPad(one);
+   auto axis2 = GetTopAxisFromPad(two);
    if(axis1 == nullptr) return;
    if(axis2 == nullptr) return;
    double ax1lo = axis1->GetBinLowEdge(axis1->GetFirst());

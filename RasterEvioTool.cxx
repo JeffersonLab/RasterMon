@@ -13,6 +13,7 @@ RasterEvioTool::RasterEvioTool(string infile) : EvioTool(infile){
    fChop_level = 1;   // Top level bank is chopped.
    tags = {0x80};      // Only get the physics event banks.  The 31 tag is EPICS.
    tag_masks = {0x80}; // Any event with bit 6 set  2<<6
+   // EVIO Data structure unpack:
    fEvioHead = AddLeaf<unsigned int>("fEvioHead", 49152, 0, "Evio Event Header Info");
    fRasterHead =  new RasterMonEventInfo(this);  // Calls AddBank internally.
    fRasterCrate = AddBank("Raster", fRasterBankTag, 0, "Raster fRasterFADC banks");
