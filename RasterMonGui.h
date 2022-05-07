@@ -48,8 +48,6 @@ public:
    };
 
    TGTab *fTabAreaTabs = nullptr;
-   std::vector<string> fTabNames = {"Raster", "Raw", "Raw2", "Scope", "Helicity"};
-   std::vector<TRootEmbeddedCanvas *> fCanvases;
    std::unique_ptr<TGMenuBar> fMenuBar = nullptr;
    std::unique_ptr<TGStatusBar> fStatusBar = nullptr;
    TGTextButton *fPauseButton = nullptr;
@@ -75,7 +73,6 @@ public:
       // Clean up used widgets: frames, buttons, layout hints
       Stop();
       // Cleanup specifically allocated memory.
-      for(auto c: fCanvases) delete c;
    }
 
    void Init(UInt_t w, UInt_t h);

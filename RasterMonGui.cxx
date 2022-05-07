@@ -155,22 +155,9 @@ void RasterMonGui::StatusBarUpdate(){
 void RasterMonGui::AddTabArea(UInt_t w, UInt_t h) {
    //--------- create the Tab widget
 
-   fTabAreaTabs = new TGTab(this, 1, 1);
+   fTabAreaTabs = fRHists->AddTabArea(this, w, h);
    AddFrame(fTabAreaTabs, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY,
                                             2, 2, 5, 1));
-
-   for( auto tab_name: fTabNames) {
-      TGCompositeFrame *tab = fTabAreaTabs->AddTab(tab_name.c_str());
-      // Note: Cannot use "emplace_back", because the copy constructor for TEmbeddedCanvas has been explicitly deleted.
-      // This forces us to create the canvas with new.
-      fCanvases.push_back(new TRootEmbeddedCanvas(tab_name.c_str(), tab, w, h));
-      tab->AddFrame(fCanvases.back(), new TGLayoutHints(kLHintsBottom | kLHintsExpandX |
-                                                     kLHintsExpandY, 5, 5, 5, 1));
-   }
-   fRHists->ReserveCanvasSpace(fTabNames.size());
-   for(int i=0; i<fCanvases.size(); ++i) {
-      fRHists->Setup_Histograms(fCanvases[i]->GetCanvas(), i);
-   }
 }
 
 void RasterMonGui::SetupGUI(UInt_t w, UInt_t h){

@@ -27,6 +27,38 @@ RasterEvioTool::RasterEvioTool(string infile) : EvioTool(infile){
       fRasterAdcBuf.emplace_back(fN_buf);
    }
 
+   cout << "Create RasterEvioTool: \n";
+   cout << "fN_buf = " << fN_buf << endl;
+   cout << "fHelicityBankTag = " << fHelicityBankTag << endl;
+   cout << "fHelicitySlot = " << fHelicitySlot << endl;
+   cout << "fRasterChannel_data = [";
+   for(auto d: fRasterChannel_data){
+      cout << d << ",";
+   }
+   cout << "]\n";
+}
+
+void RasterEvioTool::AddChannel(unsigned short bank_tag, unsigned short slot, unsigned short channel){
+   // Add one data item to the structure for parsing EVIO files.
+   EvioBank_t *lbank = nullptr;
+   // See if the bank is already in the parse tree. (Can speed this up with a proper search if the tree gets large?)
+   for(auto &b: fEvioBanks){
+      if( b.bank->CheckTag(bank_tag)){
+         lbank = &b;
+         break;
+      }
+   }
+   bool stat = true;
+   if(lbank == nullptr){ // Not found, so create it.
+      fEvioBanks.emplace_back(this, bank_tag, slot, channel, fChannelAverage.size());
+   }else{
+      stat = lbank->AddSlot(slot, channel, fChannelAverage.size());
+   }
+   if(stat) {  // Data was actually added, so reserve space for it.
+      fChannelAverage.push_back(0.);
+      fTimeBuf.emplace_back(fN_buf);
+      fAdcAverageBuf.emplace_back(fN_buf);
+   }
 }
 
 void RasterEvioTool::Clear(Option_t *opt) {
@@ -61,42 +93,40 @@ int RasterEvioTool::Next() {
       return(Next());  // Recursively call next, which wil open the next file and read the next event.
    }
    fNEventsProcessed++;
-   // Here we parse the expected fRasterFADC data to make for easy access.
-   for(int i=0; i < fHelicityFADC->size(); ++i){
-      if(fHelicityFADC->GetData(i).GetCrate() == fHelicityBankTag && fHelicityFADC->GetData(i).GetSlot() == fHelicitySlot){
-         for(int j=0; j < fHelicityChannels.size(); ++j){
-            if(fHelicityFADC->GetData(i).GetChan() == fHelicityChannels[j]){
-               double sum = 0.;
-               for(int k=0; k < fHelicityFADC->GetData(i).GetSampleSize(); ++k){
-                  sum += (double) fHelicityFADC->GetData(i).GetSample(k);
+
+   // We loop through the EVIO Banks in fEvioBank. If they were in the data and had an FADC bank, then we will
+   // find this in b.FADC.
+   // We compare the b.FADC against the slot, channel information from our fEvioBanks tree, and when machted,
+   // store the *average* FADC in the appropriate fChannelAverage slot.
+   //
+   // The following multi loop sort is fairly fast because the loops are small.
+   // TODO: Investigate if under small loop conditions, an std::map lookup is (still) faster than this algorith.
+   for(auto &b: fEvioBanks){
+      for(int i_fadc=0; i_fadc< b.FADC->size(); ++i_fadc){
+         for(auto &slot: b.slots){
+            if( b.FADC->GetData(i_fadc).GetSlot() == slot.slot ) {
+               for (int k = 0; k < slot.channels.size(); ++k) {
+                  if (b.FADC->GetData(i_fadc).GetChan() == slot.channels[k]) {
+                     double sum = 0.;
+                     int n_samples = b.FADC->GetData(i_fadc).GetSampleSize();
+                     for (int k = 0; k < n_samples; ++k) {
+                        sum += (double) b.FADC->GetData(i_fadc).GetSample(k);
+                     }
+                     sum = sum / (double) n_samples;
+                     int buf_index = slot.data_index[k];
+                     fChannelAverage[buf_index] = sum;
+                     double time = 5.e-9*(double)b.FADC->GetData(i_fadc).GetRefTime();
+                     if(time>0) { // If time == 0, then this is not data so skip it.
+                        fRasterTimeBuf[buf_index].push_back(time);   // Convert to second
+                        fRasterAdcBuf[buf_index].push_back(sum);
+                     }
+                  }
                }
-               fHelicityChannel_data[j] = sum / (double)fHelicityFADC->GetData(i).GetSampleSize();
             }
          }
       }
    }
 
-   for(int i=0; i < fRasterFADC->size(); ++i){
-      if(fRasterFADC->GetData(i).GetCrate() == fRasterBankTag && fRasterFADC->GetData(i).GetSlot() == fRasterSlot){
-         for(int j=0; j < fRasterChannels.size(); ++j){
-            if(fRasterFADC->GetData(i).GetChan() == fRasterChannels[j]){
-               double sum = 0.;
-               size_t N = fRasterFADC->GetData(i).GetSampleSize();
-               for(size_t k=0; k < N; ++k){
-                  sum += (double) fRasterFADC->GetData(i).GetSample(k);
-               }
-               sum = sum / (double) N;
-               fRasterChannel_data[j] = sum;
-               double time = 5.e-9*(double)fRasterFADC->GetData(i).GetRefTime();
-               if(time>0) { // If time == 0, then this is not data so skip it.
-                  fRasterTimeBuf[j].push_back(time);   // Convert to second
-                  fRasterAdcBuf[j].push_back(sum);
-               }
-            }
-         }
-      }
-   }
-   // std::this_thread::sleep_for(std::chrono::microseconds(500));
    return(EvioTool_Status_OK);
 }
 

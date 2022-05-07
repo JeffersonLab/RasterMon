@@ -23,6 +23,65 @@
 #define ET_DEFAULT_HOST "clondaq6"
 #endif
 
+struct EvioSlot_t {
+   unsigned short slot;
+   vector<unsigned short> channels;   // Channels for this slot that we need to parse out.
+   vector<unsigned short> data_index; // Index in the data array where this slot is put.
+   EvioSlot_t(unsigned int slot, unsigned int channel, unsigned int i_dat): slot(slot) {
+      channels.push_back(channel);
+      data_index.push_back(i_dat);
+   }
+   bool AddChannel(unsigned int channel, unsigned int i_dat){
+      for(auto &c: channels){
+         if(c == channel){ // Channel already exists. Don't add again.
+            return false;
+         }
+      }
+      // If we get here, the channel does not yet exist.
+      channels.push_back(channel);
+      data_index.push_back(i_dat);
+      return true;
+   }
+};
+
+struct EvioBank_t {
+   Bank *bank = nullptr;
+   Leaf<unsigned int> *TI = nullptr;
+   Leaf<FADCdata> *FADC = nullptr;
+   std::vector<EvioSlot_t> slots; // Slots of the FADC sub-bank we are interested in.
+   EvioBank_t(Bank *parent, unsigned short tag, unsigned short slot, unsigned short channel, unsigned short data_index){
+      string name = "Bank_" + to_string(tag);
+      bank = parent->AddBank(name, tag, 0, "FADC Crate");
+      TI = bank->AddLeaf<unsigned int>(name + "_TI", 57610, 9, name +" Trigger bank.");
+      FADC = bank->AddLeaf<FADCdata>(name+"_FADC", 57601, 0, name+" FADC data");
+      slots.emplace_back(slot, channel, data_index);
+   }
+   bool AddSlot(unsigned short slot, unsigned short channel, unsigned short data_index){
+      // Check if slot exists.
+      for(auto &s: slots){
+         if(s.slot == slot){  // Found it.
+            bool stat = s.AddChannel(channel, data_index);
+            return(stat);
+         }
+      }
+      // Not found, so add it.
+      slots.emplace_back(slot, channel, data_index);
+      return true;
+   }
+   unsigned long GetRefTime() const{
+      if(TI && TI->size()>3)
+         return (unsigned long)TI->GetData(2) +  ((unsigned long) (TI->GetData(3) & 0x0000ffff) << 32);
+      else return 0;
+   }
+   unsigned long GetEventNumber() const{
+      if(TI && TI->size()>3)
+         return TI->GetData(1);
+         // This seems not activated (labelled optional) in clonbanks.xml : +  ((unsigned long) (TI->GetData(3) & 0xffff0000) << 16);
+      else
+         return 0;
+   }
+};
+
 class RasterEvioTool: public EvioTool{
 
 public:
@@ -54,17 +113,23 @@ public:
    Bank   *fHelicityCrate = nullptr;
    Leaf<FADCdata> *fHelicityFADC = nullptr;
 
-   int fHelicityBankTag = 19;
+   size_t fN_buf = 5000;
+   std::vector<EvioBank_t> fEvioBanks;
+   std::vector<double> fChannelAverage;
+   std::vector< CircularBuffer<double> > fTimeBuf;
+   std::vector< CircularBuffer<double> > fAdcAverageBuf;
+
+   int fHelicityBankTag = 190;
    int fHelicitySlot = 19;
    std::vector<int> fHelicityChannels = {0, 2, 4};
    std::vector<double> fHelicityChannel_data = {-1., -1., -1.}; // reserve 3 slots for the data.
 
-   int fRasterBankTag = 59;
+   int fRasterBankTag = 159;
    int fRasterSlot = 19;
    std::vector<int> fRasterChannels = {1, 3, 5, 7};
    std::vector<double> fRasterChannel_data  = {-1., -1., -1., -1.}; // reserve slots for the data.
 
-   size_t fN_buf = 5000;
+ //  size_t fN_buf = 5000;
    std::vector< CircularBuffer<double> > fRasterTimeBuf;
    std::vector< CircularBuffer<double> > fRasterAdcBuf;
 
@@ -75,6 +140,8 @@ public:
    virtual ~RasterEvioTool(){
       // Nothing to destroy.
    };
+
+   void AddChannel(unsigned short bank_tag, unsigned short slot, unsigned short channel);
 
    void AddFile(const string &file){
       fInputFiles.push_back(file);
@@ -87,29 +154,27 @@ public:
    }
    unsigned int GetRunNumber() const {return(fRasterHead->GetRunNumber());}
    unsigned int GetTimeStamp() const {return(fRasterHead->GetTimeStamp());}
-   unsigned long GetTimeRasterCrate() const {
-      if(fRasterCrateTI && fRasterCrateTI->size()>=5)
-         return fRasterCrateTI->GetData(2) +  ((unsigned long) (fRasterCrateTI->GetData(3) & 0x0000ffff) << 32);
+   unsigned long GetTimeCrate(unsigned short i=0) const {
+      if(fEvioBanks.size()>i){ // Assume first crate is raster
+         return fEvioBanks[i].GetRefTime();
+      }
       else return 0;
    }
-   unsigned long GetEventNumberRasterCrate() const {
-      if(fRasterCrateTI && fRasterCrateTI->size()>=5)
-         return fRasterCrateTI->GetData(1);
-// This seems not activated (labelled optional in clonbanks.xml : +  ((unsigned long) (fRasterCrateTI->GetData(3) & 0xffff0000) << 16);
+   unsigned long GetEventNumberCrate(unsigned short i=0) const {
+      if(fEvioBanks.size()>i){ // Assume first crate is raster
+         return fEvioBanks[i].GetEventNumber();
+      }
       else return 0;
-   }
-   unsigned int GetHelicitySize(){ return fHelicityChannel_data.size(); }
-   double GetHelicity(int i){ if(i >=0 && i<fHelicityChannel_data.size()){ return fHelicityChannel_data[i];} else return 0;}
-   unsigned int GetRasterSize(){ return fRasterChannel_data.size(); }
-   double GetRaster(int i){ if(i >=0 && i<fRasterChannel_data.size()){ return fRasterChannel_data[i];} else return 0;}
 
-   void UpdateRasterBufferSize(unsigned long bufsize){
+   }
+   unsigned int GetDataSize(){ return fChannelAverage.size(); }
+   double GetData(int i){ if(i >=0 && i<fChannelAverage.size()){ return fChannelAverage[i];} else return 0;}
+
+   void UpdateBufferSize(unsigned long bufsize){
       std::lock_guard<std::mutex> _lck(fFileLock);
-      std::cout << "Resizing buffers.\n";
-      for(int i=0; i< fRasterTimeBuf.size(); ++i) fRasterTimeBuf[i] = CircularBuffer<double>(bufsize);
-      for(int i=0; i< fRasterAdcBuf.size(); ++i) fRasterAdcBuf[i] = CircularBuffer<double>(bufsize);
+      for(int i=0; i< fTimeBuf.size(); ++i) fTimeBuf[i] = CircularBuffer<double>(bufsize);
+      for(int i=0; i< fAdcAverageBuf.size(); ++i) fAdcAverageBuf[i] = CircularBuffer<double>(bufsize);
       fN_buf = bufsize;
-      std::cout << "Done Resizing buffers.\n";
    }
 
    void SetETHost(string host) { fETHost = host; }

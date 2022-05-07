@@ -59,7 +59,7 @@ public:
    void UpdateADCBufDepth(){
       unsigned long bufsize = fNumberEntryScopeBufDepth->GetIntNumber();
       if(fEvio){
-         fEvio->UpdateRasterBufferSize(bufsize);
+         fEvio->UpdateBufferSize(bufsize);
       }
       if(fHists){
          fHists->ResizeScopeGraphs(bufsize);
