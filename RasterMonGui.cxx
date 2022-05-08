@@ -154,7 +154,7 @@ void RasterMonGui::StatusBarUpdate(){
 
 void RasterMonGui::AddTabArea(UInt_t w, UInt_t h) {
    //--------- create the Tab widget
-
+   fRHists->InitTabs();
    fTabAreaTabs = fRHists->AddTabArea(this, w, h);
    AddFrame(fTabAreaTabs, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY,
                                             2, 2, 5, 1));

@@ -32,7 +32,7 @@
 #include <vector>
 #include <chrono>
 
-struct ScopeGraphs_t {   // Object to hold the information for each scope channel for FADC readout.
+struct Graph_t {   // Object to hold the information for each scope channel for FADC readout.
    unsigned char bank_tag;
    unsigned char slot;
    unsigned char adc_chan;  // Channel for the slot of the FADC module.
@@ -41,30 +41,32 @@ struct ScopeGraphs_t {   // Object to hold the information for each scope channe
    string  name;        // Name for the TGraph.
    string  title;       // Title. Set to "" to not show title on graph.
    string  legend;      // Legend entry.
+   string draw_opt = ""; // Draw option.
    unsigned int color;  // Line color, as in kRed = 632.
    unsigned char width; // Line width
    bool show;      // Set false to not draw the TGraph, but still accumulate the data.
    int data_index; // Index into the data buffers. Filled when EVIO is setup.
-   TGraph *graph = nullptr; // The TGraph object that actually contains the data.
-   ScopeGraphs_t(unsigned char tab_number, unsigned char pad_number,
-                 unsigned int bank_tag, unsigned char slot, unsigned char adc_chan,
-                 string name, string title, string legend, unsigned int color, unsigned char width, bool show):
+   unique_ptr<TGraph> graph = nullptr; // The TGraph object that actually contains the data.
+   Graph_t(unsigned char tab_number, unsigned char pad_number,
+           unsigned int bank_tag, unsigned char slot, unsigned char adc_chan,
+           string name, string title, string legend, unsigned int color, unsigned char width, bool show):
          bank_tag(bank_tag), slot(slot), adc_chan(adc_chan), tab_number(tab_number), pad_number(pad_number),
-         name(name), title(title), legend(legend), color(color), width(width), show(show){
+         name(name), title(title), legend(legend), color(color), width(width), show(show) {
       data_index = -1;
       init_graph();
    };
    void init_graph(){
-      graph = new TGraph();
+      graph = make_unique<TGraph>();
       graph->SetTitle(title.c_str());
       graph->SetName(name.c_str());
       graph->SetLineColor(color);
       graph->SetLineWidth(width);
+      graph->SetMinimum(-1.);
+      graph->SetMaximum(4096.);
    }
-   ~ScopeGraphs_t(){delete graph;}
 };
 
-struct Histogram_t{  // Object to hold the information for each histogram channel.
+struct Histogram_t {  // Object to hold the information for each histogram channel.
    unsigned char bank_tag;
    unsigned char slot;
    unsigned char adc_chan;  // Channel for the slot of the FADC module.
@@ -74,47 +76,81 @@ struct Histogram_t{  // Object to hold the information for each histogram channe
    unsigned char adc_chan2 = 0;  // Channel for the slot of the FADC module.
    int data_index2 = -1;
    unsigned char tab_number; // Number of the tab where graphs are to be shown.
-   unsigned char pad_number; // Number of the pad in the canvas (tab). 0 is top. Max is 3, for 4 pads.
-   bool show;      // Set false to not draw the TGraph, but still accumulate the data.
+   unsigned char pad_number; // Number of the pad in the canvas (tab). 0 = canvas, 1 is first pad etc.
+   bool show;      // Set false to not draw the THist, but still accumulate the data.
    double scale_x = 1.;  // Conversion from ADC integer to real
    double offset_x = 0.; // Offset for conversion to real.
    double scale_y = 1.;
    double offset_y = 0.;
-   int special_fill = 0;  // Special calculation for filling this histogram, i.e. exceptions.
-   TH1D *hist = nullptr;  // Histogram.
+   int special_fill = 0;  // Special calculation for filling this histogram, i.e. exceptions. -1 = no fill.
+   int special_draw = 0;  // Special way of drawing this histogram.
+   string draw_opt = "";  // Drawing option.
+   string legend="";      // Legend entry. -- Usually blank, so no legend.
+   std::unique_ptr<TH1> hist = nullptr;  // Histogram. -- Note: Must be either a unique_ptr, OR we need to be really careful with copy and move constructors.
    Histogram_t(unsigned char tab_number, unsigned char pad_number,
                unsigned int bank_tag, unsigned char slot, unsigned char adc_chan,
-               string name, string title, int nx, double x_min, double x_max):
-         bank_tag(bank_tag),slot(slot), adc_chan(adc_chan), tab_number(tab_number), pad_number(pad_number){
-      hist = new TH1D(name.c_str(), title.c_str(), nx, x_min, x_max );
+               string name, string title, int nx, double x_min, double x_max) :
+         bank_tag(bank_tag), slot(slot), adc_chan(adc_chan), tab_number(tab_number), pad_number(pad_number),
+         hist(make_unique<TH1D>(name.c_str(), title.c_str(), nx, x_min, x_max)){
       show = true;
    };
+
    Histogram_t(unsigned char tab_number, unsigned char pad_number,
                unsigned int bank_tag_x, unsigned char slot_x, unsigned char adc_chan_x,
                unsigned int bank_tag_y, unsigned char slot_y, unsigned char adc_chan_y,
-               string name, string title, int nx, double x_min, double x_max, int ny, double y_min, double y_max):
-         bank_tag(bank_tag_x),slot(slot_x), adc_chan(adc_chan_x),
-         bank_tag2(bank_tag_y),slot2(slot_y), adc_chan2(adc_chan_y),
+               string name, string title, int nx, double x_min, double x_max, int ny, double y_min, double y_max) :
+         bank_tag(bank_tag_x), slot(slot_x), adc_chan(adc_chan_x),
+         bank_tag2(bank_tag_y), slot2(slot_y), adc_chan2(adc_chan_y),
          tab_number(tab_number), pad_number(pad_number) {
-
-      auto hist2d = new TH2D(name.c_str(), title.c_str(), nx, x_min, x_max, ny, y_min, y_max);
-      hist = dynamic_cast<TH1D *>(hist2d);
+      auto hist2d = make_unique<TH2D>(name.c_str(), title.c_str(), nx, x_min, x_max, ny, y_min, y_max);
+      hist = unique_ptr<TH1>(static_cast<TH1 *>(hist2d.release()));
       show = true;
    }
+   // Note on *DESTRUCTOR*  == The Rule of 5.
+   // IF you choose to have a non-defaulted destructor (i.e. include a ~Histogram_t()), then you *MUST* also include
+   // a copy constructor, a move constructor, a copy assignment and a move assignment, because none of these will be default.
+   // I.e. add::
+   //   Histogram_t(Histogram_t&&);                  // move constructor
+   //   Histogram_t(const Histogram_t&);             // copy constructor
+   //   Histogram_t& operator=(Histogram_t&&);       // move assignment
+   //   Histogram_t& operator=(const Histogram_t&);  // copy assignment
+   //   ~Histogram_t();                              // destructor
 
-   ~Histogram_t(){ delete hist;}
+
+   [[nodiscard]] bool Is2D() const{ return bank_tag2>0; }
+
+   [[nodiscard]] TH1 *GetTH1() const{
+      // Return a TH1D histogram pointer. No checks are made that the histogram is there.
+      return hist.get();
+   }
+
+   [[nodiscard]] TH1D *GetHist() const{
+      // Return a TH1D histogram pointer. No checks are made that the histogram is there.
+      return dynamic_cast<TH1D *>(hist.get());
+   }
+   [[nodiscard]] TH2D *GetHist2D() const{
+      // Return a TH2D histogram pointer. Note: No check is made that this is indeed a 2D histogram!
+      return dynamic_cast<TH2D *>(hist.get());
+   }
+
 };
 
 struct TabSpace_t{  // Object for each of the tabs.
    string name;
-   TCanvas *canvas;  // Canvas to hold the histograms and graphs in a tab.
+   TRootEmbeddedCanvas *canvas;  // Canvas to hold the histograms and graphs in a tab.
    unsigned int nx;      // Divisions in x.
    unsigned int ny;      // Divisions in y.
+   unsigned int npads;   // usually = to nx*ny, unless you do custom pad layout.
+   float x_margin;
+   float y_margin;
    vector<bool> logy; // true of false for each pad.
+   vector<int> grid; // true of false for each pad.
    vector<int> calc;  // Number for any special calculation that may be needed for a pad.
-   std::vector<ScopeGraphs_t *> graphs;  // Pointers the Scope graphs.
-   std::vector<Histogram_t *> hists;     // Pointers to histograms.
-   TabSpace_t(string name,unsigned int nx, unsigned int ny): name(name), nx(nx), ny(ny){ };
+   vector<int> pad_link; // List of how pads are linked for x-axis updates. for 3 pads, set to [2, 3, 1], so pad1 updates pad2, etc.
+   std::vector< unsigned short > graphs;  // Index for the Scope graphs into fGraphs. (If you want pointers, then Graph_t needs to be more complicated.)
+   std::vector< unsigned short > hists;     // Index for the Histogram into fHists.
+   TabSpace_t(string name,unsigned int nx, unsigned int ny, float x_margin=0.01, float y_margin = 0.01):
+      name(std::move(name)), nx(nx), ny(ny), npads(nx*ny), x_margin(x_margin), y_margin(y_margin), canvas(nullptr){ };
 };
 
 
@@ -122,18 +158,19 @@ class RasterHists : public TQObject, public TObject{
 
 public:
    RasterEvioTool *fEvio = nullptr;
+   TGTab *fTabAreaTabs = nullptr;    // Pointer to the tab area
 
    bool fPadSizeIsUpdating = false;  // To lock for asynchronous resizing.
-   bool fPadTopResizing = false;     // To avoid pingpong resizing
-   bool fPadBotResizing = false;
 
    std::vector<TabSpace_t> fTabs;
    // For the scope channels.
-   std::vector<ScopeGraphs_t> fScope;
+   std::vector<Graph_t> fGraphs;
    size_t fBufferDepth = 10000;
    // For the histograms.
    std::vector<Histogram_t> fHists;
+
    THStack *fHelicity_stack= nullptr;
+   TLegend *fHelicity_legend = nullptr;
 
    // For the worker fill threads.
    int  fDebug = 0;
@@ -145,39 +182,38 @@ public:
    std::mutex fEvioReadLock;
 
 public:
-   RasterHists(){};
-   RasterHists(RasterEvioTool *evio): fEvio(evio) {};
-   virtual ~RasterHists();
+   RasterHists()= default;
+   explicit RasterHists(RasterEvioTool *evio): fEvio(evio) {};
+   ~RasterHists() override;
 
    void InitTabs();
    TGTab *AddTabArea(TGWindow *frame, int w, int h);
    void SetupData(TabSpace_t &tab);
-//   void ReserveCanvasSpace(int n) { fCanvases.reserve(n);}
-   void Setup_Histograms(TCanvas *canvas, int tab_num);
-   void CreateScopeGraphs(TCanvas *canvas, int nbins);
-//   TCanvas *GetCanvas(int i){return fCanvases[i]->GetCanvas();}
    void ResizeScopeGraphs(unsigned long size);
-   void DrawCanvas(int hist_no);
+   void DrawCanvas(int tab_no);
    void HistFillWorker(int seed=0);
-   RasterEvioTool *GetEvioPtr(){return fEvio;}
+   RasterEvioTool *GetEvioPtr() const{return fEvio;}
    void pause(){ fPause = true;}
    void unpause(){ fPause = false;}
    void go();
    void stop();
-   void clear();
+   void clear(int active_tab=-1);
    void DoDraw(int active_tab=-1);
    bool isworking(){return(fKeepWorking);}
 
-   TAxis * GetTopAxisFromPad(TPad *pad);
+   static TAxis * GetTopAxisFromPad(TPad *pad);
    void SubPadCopyRange(TPad *one, TPad *two);
-   void SubPadTopResized();
-   void SubPadBotResized();
-   void SignalTest1(){ cout << "Signal test 1. \n";}
-   void SignalTest2(){ cout << "Signal test 2. \n";}
-   void SignalTest3(){ cout << "Signal test 3. \n";}
-   void SignalTest4(){ cout << "Signal test 4. \n";}
-
-   void TopUpBuffer(CircularBuffer<double> &buf);
+   // Unfortunately the Signal for a virtual void TPad::RangeChanged() { Emit("RangeChanged()"); } // *SIGNAL*
+   // does not include the fNumber identifier. We could derive from TPad, but then TCanvas->Divide() would malfunction.
+   // We could *also* derive our own TCanvas, but that would be more of a mess than multiple SubPad#Resize() functions.
+   void SubPadResized(int i);
+   void SubPad1Resized(){ SubPadResized(1);};
+   void SubPad2Resized(){ SubPadResized(2);};
+   void SubPad3Resized(){ SubPadResized(3);};
+   void SubPad4Resized(){ SubPadResized(4);};
+   void SubPad5Resized(){ SubPadResized(5);};
+   void SubPad6Resized(){ SubPadResized(6);};
+//   void TestSignal(){ cout << "Test signal\n";};
 
    void SetDebug(int level){ fDebug = level;}
    int GetDebug(){ return(fDebug);}
@@ -186,7 +222,7 @@ public:
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Winconsistent-missing-override"
-    ClassDef(RasterHists, 0)
+ClassDef(RasterHists, 0)
 #pragma clang diagnostic pop
 
 };

@@ -8,104 +8,156 @@ RasterHists::~RasterHists(){
 }
 
 void RasterHists::InitTabs() {
-   // Setup the channels for the scope and histograms with a default layout.
+   // This will setup the structures for the tabs and the channels for the scope and histograms with a default layout.
    //
    // Init with:  (bank_tag, slot, adc_chan, tab_number, pad_number, name, title, legend, color, width, show)
    // Or with:    (adc_chan, tab_number, pad_number, name, title, legend, color, width)
+
+   // Note: PAD numbering starts at 1, with 0 being the Canvas (i.e. only one object on the screen)
 
    // TAB 0 == Histograms that are NOT raw.
    int tab = 0;
    fTabs.emplace_back("Raster", 2, 2);
 
-   fHists.emplace_back(tab, 3, 59, 19, 1, "Raster_x", "Raster Pos x", 400, -10., 10.);
-   fTabs.back().hists.push_back( &fHists.back());
+   fHists.emplace_back(tab, 4, 59, 19, 1,
+                       "Raster_x", "Raster Pos x;x[mm]", 400, -10., 10.);
+   fTabs.back().hists.push_back(fHists.size()-1);
    fHists.back().scale_x = 0.004;
    fHists.back().offset_x = -8.0;
-   fHists.emplace_back(tab, 0, 59, 19, 1, "Raster_y", "Raster Pos y", 400, -10., 10.);
-   fTabs.back().hists.push_back( &fHists.back());
+   fHists.emplace_back(tab, 1, 59, 19, 3,
+                       "Raster_y", "Raster Pos y;y[mm]", 400, -10., 10.);
+   fTabs.back().hists.push_back( fHists.size()-1);
    fHists.back().scale_x = 0.004;
    fHists.back().offset_x = -8.0;
-   fHists.emplace_back(tab, 1, 59, 19, 1,  59, 19, 1,
-                       "Raster_Ixy", "Raster Pos y vs x", 400, -10., 10.,  400, -10., 10.);
-   fTabs.back().hists.push_back( &fHists.back());
+   fHists.emplace_back(tab, 2, 59, 19, 1,  59, 19, 3,
+                       "Raster_Ixy", "Raster Pos y vs x;x[mm];y[xx]", 400, -10., 10.,  400, -10., 10.);
+   fTabs.back().hists.push_back( fHists.size()-1);
    fHists.back().scale_x = 0.004;
    fHists.back().offset_x = -8.0;
    fHists.back().scale_y = 0.004;
    fHists.back().offset_y = -8.0;
+   fHists.back().draw_opt = "colz";
+   fHists.back().hist->SetStats(false);
 
    // TAB 1
    tab++;
    fTabs.emplace_back("Raw1", 2, 2);
-   fHists.emplace_back(tab, 3, 59, 19, 1, "RawIx", "Raw ADC 3, I_x", 4096, -0.5, 4095.5);
-   fTabs.back().hists.push_back( &fHists.back());
-   fHists.emplace_back(tab, 0, 59, 19, 3, "RawIy", "Raw ADC 1, I_y", 4096, -0.5, 4095.5);
-   fTabs.back().hists.push_back( &fHists.back());
-   fHists.emplace_back(tab, 1, 59, 19, 1, 59, 19, 3,
-                       "RawIxy", "Raw ADC 3-2, I_y vs I_x", 409, -0.5, 4095.5, 409, -0.5, 4095.5);
-   fTabs.back().hists.push_back( &fHists.back());
-   fHists.emplace_back(tab, 2, 59, 19, 5, 59, 19, 1,
-                       "RawIxy", "Raw ADC 3-2, G(x) vs I_x", 409, -0.5, 4095.5, 409, -0.5, 4095.5);
-   fTabs.back().hists.push_back( &fHists.back());
+   fHists.emplace_back(tab, 4, 59, 19, 1,
+                       "RawIx", "Raw ADC 3, I_x;ADC(1) channel", 4096, -0.5, 4095.5);
+   fTabs.back().hists.push_back( fHists.size()-1);
+   fHists.emplace_back(tab, 1, 59, 19, 3,
+                       "RawIy", "Raw ADC 1, I_{y};ADC(3) channel", 4096, -0.5, 4095.5);
+   fTabs.back().hists.push_back( fHists.size()-1);
+   fHists.emplace_back(tab, 2, 59, 19, 1, 59, 19, 3,
+                       "RawIxy", "Raw ADC 3-2, I_{y} vs I_{x};ADC(1) channel;ADC(3) channel", 409, -0.5, 4095.5, 409, -0.5, 4095.5);
+   fTabs.back().hists.push_back( fHists.size()-1);
+   fHists.back().draw_opt = "colz";
+   fHists.back().hist->SetStats(false);
+   fHists.emplace_back(tab, 3, 59, 19, 5, 59, 19, 1,
+                       "RawIGx", "Raw ADC 3-2, G(x) vs I_{x};ADC(1) channel; ADC(5) channel", 409, -0.5, 4095.5, 409, -0.5, 4095.5);
+   fTabs.back().hists.push_back(fHists.size()-1);
+   fHists.back().draw_opt = "colz";
+   fHists.back().hist->SetStats(false);
 
    // TAB 2
    tab++;
    fTabs.emplace_back("Raw2", 2, 2);
-   fHists.emplace_back(tab,3,59, 19, 5, "RawGx", "Raw ADC 5, G(x)", 4096, -0.5, 4095.5);
-   fTabs.back().hists.push_back( &fHists.back());
-   fHists.emplace_back(tab, 0, 59, 19, 7, "RawGy", "Raw ADC 7, G(y)", 4096, -0.5, 4095.5);
-   fTabs.back().hists.push_back( &fHists.back());
-   fHists.emplace_back(tab,1,59, 19, 5, 59, 19, 7,
+   fHists.emplace_back(tab,4,59, 19, 5,
+                       "RawGx", "Raw ADC 5, G(x); ADC(5) channel", 4096, -0.5, 4095.5);
+   fTabs.back().hists.push_back( fHists.size()-1);
+   fHists.emplace_back(tab, 1, 59, 19, 7,
+                       "RawGy", "Raw ADC 7, G(y); ADC(7) channel", 4096, -0.5, 4095.5);
+   fTabs.back().hists.push_back( fHists.size()-1);
+   fHists.emplace_back(tab,2,59, 19, 5, 59, 19, 7,
                        "RawGxy", "Raw ADC 7-5, G(y) vs G(x)", 409, -0.5, 4095.5, 409, -0.5, 4095.5);
-   fTabs.back().hists.push_back( &fHists.back());
-   fHists.emplace_back(tab,2,59, 19, 3, 59, 19, 7,
-                       "RawGxy", "Raw ADC 7-5, G(y) vs I_y", 409, -0.5, 4095.5, 409, -0.5, 4095.5);
-   fTabs.back().hists.push_back( &fHists.back());
+   fTabs.back().hists.push_back( fHists.size()-1);
+   fHists.back().draw_opt = "colz";
+   fHists.back().hist->SetStats(false);
+   fHists.emplace_back(tab,3,59, 19, 3, 59, 19, 7,
+                       "RawIGy", "Raw ADC 7-5, G(y) vs I_{y}", 409, -0.5, 4095.5, 409, -0.5, 4095.5);
+   fTabs.back().hists.push_back( fHists.size()-1);
+   fHists.back().draw_opt = "colz";
+   fHists.back().hist->SetStats(false);
 
    // TAB 3 Scope
    tab++;
-   fTabs.emplace_back("Scope", 1, 3);
-   fScope.emplace_back(tab, 0, 59, 19, 1, "X0", "", "I_x", kRed+1, 2, true);
-   fTabs.back().graphs.push_back( &fScope.back());
-   fScope.emplace_back(tab, 0, 59, 19, 3, "Y0", "", "I_y", kGreen+1, 2, true);
-   fTabs.back().graphs.push_back( &fScope.back());
-   fScope.emplace_back(tab, 1,59, 19, 5, "X1", "", "G(x)", kBlue+1, 2, true);
-   fTabs.back().graphs.push_back( &fScope.back());
-   fScope.emplace_back(tab, 1, 59, 19, 6, "Y1", "", "G(y)", kMagenta+1, 2, true);
-   fTabs.back().graphs.push_back( &fScope.back());
+   fTabs.emplace_back("Scope", 1, 3, 0, 0);
+   fTabs.back().grid = {1, 1, 1};
+   fTabs.back().calc = {1, 1, 0}; // Calc 1 - modify the bottom margin.
+   fGraphs.emplace_back(tab, 1, 59, 19, 1, ""
+                                           "IX0", ";t (s)", "I_{x}", kRed+1, 2, true);
+   fTabs.back().graphs.push_back(fGraphs.size() - 1);
+   fGraphs.emplace_back(tab, 1, 59, 19, 3,
+                        "IY0", ";t(s)", "I_{y}", kGreen+1, 2, true);
+   fTabs.back().graphs.push_back(fGraphs.size() - 1);
+
+   fGraphs.emplace_back(tab, 2, 59, 19, 1,
+                        "GX1", ";t(s)", "G(x)", kBlue+1, 2, true);
+   fTabs.back().graphs.push_back(fGraphs.size() - 1);
+   fGraphs.emplace_back(tab, 2, 59, 19, 3,
+                        "GY1", ";t(s)", "G(y)", kMagenta+1, 2, true);
+   fTabs.back().graphs.push_back(fGraphs.size() - 1);
+
+   fGraphs.emplace_back(tab, 3, 59, 19, 1,
+                        "VX1", ";t(s)", "V_{x}", kAzure+1, 2, true);
+   fTabs.back().graphs.push_back(fGraphs.size() - 1);
+   fGraphs.emplace_back(tab, 3, 59, 19, 3,
+                        "VY1", ";t(s)", "V_{y}", kViolet+1, 2, true);
+   fTabs.back().graphs.push_back(fGraphs.size() - 1);
+
+   fTabs.back().pad_link = {2, 3, 1};
 
    // Tab4 Helicity
    tab++;
    fTabs.emplace_back("Helicity", 2, 2);
+   fTabs.back().logy = {true, false, true, true};
 
    fHelicity_stack = new THStack("Helicity_stack","Helicity Histograms");
-   fHists.emplace_back(tab, 0, 19, 19, 1,
-                       "Helicity1", "Helicity raw", 256, -2, 4097.);
-   fTabs.back().hists.push_back( &fHists.back());
-   fHists.emplace_back(tab, 2, 19, 19, 1,
-                       "Helicity1", "Helicity raw", 256, -2, 4097.);
-   fTabs.back().hists.push_back( &fHists.back());
-   fHists.emplace_back(tab, 3, 19, 19, 1,
-                       "Helicity1", "Helicity raw", 256, -2, 4097.);
-   fTabs.back().hists.push_back( &fHists.back());
-   fHists.emplace_back(tab, 1, 0, 0, 0,              // Special - do not fill with raw info.
+   fHelicity_legend = new TLegend(0.9,0.8,1.0 ,1.0);
+
+   fHists.emplace_back(tab, 1, 19, 19, 0,
+                       "HelicityRaw", "Helicity raw", 256, -2, 4097.);
+   fTabs.back().hists.push_back( fHists.size()-1);
+
+   fHists.emplace_back(tab, 3, 19, 19, 2,
+                       "SyncRaw", "Sync raw", 256, -2, 4097.);
+   fTabs.back().hists.push_back( fHists.size()-1);
+
+   fHists.emplace_back(tab, 4, 19, 19, 4,
+                       "QuartedRaw", "Quarted raw", 256, -2, 4097.);
+   fTabs.back().hists.push_back(fHists.size()-1);
+
+   fHists.emplace_back(tab, 2, 19, 19, 0,              // Special - do not fill with raw info.
                        "Helicity", "Helicity", 3, -1.5, 1.5);
+   fTabs.back().hists.push_back(fHists.size()-1);
    fHists.back().hist->SetFillColor(kRed);
    fHists.back().special_fill = 1;
-   fHelicity_stack->Add(fHists.back().hist);
-   fHists.emplace_back(tab, 1, 0, 0, 0,              // Special - do not fill with raw info.
+   fHists.back().special_draw = -1;
+   fHelicity_stack->Add(fHists.back().GetHist());
+   fHelicity_legend->AddEntry(fHists.back().GetHist(), "Helicity");
+
+   fHists.emplace_back(tab, 2, 19, 19, 2,              // Special - do not fill with raw info.
                        "Sync", "Sync", 3, -1.5, 1.5);
+   fTabs.back().hists.push_back(fHists.size()-1);
    fHists.back().hist->SetFillColor(kGreen);
    fHists.back().special_fill = 1;
-   fHelicity_stack->Add(fHists.back().hist);
-   fHists.emplace_back(tab, 1, 0, 0, 0,              // Special - do not fill with raw info.
+   fHists.back().special_draw = -1;
+   fHelicity_stack->Add(fHists.back().GetHist());
+   fHelicity_legend->AddEntry(fHists.back().GetHist(), "Sync");
+
+   fHists.emplace_back(tab, 2, 19, 19, 4,              // Special - do not fill with raw info.
                        "Quartet", "Quartet", 3, -1.5, 1.5);
+   fTabs.back().hists.push_back(fHists.size()-1);
    fHists.back().hist->SetFillColor(kBlue);
    fHists.back().special_fill = 1;
-   fHelicity_stack->Add(fHists.back().hist);
+   fHists.back().special_draw = 1;
+   fHelicity_stack->Add(fHists.back().GetHist());
+   fHelicity_legend->AddEntry(fHists.back().GetHist(), "Quartet");
 }
 
 TGTab * RasterHists::AddTabArea(TGWindow *frame, int w, int h) {
-   auto fTabAreaTabs = new TGTab(frame, 1, 1);
+   // Add a Tab Area to the main window frame.
+   fTabAreaTabs = new TGTab(frame, 1, 1);
 
    for( auto &tab_info: fTabs) {
       TGCompositeFrame *tab = fTabAreaTabs->AddTab(tab_info.name.c_str());
@@ -115,37 +167,83 @@ TGTab * RasterHists::AddTabArea(TGWindow *frame, int w, int h) {
       tab->AddFrame(embedded_canvas, new TGLayoutHints(kLHintsBottom | kLHintsExpandX |
                                                        kLHintsExpandY, 5, 5, 5, 1));
 
-      tab_info.canvas = embedded_canvas->GetCanvas();
-      tab_info.canvas->Divide(tab_info.nx, tab_info.ny);
+      tab_info.canvas = embedded_canvas;
       SetupData(tab_info);
    }
-
-//   fRHists->ReserveCanvasSpace(fTabNames.size());
-//   for(int i=0; i<fCanvases.size(); ++i) {
-//      fRHists->Setup_Histograms(fCanvases[i]->GetCanvas(), i);
-//   }
    return fTabAreaTabs;
 }
 
 void RasterHists::SetupData(TabSpace_t &tab) {
-   // Populate the tab's canvas with the histograms and/or graphs defined in ScopeGraphs_t and Histogram_t vectors.
    // For each histogram or graph, fill in the data fetch information so HistFillWorker's can do their job.
+   //
+   // Also, draw the tabs so they show up.
    if( tab.canvas == nullptr){
       cout << "ERROR - Tab has no canvas. ";
       return;
    }
 
-   for(auto scope: tab.graphs){
-      if(fDebug) std::cout << "Placing scope graph: " << scope->name << std::endl;
-      scope->graph->Expand(fBufferDepth);
-
+   // Link the EVIO data for each histogram to the data store.
+   // This also telss (RasterEviTool *)fEvio which channels to store.
+   for(auto &h_t: fHists){
+      int his_index = fEvio->AddChannel(h_t.bank_tag, h_t.slot, h_t.adc_chan);
+      if(his_index>=0) h_t.data_index = his_index;
+      if(h_t.Is2D()){
+         his_index = fEvio->AddChannel(h_t.bank_tag2, h_t.slot2, h_t.adc_chan2);
+         if(his_index>=0) h_t.data_index2 = his_index;
+      }
    }
 
-   for(auto hist: tab.hists){
-      if(fDebug) std::cout << " histogram: " << hist->hist->GetName() << std::endl;
+   // Same for the graphs.
+   for(auto &g_t: fGraphs){
+      int his_index = fEvio->AddChannel(g_t.bank_tag, g_t.slot, g_t.adc_chan);
+      if(his_index>=0) g_t.data_index = his_index;
    }
 
 
+   // Process the canvasses.
+   auto canv = dynamic_cast<TCanvas *>(tab.canvas->GetCanvas());
+   if( tab.nx>1 || tab.ny >1) canv->Divide( (Int_t)tab.nx, (Int_t)tab.ny, tab.x_margin, tab.y_margin);
+   if( tab.pad_link.size()>0 ) {  // Setup signals for pad resizing.
+      for (int i=1; i <= std::min(tab.pad_link.size(), (size_t) 6); i++) {  // Up to 6 pads can be linked.
+         auto pad = dynamic_cast<TPad *>(canv->cd(i));
+         char slot_name[20];
+         sprintf(slot_name, "SubPad%dResized()", i);
+         if(fDebug) std::cout << "Connecing pad " << i << " RangeChanged to slot " << slot_name << std::endl;
+         pad->Connect("RangeChanged()", "RasterHists", this, slot_name);
+         pad->Connect("UnZoomed()", "RasterHists", this,  slot_name);
+      }
+   }
+   for(int i=0; i< tab.logy.size(); ++i){    // Set the logy for pads that want this. Can be set/unset by clicking on pad.
+      auto pad = canv->cd(i+1);
+      pad->SetLogy(tab.logy[i]);
+   }
+
+   for(int i=0; i< tab.grid.size(); ++i){    // Set the logy for pads that want this. Can be set/unset by clicking on pad.
+      auto pad = canv->cd(i+1);
+      pad->SetGrid(tab.grid[i], tab.grid[i]);
+   }
+
+   for(int i=0; i< tab.calc.size(); ++i){
+      if( tab.calc[i] == 1){
+         auto pad = canv->cd(i+1);
+         pad->SetBottomMargin(0.04);
+      }
+   }
+
+   //   auto legend = new TLegend(0.9,0.85,1.0,1.0);
+   //   legend->AddEntry(fGRaw_x.get(), "I_x");
+   //   legend->AddEntry(fGRaw_y.get(),"I_y");
+   //   legend->AddEntry(fGRaw2_x.get(),"G(x)");
+   //   legend->AddEntry(fGRaw2_y.get(), "G(y)");
+   //   legend->Draw();
+
+   // Draw the canvasses for each tab.
+   for(int t_index=0; t_index<fTabs.size(); ++t_index) {  // Find the tab in the tab store.
+      if( fTabs[t_index].name == tab.name) {
+         DoDraw((int) t_index);  // Draw the content on the tab.
+         break;
+      }
+   }
 }
 
 TAxis * RasterHists::GetTopAxisFromPad(TPad *pad){
@@ -153,15 +251,12 @@ TAxis * RasterHists::GetTopAxisFromPad(TPad *pad){
    // Note that the returned object is
    TAxis * axes;
    auto prims1 = pad->GetListOfPrimitives();
-   std::cout << "Scanning pad: " << pad->GetName() << std::endl;
    for(int i=0; i< prims1->GetEntries(); ++i){
       if(strncmp(prims1->At(i)->ClassName(),"TGr",3) == 0){
-         std::cout << "Object at " << i << " is TGraph.\n";
          auto graph = (TGraph *)prims1->At(i);
          axes = graph->GetXaxis();
          break;
       }else if(strncmp(prims1->At(i)->ClassName(),"TH1",3) == 0){
-         std::cout << "Object at " << i << " is TH1F\n";
          auto histo = (TH1 *)prims1->At(i);
          axes = histo->GetXaxis();
          break;
@@ -174,7 +269,10 @@ void RasterHists::SubPadCopyRange(TPad *one, TPad *two){
 // Set the X axis of TPad two to be the same as that for TPad one.
 // Here we assume that each histogram or TGraph has the same number of bins in one and two.
 //
-   if (fPadSizeIsUpdating) return;  // This is to make sure we don't call this twice too quickly.
+   if (fPadSizeIsUpdating){
+      // std::cout << "Pad is already updating.\n";
+      return;  // This is to make sure we don't call this twice too quickly.
+   }
    fPadSizeIsUpdating = true;
    auto axis1 = GetTopAxisFromPad(one);
    auto axis2 = GetTopAxisFromPad(two);
@@ -186,38 +284,37 @@ void RasterHists::SubPadCopyRange(TPad *one, TPad *two){
    double ax2hi = axis2->GetBinUpEdge(axis2->GetLast());
 
    if(axis1->GetFirst() == axis2->GetFirst() && axis1->GetLast() == axis2->GetLast() &&
-         abs(ax1lo - ax2lo ) < 1E5 && abs(ax1hi - ax2hi ) < 1E5 ){
-      std::cout << "Axes already the same.\n";
+      abs(ax1lo - ax2lo ) < 1E5 && abs(ax1hi - ax2hi ) < 1E5 ){
+      // std::cout << "Axes already the same.\n";
+      fPadSizeIsUpdating = false;
+   } else {
+      // This zooms and un-zooms okay. BUT, if one graph has no data, the labels do not update the same.
+      // Note: The mouse based zooming occurs in "TPad::ExecuteEventAxis". The final mouse up action does axis->SetRange()
+      axis2->SetRange(axis1->GetFirst(), axis1->GetLast());
+      fPadSizeIsUpdating = false;
+      // std::cout << "Signal two modified.\n";
+      two->Modified();
    }
-   // These allow for zooming, but not unzooming. The graph is re-written.
-   // axis2->SetLimits(ax1lo, ax1hi);
-   // axis2->SetRangeUser( ax1lo, ax1hi);
-
-   // This zooms and un-zooms okay. BUT, if one graph has no data, the labels do not update the same.
-   // Note: The mouse based zooming occurs in "TPad::ExecuteEventAxis". The final mouse up action does axis->SetRange()
-   axis2->SetRange(axis1->GetFirst(), axis1->GetLast());
-   two->Modified();
-
-   fPadSizeIsUpdating = false;
-}
-void RasterHists::SubPadTopResized() {
-   // If the lower pad (fPadTop) is zoomed by the user using the cursor, a signal is send calling this method.
-   // Here we read the new limits from the bottom x graph, and then set those limits on the top x graph,
-   // causing both pads to have the same x scale.
-   //
-   std::cout << "RasterHists::SubPadTopResized() - \n";
-//   SubPadCopyRange(fPadTop, fPadBot);
-
 }
 
-void RasterHists::SubPadBotResized() {
-   // If the lower pad (fPadBot) is zoomed by the user using the cursor, a signal is send calling this method.
-   // Here we read the new limits from the bottom x graph, and then set those limits on the top x graph,
-   // causing both pads to have the same x scale.
-   //
-   std::cout << "RasterHists::SubPadBotResized() - \n";
-//   SubPadCopyRange(fPadBot, fPadTop);
-
+void RasterHists::SubPadResized(int i) {
+   // We got a signal from Pad i that it has resized.
+   // We know you can only resize a pad that is on the current tab. So find the current tab and then
+   // see what pad this pad is linked to, then resize the other pad.
+   int current_tab = fTabAreaTabs->GetCurrent();
+   auto tab = fTabs[current_tab];
+   if(i > tab.pad_link.size()){
+      // cout << "Wrong tab? " << i << "\n";
+      return;  // Wrong tab showing. This can happen during global canvas update.
+   }
+   auto canvas = tab.canvas->GetCanvas();
+   auto pad1 = dynamic_cast<TPad *>(canvas->GetPad(i));
+   auto pad2_number = tab.pad_link[i-1];
+   if(fDebug>2) std::cout << "SubPadResize -- copying axis range from pad " << i << " to pad " << pad2_number << std::endl;
+   if(pad2_number>0 && pad2_number != i) {
+      auto pad2 = dynamic_cast<TPad *>(canvas->GetPad(pad2_number));
+      SubPadCopyRange(pad1, pad2);
+   }
 }
 
 void RasterHists::ResizeScopeGraphs(unsigned long size){
@@ -232,238 +329,69 @@ void RasterHists::ResizeScopeGraphs(unsigned long size){
 //   fGRaw2_y->Set(size);
 }
 
-void RasterHists::CreateScopeGraphs(TCanvas *canvas, int nbins) {
-   // Setup the scope graphs.
-//   fGRaw_x = std::make_unique<TGraph>();
-//   fGRaw_x->Expand(nbins);
-//   fGRaw_x->AddPoint(0,0);
-//   fGRaw_x->SetLineWidth(2);
-//   fGRaw_x->SetLineColor(kRed);
-//   fGRaw_x->SetTitle("");
-//   fGRaw_y = std::make_unique<TGraph>();
-//   fGRaw_y->Expand(nbins);
-//   fGRaw_y->AddPoint(0,0);
-//   fGRaw_y->SetLineWidth(2);
-//   fGRaw_y->SetLineColor(kGreen);
-//   fGRaw_y->SetTitle("");
-//   fGRaw2_x = std::make_unique<TGraph>();
-//   fGRaw2_x->Expand(nbins);
-//   fGRaw2_x->AddPoint(0,0);
-//   fGRaw2_x->SetLineWidth(2);
-//   fGRaw2_x->SetLineColor(kOrange);
-//   fGRaw2_x->SetTitle("");
-//   fGRaw2_y = std::make_unique<TGraph>();
-//   fGRaw2_y->Expand(nbins);
-//   fGRaw2_y->AddPoint(0,0);
-//   fGRaw2_y->SetLineWidth(2);
-//   fGRaw2_y->SetLineColor(kBlue);
-//   fGRaw2_y->SetTitle("");
-//   fPadTop->cd();
-//   fGRaw_x->Draw();
-//   fGRaw_y->Draw("same");
-//   fPadBot->cd();
-//   fGRaw2_x->Draw();
-//   fGRaw2_y->Draw("same");
-//   fPadTop->Modified();
-//   fPadBot->Modified();
-//   canvas->cd();
-   auto legend = new TLegend(0.9,0.85,1.0,1.0);
-//   legend->AddEntry(fGRaw_x.get(), "I_x");
-//   legend->AddEntry(fGRaw_y.get(),"I_y");
-//   legend->AddEntry(fGRaw2_x.get(),"G(x)");
-//   legend->AddEntry(fGRaw2_y.get(), "G(y)");
-   legend->Draw();
+void RasterHists::DrawCanvas(int tab_no) {
+   auto &tab = fTabs.at(tab_no);
+   auto canv = tab.canvas->GetCanvas();
 
-}
+   unsigned char max_pads=0;
+   for(int i_h: tab.hists) max_pads = std::max(max_pads, fHists.at(i_h).pad_number); // get the highest pad number.
+   std::vector<int> pad_count(max_pads+1); // for counting pad occurrence. Initialized to zero.
 
-void RasterHists::Setup_Histograms(TCanvas *canvas, int tab_num) {
-   // Create the histograms and the corresponding tab.
-
-//   fCanvases[tab_num] = canvas;
-   canvas->cd();
-   string name = "Helicity";
-   string name_raw = "Helicity_raw";
-   std::vector<int> colors = {kRed, kGreen, kBlue};
-   std::vector<string> helicity_names = {"Helicity","Sync","Quartet"};
-   TVirtualPad *pad;
-   TLegend *legend;
-
-   switch(tab_num) {
-      case 0:  // These are the calibrated x-y plots for the raster readback current.
-         canvas->Divide(2, 2);
-//         fHRaster_X = std::make_unique<TH1D>("Raster_X", "Raster x;x (mm);counts", 400, -10., 10.);
-//         fHRaster_XY = std::make_unique<TH2D>("Raster_XY", "Raster (x,y); x(mm); y(mm)", 200, -15., 15.,
-//                                200, -15., 15.);
-//         fHRaster_XY->SetStats(false);
-//         fHRaster_Y = std::make_unique<TH1D>("Raster_Y", "Raster y;y (mm);counts", 400, -10., 10.);
-//         fHRaster_R = std::make_unique<TH1D>("Raster_R", "Raster r;r (mm);counts", 400, 0., 15.);
-         break;
-      case 1: // These are the uncalibrated raw ADC values for the raster readback current.
-         canvas->Divide(2, 2);
-//         fHRaw_X = std::make_unique<TH1D>("Raster_Raw_X", "Raster Current Readback x;x (ADC);counts", 4100, -0.5, 4099.5);
-//         fHRaw_XY = std::make_unique<TH2D>("Raster_Raw_XY", "Raster Current Readback (x,y); x(ADC); y(ADC)", 200, 0., 4095.,
-//                                200, 0., 4095.);
-//         fHRaw_XY->SetStats(false);
-//         fHRaw_Y = std::make_unique<TH1D>("Raster_Raw_Y", "Raster Current Readback y;y (ADC);counts", 4100, -0.5, 4099.5);
-//
-//         fHRaw2_vs_Raw1_x = std::make_unique<TH2D>("Raw2_vs_Raw1_x", "Raw2 vs Raw1 (x)", 2048, -0.5, 4095.5,
-//                                                   2048, -0.5, 4095.5);
-//         fHRaw2_vs_Raw1_x->SetStats(false);
-
-         break;
-      case 2: // These are the uncalibrated raw ADC values for the raster powersupply input.
-//         canvas->Divide(2, 2);
-//         fHRaw2_X = std::make_unique<TH1D>("Raster2_Raw_X", "Raster Generator x;x (ADC);counts", 4100, -0.5, 4099.5);
-//         fHRaw2_XY = std::make_unique<TH2D>("Raster2_Raw_XY", "Raster Generator (x,y); x(ADC); y(ADC)", 200, 0., 4095.,
-//                                           200, 0., 4095.);
-//         fHRaw2_XY->SetStats(false);
-//         fHRaw2_Y = std::make_unique<TH1D>("Raster2_Raw_Y", "Raster Generator y;y (ADC);counts", 4100, -0.5, 4099.5);
-//
-//         fHRaw2_vs_Raw1_y = std::make_unique<TH2D>("Raw2_vs_Raw1_y", "Raw2 vs Raw1 (y)", 2048, -0.5, 4095.5,
-//                                                   2048, -0.5, 4095.5);
-//         fHRaw2_vs_Raw1_y->SetStats(false);
-         break;
-      case 3: // Here we setup the TGraphs for the "scope" function, ADC versus time.
-         canvas->Divide(1,2);
-//         fPadTop = dynamic_cast<TPad *>(canvas->cd(1));
-//         fPadTop->Connect("RangeChanged()", "RasterHists", this, "SubPadTopResized()");
-//         // fPadTop->SetName("ADC, current read back.");
-//         fPadTop->SetGrid();
-//         fPadTop->SetBit(TPad::kCannotMove);
-//         fPadBot = dynamic_cast<TPad *>(canvas->cd(2));
-//         // fPadBot->SetName("ADC2, readout from driver.");
-//         fPadBot->Connect("RangeChanged()", "RasterHists", this, "SubPadBotResized()");
-//         // fPadBot->Connect("Resized()", "RasterHists", this, "SignalTest()"); // Signal that is called when pad *size* changes.
-//         fPadBot->SetGrid();
-//         fPadBot->SetBit(TPad::kCannotMove);
-
-         if(fEvio) CreateScopeGraphs(canvas, fEvio->fN_buf);
-         else CreateScopeGraphs(canvas, 10000);
-         break;
-
-      case 4:
-         canvas->Divide(2, 2);
-         pad = canvas->cd(1);
-         pad->SetLogy(1);
-         pad = canvas->cd(3);
-         pad->SetLogy(1);
-         pad = canvas->cd(4);
-         pad->SetLogy(1);
-
-//         fHelicity_stack = new THStack("Helicity_stack","Helicity Histograms");
-//         for(int i=0; i<3; ++i){
-//            fHelicity.emplace_back(name + i,helicity_names[i].c_str(), 3, -1.5,1.5);
-//            fHelicity[i].SetFillColor(colors[i]);
-//            fHelicity_raw.emplace_back(name_raw + i, (helicity_names[i]+" raw").c_str(), 256, -2.,4097.);
-//            fHelicity_raw[i].SetFillColor(colors[i]);
-//        }
-//
-//         fHelicity_legend = new TLegend(0.1, 0.7, 0.4, 0.9);
-//         for(int i=0; i<fHelicity.size(); ++i){   // NOTE: Some really obscure ROOT error does not permit these to be added in the loop above.
-//            fHelicity_stack->Add( &(fHelicity[i]));
-//            fHelicity_legend->AddEntry(&(fHelicity[i]));
-//         }
-//         break;
-
-      default:
-         cout << "ERROR - setting up a tab too many.\n";
-   }
-
-   canvas->Draw();
-   DrawCanvas(tab_num);
-
-}
-
-void RasterHists::TopUpBuffer(CircularBuffer<double> &buf){
-   // This function is used to fill the buffer with the same points until the end.
-   // Doing so avoids the graphs from having zeros that distort the picture.
-   // ToDo: Check if it is better to resize the TGraph each time.
-
-   if(!buf.full() && !buf.empty()){
-      for(int i=buf.size(); i< buf.capacity(); ++i){
-         buf.push_back(buf.back());
+   for(int i_h: tab.hists) {
+      auto &h_t = fHists.at(i_h);
+      auto pad = canv->cd(h_t.pad_number);
+      if(h_t.special_draw == 0){
+         string draw_opt = h_t.draw_opt;
+         h_t.hist->Draw(draw_opt.c_str());
+         pad->Modified();
+      }else if(h_t.special_draw == 1){   // The helicity stack has a separate draw.
+         fHelicity_stack->Draw("nostackb");
+         fHelicity_legend->Draw();
       }
    }
-}
 
-void RasterHists::DrawCanvas(int hist_no) {
-   {
-      // Draw the histograms on the selected canvas.
-//      auto canvas = fCanvases[hist_no];
-//      switch(hist_no){
-//         case 0:
-//            canvas->cd(1);
-//            fHRaster_Y->Draw("E");
-//            canvas->cd(2);
-//            fHRaster_XY->Draw("colz");
-//            canvas->cd(3);
-//            fHRaster_R->Draw("E");
-//            canvas->cd(4);
-//            fHRaster_X->Draw("E");
-//            break;
-//         case 1:
-//            canvas->cd(1);
-//            fHRaw_Y->Draw("");
-//            canvas->cd(2);
-//            fHRaw_XY->Draw("colz");
-//            canvas->cd(3);
-//            fHRaw2_vs_Raw1_x->Draw("colz");
-//            canvas->cd(4);
-//            fHRaw_X->Draw("");
-//            break;
-//         case 2:
-//            canvas->cd(1);
-//            fHRaw2_Y->Draw("");
-//            canvas->cd(2);
-//            fHRaw2_XY->Draw("colz");
-//            canvas->cd(3);
-//            fHRaw2_vs_Raw1_y->Draw("colz");
-//            canvas->cd(4);
-//            fHRaw2_X->Draw("");
-//            break;
-//         case 3:
-//            if(fEvio){
-//               for (int i = 0; i < fEvio->fRasterTimeBuf[0].size(); ++i){
-//                  fGRaw_x->SetPoint(i, fEvio->fRasterTimeBuf[0].at(i), fEvio->fRasterAdcBuf[0].at(i));
-//                  if(fEvio->fRasterTimeBuf[1].empty()) fGRaw_y->SetPoint(i, fEvio->fRasterTimeBuf[0].at(i), 0.);
-//                  if(fEvio->fRasterTimeBuf[2].empty()) fGRaw2_x->SetPoint(i, fEvio->fRasterTimeBuf[0].at(i), 0.);
-//                  if(fEvio->fRasterTimeBuf[3].empty()) fGRaw2_y->SetPoint(i, fEvio->fRasterTimeBuf[0].at(i), 0.);
-//               }
-//               for (int i = 0; i < fEvio->fRasterTimeBuf[1].size(); ++i)
-//                  fGRaw_y->SetPoint(i, fEvio->fRasterTimeBuf[1].at(i), fEvio->fRasterAdcBuf[1].at(i));
-//               for (int i = 0; i < fEvio->fRasterTimeBuf[2].size(); ++i)
-//                  fGRaw2_x->SetPoint(i, fEvio->fRasterTimeBuf[2].at(i), fEvio->fRasterAdcBuf[2].at(i));
-//               for (int i = 0; i < fEvio->fRasterTimeBuf[3].size(); ++i)
-//                  fGRaw2_y->SetPoint(i, fEvio->fRasterTimeBuf[3].at(i), fEvio->fRasterAdcBuf[3].at(i));
-//            }
-//            fGRaw_x->SetMinimum(0);
-//            fGRaw_x->SetMaximum(4096);
-//            fGRaw2_x->SetMinimum(0);
-//            fGRaw2_x->SetMaximum(4096);
-//
-//            fPadTop->cd();
-//            fGRaw_x->Draw();
-//            if(fGRaw_y->GetN()) fGRaw_y->Draw("same");
-//
-//            fPadBot->cd();
-//            fGRaw2_x->Draw();
-//            if(fGRaw2_y->GetN()) fGRaw2_y->Draw("same");
-//
-//            break;
-//         case 4:
-//            canvas->cd(1);
-//            fHelicity_raw[0].Draw();
-//            canvas->cd(2);
-//            fHelicity_stack->Draw("nostackb");
-//            fHelicity_legend->Draw();
-//            canvas->cd(3);
-//            fHelicity_raw[1].Draw();
-//            canvas->cd(4);
-//            fHelicity_raw[2].Draw();
-//            break;
-//      }
-//      canvas->Update();
+   //
+   // To fill the graphs, we need to copy the data from the fEvio->fTimeBuf and fEvio->fAdcAverageBuf to th graph.
+   // Because we *link* the x-axis of the graph pads, we want the same number of events in each graph, otherwise
+   // such linking becomes a second order ROOT hell.
+   // If an fEvio->fTimeBuf is empty, then just fill it with the correct data from another channel and set the
+   // fEvio->fAdcAverageBuf to zero.
+   // TODO: A problem occurs here when the data on linked pads is of different size. This is probably rare or not
+   // TODO: occurring, so we can ot worry about it for now.
+   max_pads = 0;
+   for(int i_h: tab.graphs) max_pads = std::max(max_pads, fGraphs.at(i_h).pad_number); // get the highest pad number.
+   pad_count.resize(max_pads+1);
+   pad_count.assign(max_pads+1, 0);
+   for(int i_h: tab.graphs){
+      auto &g_t = fGraphs.at(i_h);
+      pad_count[g_t.pad_number]++;
+      auto pad = canv->cd(g_t.pad_number);
+      auto graph = g_t.graph.get();
+      if(fEvio){
+         auto data_idx = g_t.data_index;
+         if(fEvio->fTimeBuf[data_idx].empty()){
+            int not_empty =0;
+            for( ; not_empty < tab.graphs.size(); ++not_empty ) if(!fEvio->fTimeBuf[not_empty].empty()) break;
+            if( not_empty < tab.graphs.size()){ // We found the first not empty graph.
+               for (int i = 0; i < fEvio->fTimeBuf[not_empty].size(); ++i) {
+                  graph->SetPoint(i, fEvio->fTimeBuf[not_empty].at(i), 0.);
+               }
+            }else{ // All the graphs are empty!
+               graph->SetPoint(0, 0., 0.);
+               graph->SetPoint(1, 1., 0.);
+            }
+         }else {
+            for (int i = 0; i < fEvio->fTimeBuf[data_idx].size(); ++i) {
+               graph->SetPoint(i, fEvio->fTimeBuf[data_idx].at(i), fEvio->fAdcAverageBuf[data_idx].at(i));
+            }
+         }
+      }
+      string draw_option = g_t.draw_opt;
+      if(pad_count[g_t.pad_number]>1) draw_option += "same";
+      graph->Draw(draw_option.c_str());
+      pad->Modified();
    }
+   canv->Update();
 }
 
 void RasterHists::stop(){
@@ -487,32 +415,28 @@ void RasterHists::go(){
 
 void RasterHists::DoDraw(int active_tab){
    if(active_tab == -1) {
-//      for (int i = 0; i < fCanvases.size(); ++i) {
-//         DrawCanvas(i);
-//      }
+      for(int i_tab=0; i_tab< fTabs.size(); ++i_tab)
+         DrawCanvas(i_tab);
    }else{
       DrawCanvas(active_tab);
    }
 }
 
-void RasterHists::clear(){
+void RasterHists::clear(int active_tab){
    // Clear the histograms
-   if(fDebug) std::cout << "RasterHists::clear() \n";
-//   fHRaster_X->Reset();
-//   fHRaster_Y->Reset();
-//   fHRaster_XY->Reset();
-//   fHRaster_R->Reset();
-//   fHRaw_X->Reset();
-//   fHRaw_XY->Reset();
-//   fHRaw_Y->Reset();
-//   fHRaw2_X->Reset();
-//   fHRaw2_XY->Reset();
-//   fHRaw2_Y->Reset();
-//   fHRaw2_vs_Raw1_x->Reset();
-//   fHRaw2_vs_Raw1_y->Reset();
-//
-//   for(auto &h: fHelicity ) h.Reset();
-//   for(auto &h: fHelicity_raw ) h.Reset();
+   if(active_tab<0){ // Clear everything
+      if(fDebug) std::cout << "RasterHists::clear() \n";
+      for(auto &h_t: fHists){
+         auto &h = h_t.hist;
+         h->Reset();
+      }
+      for(auto &g_t: fGraphs){
+         auto &g = g_t.graph;
+         g->Set(1);  // Only one point effectively empties the graph.
+         for(auto &buf: fEvio->fTimeBuf) buf.clear();  // Empty the buffers too.
+         for(auto &buf: fEvio->fAdcAverageBuf) buf.clear();
+      }
+   }
    DoDraw();    // Draw so that even during a pause the display is updated.
 }
 
@@ -520,6 +444,7 @@ void RasterHists::HistFillWorker(int thread_num){
    TRandom3 rndm(thread_num);
 
    std::vector<double> local_data;
+   local_data.reserve(fHists.size() + fGraphs.size());   // Probably more than needed, but okay.
 
    if(fDebug>0) std::cout << "RasterHists::HistFillWorker - Start thread "<< thread_num << "\n";
 
@@ -544,8 +469,6 @@ void RasterHists::HistFillWorker(int thread_num){
          //
 
          local_data.clear();
-         size_t N = fEvio->fAdcAverageBuf.size();
-
          // memcpy is perhaps twice as fast ~ 1,879 ns per copy if size = 10;
          // memcpy(&local_data[0], &fEvio->fChannelAverage[0], fEvio->fChannelAverage.size() * sizeof(double));
          // Safer way to do this is assign or insert. ~ 3.7953 ns per copy is size = 10;
@@ -561,43 +484,46 @@ void RasterHists::HistFillWorker(int thread_num){
          for(auto &h: fHists) {
             if (h.special_fill == 0) {
                int indx = h.data_index;
-               if (h.data_index2 < 0)
-                  h.hist->Fill(fEvio->GetData(indx));
-               else
-                  ((TH2D *) h.hist)->Fill(fEvio->GetData(h.data_index), fEvio->GetData(h.data_index2));
+               double x = fEvio->GetData(h.data_index)*h.scale_x + h.offset_x;
+               if (h.Is2D()) {
+                  double y = fEvio->GetData(h.data_index2) * h.scale_y + h.offset_y;
+                  h.GetHist2D()->Fill(x, y);
+               }
+               else {
+                  h.GetHist()->Fill(x);
+               }
             }else if(h.special_fill == 1){
                // The helicity histgrams are -1 or 1
                // TODO: determine hi and low level?
                int indx = h.data_index;
                if(fEvio->GetData(indx) > 1500 )
-                  h.hist->Fill(1);
+                  h.GetHist()->Fill(1);
                else
-                  h.hist->Fill(-1);
-               }
+                  h.GetHist()->Fill(-1);
             }
+         }
          // Nothing to do for Scope, the buffer is filled in
          // fEvio->Next(); We just need to draw it.
 
       }else{
          std::this_thread::sleep_for(std::chrono::milliseconds(250));
-       }
+      }
    }
    if(fDebug>0) std::cout << "RasterHists::HistFillWorker - Exit thread "<< thread_num << "\n";
 }
 
 void RasterHists::SavePDF(const string &file, bool overwrite){
    // Save the canvesses as PDF file
-   DoDraw();
+   DoDraw();  // Make sure they are all updated.
 
-//   if(fCanvases.size()>1) {
-//      fCanvases[0]->Print((file+"(").c_str());
-//      for (int i = 1; i < fCanvases.size() - 1; ++i) {
-//         fCanvases[i]->Print(file.c_str());
-//      }
-//      fCanvases[fCanvases.size() - 1]->Print((file+")").c_str());
-//   }else{
-//      fCanvases[0]->Print(file.c_str());
-//   }
+   for(int count =0; count < fTabs.size(); ++count){
+      auto tab = fTabs.at(count);
+      string out;
+      if(count == 0 && fTabs.size() > 1) out = file + "(";  // First one of set.
+      else if(count == fTabs.size() -1) out = file + ")";   // Last one of set.
+      else out = file;                                      // Middle page.
+      tab.canvas->Print(out.c_str());
+   }
 };
 
 void RasterHists::SaveRoot(const string &file, bool overwrite){
@@ -609,16 +535,9 @@ void RasterHists::SaveRoot(const string &file, bool overwrite){
       } else {
          out_file = std::make_unique<TFile>(file.c_str(), "UPDATE");
       }
-//      fHRaw_X->Write();
-//      fHRaw_Y->Write();
-//      fHRaw_XY->Write();
-//      fHRaster_X->Write();
-//      fHRaster_Y->Write();
-//      fHRaster_XY->Write();
-//      fHRaster_R->Write();
-//      for( auto h: fHelicity_raw) h.Write();
-//      for( auto h: fHelicity) h.Write();
 
+      for(auto &hist: fHists) hist.GetTH1()->Write();
+      for(auto &graph: fGraphs) graph.graph->Write();
       out_file->Write();
       out_file->Close();
 

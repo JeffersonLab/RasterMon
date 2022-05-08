@@ -16,32 +16,25 @@ RasterEvioTool::RasterEvioTool(string infile) : EvioTool(infile){
    // EVIO Data structure unpack:
    fEvioHead = AddLeaf<unsigned int>("fEvioHead", 49152, 0, "Evio Event Header Info");
    fRasterHead =  new RasterMonEventInfo(this);  // Calls AddBank internally.
-   fRasterCrate = AddBank("Raster", fRasterBankTag, 0, "Raster fRasterFADC banks");
-   fRasterCrateTI = fRasterCrate->AddLeaf<unsigned int>("RasterCrateTI", 57610, 0, "Raster Crate TI info");
-   fRasterFADC = fRasterCrate->AddLeaf<FADCdata>("fRasterFADC", 57601, 0, "Raster fRasterFADC");
-   fHelicityCrate = AddBank("Helicity", fHelicityBankTag, 0, "Raster fRasterFADC banks");
-   fHelicityFADC = fHelicityCrate->AddLeaf<FADCdata>("fHelicityFADC", 57601, 0, "Raster fRasterFADC");
+//   fRasterCrate = AddBank("Raster", fRasterBankTag, 0, "Raster fRasterFADC banks");
+//   fRasterCrateTI = fRasterCrate->AddLeaf<unsigned int>("RasterCrateTI", 57610, 0, "Raster Crate TI info");
+//   fRasterFADC = fRasterCrate->AddLeaf<FADCdata>("fRasterFADC", 57601, 0, "Raster fRasterFADC");
+//   fHelicityCrate = AddBank("Helicity", fHelicityBankTag, 0, "Raster fRasterFADC banks");
+//   fHelicityFADC = fHelicityCrate->AddLeaf<FADCdata>("fHelicityFADC", 57601, 0, "Raster fRasterFADC");
 
-   for(int i=0; i<fRasterChannels.size(); ++i){
-      fRasterTimeBuf.emplace_back(fN_buf);
-      fRasterAdcBuf.emplace_back(fN_buf);
-   }
-
-   cout << "Create RasterEvioTool: \n";
-   cout << "fN_buf = " << fN_buf << endl;
-   cout << "fHelicityBankTag = " << fHelicityBankTag << endl;
-   cout << "fHelicitySlot = " << fHelicitySlot << endl;
-   cout << "fRasterChannel_data = [";
-   for(auto d: fRasterChannel_data){
-      cout << d << ",";
-   }
-   cout << "]\n";
+//  for(int i=0; i<fRasterChannels.size(); ++i){
+//      fRasterTimeBuf.emplace_back(fN_buf);
+//      fRasterAdcBuf.emplace_back(fN_buf);
+//   }
 }
 
-void RasterEvioTool::AddChannel(unsigned short bank_tag, unsigned short slot, unsigned short channel){
+int RasterEvioTool::AddChannel(unsigned short bank_tag, unsigned short slot, unsigned short channel){
    // Add one data item to the structure for parsing EVIO files.
+   // Return the index to the fChannelAverage and fTimeBuf and fAdcAverageBuf data stores.
+   //
    EvioBank_t *lbank = nullptr;
-   // See if the bank is already in the parse tree. (Can speed this up with a proper search if the tree gets large?)
+   // See if the bank is already in the parse tree.
+   // TODO: Can speed this up with a proper search if the tree gets large?)
    for(auto &b: fEvioBanks){
       if( b.bank->CheckTag(bank_tag)){
          lbank = &b;
@@ -58,13 +51,31 @@ void RasterEvioTool::AddChannel(unsigned short bank_tag, unsigned short slot, un
       fChannelAverage.push_back(0.);
       fTimeBuf.emplace_back(fN_buf);
       fAdcAverageBuf.emplace_back(fN_buf);
+      return(fChannelAverage.size()-1);
+   }else{  // Data was not added, so search for it in the tree.
+      for(int i_t=0; i_t < fEvioBanks.size(); ++i_t) {
+         if (fEvioBanks[i_t].bank->CheckTag(bank_tag)) {  // Bank tag maches.
+            for (int i_s = 0; i_s < fEvioBanks[i_t].slots.size(); ++i_s) {
+               if( fEvioBanks[i_t].slots[i_s].slot == slot) { // Slot matches
+                  for (int i_c = 0; i_c < fEvioBanks[i_t].slots[i_s].channels.size(); ++i_c) {
+                     if(fEvioBanks[i_t].slots[i_s].channels[i_c] == channel ){ // Channel matches, we have a match.
+                        return fEvioBanks[i_t].slots[i_s].data_index[i_c];  // return the index.
+                     }
+                  }
+               }
+            }
+         }
+      }
+      cout << "RasterEvioTool::AddChannel - Uh oh, I did not add the channel, but I could not find it either.\n";
+      return -1;  //
    }
+
 }
 
 void RasterEvioTool::Clear(Option_t *opt) {
    // Clears the entire data structures.
-   // Here we clear the *local* data, then call the parent Clear to clear the rest.
-   for(int i=0; i < fHelicityChannel_data.size(); ++i) fHelicityChannel_data[i] = 0;
+   // Here we clear the *local* data copy, then call the parent Clear to clear the rest.
+   fChannelAverage.assign(fChannelAverage.size(), 0);
    EvioTool::Clear(opt);
 }
 
@@ -96,7 +107,7 @@ int RasterEvioTool::Next() {
 
    // We loop through the EVIO Banks in fEvioBank. If they were in the data and had an FADC bank, then we will
    // find this in b.FADC.
-   // We compare the b.FADC against the slot, channel information from our fEvioBanks tree, and when machted,
+   // We compare the b.FADC against the slot, channel information from our fEvioBanks tree, and when matchted,
    // store the *average* FADC in the appropriate fChannelAverage slot.
    //
    // The following multi loop sort is fairly fast because the loops are small.
@@ -115,10 +126,10 @@ int RasterEvioTool::Next() {
                      sum = sum / (double) n_samples;
                      int buf_index = slot.data_index[k];
                      fChannelAverage[buf_index] = sum;
-                     double time = 5.e-9*(double)b.FADC->GetData(i_fadc).GetRefTime();
+                     double time = 5.e-9*(double)b.FADC->GetData(i_fadc).GetRefTime(); // Convert to second
                      if(time>0) { // If time == 0, then this is not data so skip it.
-                        fRasterTimeBuf[buf_index].push_back(time);   // Convert to second
-                        fRasterAdcBuf[buf_index].push_back(sum);
+                        fTimeBuf[buf_index].push_back(time);
+                        fAdcAverageBuf[buf_index].push_back(sum);
                      }
                   }
                }

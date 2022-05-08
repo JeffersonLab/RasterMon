@@ -103,35 +103,16 @@ public:
    //
    // Setup the data for the EVIO parsing.
    //
-   // Note on mem: The memory will be managed by TObjArray. So no delete to be called.
+   // Note on mem: The memory will be managed by TObjArray. So no delete to be called. No unique_ptr etc.
    Leaf<unsigned int>  *fEvioHead = nullptr;  // EvioHead is tag=49152 and is always there.
    unsigned long fMostRecentEventNumber;      // Number of last actual event that was read.
    RasterMonEventInfo *fRasterHead = nullptr; // RasterHead is tag=
-   Bank   *fRasterCrate = nullptr;
-   Leaf<unsigned int> *fRasterCrateTI = nullptr; // Raster Crate trigger info bank.
-   Leaf<FADCdata> *fRasterFADC = nullptr;
-   Bank   *fHelicityCrate = nullptr;
-   Leaf<FADCdata> *fHelicityFADC = nullptr;
 
    size_t fN_buf = 5000;
    std::vector<EvioBank_t> fEvioBanks;
    std::vector<double> fChannelAverage;
    std::vector< CircularBuffer<double> > fTimeBuf;
    std::vector< CircularBuffer<double> > fAdcAverageBuf;
-
-   int fHelicityBankTag = 190;
-   int fHelicitySlot = 19;
-   std::vector<int> fHelicityChannels = {0, 2, 4};
-   std::vector<double> fHelicityChannel_data = {-1., -1., -1.}; // reserve 3 slots for the data.
-
-   int fRasterBankTag = 159;
-   int fRasterSlot = 19;
-   std::vector<int> fRasterChannels = {1, 3, 5, 7};
-   std::vector<double> fRasterChannel_data  = {-1., -1., -1., -1.}; // reserve slots for the data.
-
- //  size_t fN_buf = 5000;
-   std::vector< CircularBuffer<double> > fRasterTimeBuf;
-   std::vector< CircularBuffer<double> > fRasterAdcBuf;
 
    std::mutex fFileLock;   // Because the Next() has a next file build in.
 
@@ -141,7 +122,7 @@ public:
       // Nothing to destroy.
    };
 
-   void AddChannel(unsigned short bank_tag, unsigned short slot, unsigned short channel);
+   int AddChannel(unsigned short bank_tag, unsigned short slot, unsigned short channel);
 
    void AddFile(const string &file){
       fInputFiles.push_back(file);
