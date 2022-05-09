@@ -57,13 +57,16 @@ public:
    void CloseWindow(){ Cancel(); };
 
    void UpdateADCBufDepth(){
-      unsigned long bufsize = fNumberEntryScopeBufDepth->GetIntNumber();
+      double rnum = fNumberEntryScopeBufDepth->GetNumber();
+      unsigned long bufsize = (unsigned long)(rnum*1000.);
+      fHists->fPause = true;  // Pause the worker threads.
       if(fEvio){
          fEvio->UpdateBufferSize(bufsize);
       }
       if(fHists){
          fHists->ResizeScopeGraphs(bufsize);
       }
+      fHists->fPause = false;
    }
 
 };
@@ -116,16 +119,21 @@ inline void RasterMonConfig::Run(){
 
    auto *h_frame2 = new TGHorizontalFrame(Frame2);
    Frame2->AddFrame(h_frame2, new TGLayoutHints(kLHintsExpandX, 10, 2, 10, 2));
-   auto label2 = new TGLabel(h_frame2,"Scope event buffer depth:");
-   h_frame2->AddFrame(label2, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 10, 35, 5, 5));
-   label2->Resize(label_width, 25);
+   auto label2 = new TGLabel(h_frame2,"Scope event buffer depth:");\
+   label2->Resize(label_width, 20);
+   h_frame2->AddFrame(label2, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 10, 20, 5, 5));
 
-   fNumberEntryScopeBufDepth = new TGNumberEntry(h_frame2, fScopeBufDepth, 5, 1, TGNumberFormat::kNESInteger,
-                                        TGNumberFormat::kNEAPositive,TGNumberFormat::kNELLimitMin, 100, 10000000);
-   h_frame2->AddFrame(fNumberEntryScopeBufDepth, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsCenterY ,
-                                                          10, 10, 5, 5));
-   fNumberEntryScopeBufDepth->Resize(field_width, 25);
-   fNumberEntryScopeBufDepth->Connect("ValueSet(Long_t","RasterMonConfig",this,"UpdateADCBufDepth()");
+   fNumberEntryScopeBufDepth = new TGNumberEntry(h_frame2, (double)(fScopeBufDepth/1000.), 10, 1,
+                                                 TGNumberFormat::kNESRealOne,TGNumberFormat::kNEAPositive,TGNumberFormat::kNELLimitMinMax , 0.2, 1000.0);
+
+   // fNumberEntryScopeBufDepth->Resize( 60, 20);
+   h_frame2->AddFrame(fNumberEntryScopeBufDepth, new TGLayoutHints(kLHintsCenterX | kLHintsExpandX | kLHintsCenterY ,
+                                                          1, 1, 5, 5));
+   auto label2tail = new TGLabel(h_frame2,"x1k evt.");
+   label2tail->Resize(9, 20);
+   h_frame2->AddFrame(label2tail, new TGLayoutHints(kLHintsRight | kLHintsCenterY, 2, 1, 5, 5));
+
+   fNumberEntryScopeBufDepth->Connect("ValueSet(Long_t)","RasterMonConfig",this,"UpdateADCBufDepth()");
 
 
    fConfigDialog->AddFrame(Frame2, new TGLayoutHints(kLHintsTop));

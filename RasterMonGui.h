@@ -126,8 +126,16 @@ public:
       fRHists->stop();
    };
 
-   void Clear(){
-      fRHists->clear();
+   void ClearAll(){
+      fRHists->clear(-1);
+   }
+
+   void ClearTab(){
+      fRHists->clear(fTabAreaTabs->GetCurrent());
+   }
+
+   void Clear(int what= -1){
+      fRHists->clear(what);
    }
 
    void Exit(){

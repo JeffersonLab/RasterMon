@@ -454,6 +454,17 @@ void RasterHists::clear(int active_tab){
          for(auto &buf: fEvio->fTimeBuf) buf.clear();  // Empty the buffers too.
          for(auto &buf: fEvio->fAdcAverageBuf) buf.clear();
       }
+   }else{
+      if(fDebug) std::cout << "RasterHists::clear() tab " << active_tab << "\n";
+      auto tab = fTabs.at(active_tab);
+      for(int i_h: tab.hists){
+         fHists.at(i_h).hist->Reset();
+      }
+      for(int i_g: tab.graphs){
+         fGraphs.at(i_g).graph->Set(1);
+         fEvio->fTimeBuf.at(i_g).clear();
+         fEvio->fAdcAverageBuf.at(i_g).clear();
+      }
    }
    DoDraw();    // Draw so that even during a pause the display is updated.
 }

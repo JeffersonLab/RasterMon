@@ -83,15 +83,24 @@ void RasterMonGui::AddControlBar(){
    hframe->AddFrame(fPauseButton, new TGLayoutHints(kLHintsCenterX,
                                              5,5,3,4));
 
+   TGButton *stop;
    auto stop_pic =  gClient->GetPicture("ed_interrupt.png");
-   auto *stop = new TGPictureButton(hframe, stop_pic);
+   if(stop_pic){
+      stop = new TGPictureButton(hframe, stop_pic);
+   }else{
+      stop = new TGTextButton(hframe, "&Stop");
+   }
    stop->Connect("Clicked()","RasterMonGui",this,"Stop()");
    hframe->AddFrame(stop, new TGLayoutHints(kLHintsCenterX,
                                             5,5,3,4));
 
-   auto *clear = new TGTextButton(hframe,"&Clear");
+   auto *cleartab = new TGTextButton(hframe,"&Clear");
+   cleartab->Connect("Clicked()","RasterMonGui",this,"ClearTab()");
+   hframe->AddFrame(cleartab, new TGLayoutHints(kLHintsCenterX,
+                                             5,5,3,4));
 
-   clear->Connect("Clicked()","RasterMonGui",this,"Clear()");
+   auto *clear = new TGTextButton(hframe,"&Clear All");
+   clear->Connect("Clicked()","RasterMonGui",this,"ClearAll()");
    hframe->AddFrame(clear, new TGLayoutHints(kLHintsCenterX,
                                              5,5,3,4));
 
