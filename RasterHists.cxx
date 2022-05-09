@@ -109,17 +109,17 @@ void RasterHists::InitTabs() {
                         "IY0", ";t(s)", "I_{y}", kGreen+1, 2, true);
    fTabs.back().graphs.push_back(fGraphs.size() - 1);
 
-   fGraphs.emplace_back(tab, 2, 59, 19, 1,
+   fGraphs.emplace_back(tab, 2, 59, 19, 5,
                         "GX1", ";t(s)", "G(x)", kBlue+1, 2, true);
    fTabs.back().graphs.push_back(fGraphs.size() - 1);
-   fGraphs.emplace_back(tab, 2, 59, 19, 3,
+   fGraphs.emplace_back(tab, 2, 59, 19, 7,
                         "GY1", ";t(s)", "G(y)", kMagenta+1, 2, true);
    fTabs.back().graphs.push_back(fGraphs.size() - 1);
 
-   fGraphs.emplace_back(tab, 3, 59, 19, 1,
+   fGraphs.emplace_back(tab, 3, 59, 19, 9,
                         "VX1", ";t(s)", "V_{x}", kAzure+1, 2, true);
    fTabs.back().graphs.push_back(fGraphs.size() - 1);
-   fGraphs.emplace_back(tab, 3, 59, 19, 3,
+   fGraphs.emplace_back(tab, 3, 59, 19, 11,
                         "VY1", ";t(s)", "V_{y}", kViolet+1, 2, true);
    fTabs.back().graphs.push_back(fGraphs.size() - 1);
 
