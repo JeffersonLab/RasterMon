@@ -114,7 +114,8 @@ public:
    std::vector< CircularBuffer<double> > fTimeBuf;
    std::vector< CircularBuffer<double> > fAdcAverageBuf;
 
-   std::mutex fFileLock;   // Because the Next() has a next file build in.
+   std::mutex fFileLock;    // Because the Next() has a next file build in.
+   std::mutex fBufferLock;  // Guard against buffer size changes.
 
 public:
    explicit RasterEvioTool(string infile="");
@@ -152,7 +153,7 @@ public:
    double GetData(int i){ if(i >=0 && i<fChannelAverage.size()){ return fChannelAverage[i];} else return 0;}
 
    void UpdateBufferSize(unsigned long bufsize){
-      std::lock_guard<std::mutex> _lck(fFileLock);
+      std::lock_guard<std::mutex> _lck(fBufferLock);
       for(int i=0; i< fTimeBuf.size(); ++i) fTimeBuf[i] = CircularBuffer<double>(bufsize);
       for(int i=0; i< fAdcAverageBuf.size(); ++i) fAdcAverageBuf[i] = CircularBuffer<double>(bufsize);
       fN_buf = bufsize;

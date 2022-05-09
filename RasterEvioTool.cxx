@@ -128,6 +128,7 @@ int RasterEvioTool::Next() {
                      fChannelAverage[buf_index] = sum;
                      double time = 5.e-9*(double)b.FADC->GetData(i_fadc).GetRefTime(); // Convert to second
                      if(time>0) { // If time == 0, then this is not data so skip it.
+                        std::lock_guard<std::mutex> _lck(fBufferLock);
                         fTimeBuf[buf_index].push_back(time);
                         fAdcAverageBuf[buf_index].push_back(sum);
                      }

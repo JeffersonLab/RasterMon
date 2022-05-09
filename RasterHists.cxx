@@ -226,7 +226,7 @@ void RasterHists::SetupData(TabSpace_t &tab) {
          auto pad = dynamic_cast<TPad *>(canv->cd(i));
          char slot_name[20];
          sprintf(slot_name, "SubPad%dResized()", i);
-         if(fDebug) std::cout << "Connecing pad " << i << " RangeChanged to slot " << slot_name << std::endl;
+         if(fDebug>2) std::cout << "Connecing pad " << i << " RangeChanged to slot " << slot_name << std::endl;
          pad->Connect("RangeChanged()", "RasterHists", this, slot_name);
          pad->Connect("UnZoomed()", "RasterHists", this,  slot_name);
       }
