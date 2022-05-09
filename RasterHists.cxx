@@ -13,8 +13,10 @@ void RasterHists::InitTabs() {
    // Init with:  (bank_tag, slot, adc_chan, tab_number, pad_number, name, title, legend, color, width, show)
    // Or with:    (adc_chan, tab_number, pad_number, name, title, legend, color, width)
 
-   // Note: PAD numbering starts at 1, with 0 being the Canvas (i.e. only one object on the screen)
+   // Some general styling of the app.
+   gStyle->SetPaperSize(TStyle::kUSLetter);   // Output for PDF is US-letter format.
 
+   // Note: PAD numbering starts at 1, with 0 being the Canvas (i.e. only one object on the screen)
    // TAB 0 == Histograms that are NOT raw.
    int tab = 0;
    fTabs.emplace_back("Raster", 2, 2);
@@ -79,7 +81,23 @@ void RasterHists::InitTabs() {
    fHists.back().draw_opt = "colz";
    fHists.back().hist->SetStats(false);
 
-   // TAB 3 Scope
+   // TAB 3
+   tab++;
+   fTabs.emplace_back("Raw3", 2, 2);
+   fHists.emplace_back(tab,4,59, 19, 9,
+                       "RawVx", "Raw ADC 9, G(x); ADC(5) channel", 4096, -0.5, 4095.5);
+   fTabs.back().hists.push_back( fHists.size()-1);
+   fHists.emplace_back(tab, 1, 59, 19, 11,
+                       "RawVy", "Raw ADC 11, G(y); ADC(7) channel", 4096, -0.5, 4095.5);
+   fTabs.back().hists.push_back( fHists.size()-1);
+   fHists.emplace_back(tab,2,59, 19, 9, 59, 19, 11,
+                       "RawVxy", "Raw ADC 11-9, G(y) vs G(x)", 409, -0.5, 4095.5, 409, -0.5, 4095.5);
+   fTabs.back().hists.push_back( fHists.size()-1);
+   fHists.back().draw_opt = "colz";
+   fHists.back().hist->SetStats(false);
+
+
+   // TAB 4 Scope
    tab++;
    fTabs.emplace_back("Scope", 1, 3, 0, 0);
    fTabs.back().grid = {1, 1, 1};
@@ -107,7 +125,7 @@ void RasterHists::InitTabs() {
 
    fTabs.back().pad_link = {2, 3, 1};
 
-   // Tab4 Helicity
+   // Tab 5 Helicity
    tab++;
    fTabs.emplace_back("Helicity", 2, 2);
    fTabs.back().logy = {true, false, true, true};
@@ -513,18 +531,44 @@ void RasterHists::HistFillWorker(int thread_num){
 }
 
 void RasterHists::SavePDF(const string &file, bool overwrite){
-   // Save the canvesses as PDF file
+   // Save the canvasses as PDF file
    DoDraw();  // Make sure they are all updated.
 
    for(int count =0; count < fTabs.size(); ++count){
       auto tab = fTabs.at(count);
+      TCanvas *canv = tab.canvas->GetCanvas();
       string out;
       if(count == 0 && fTabs.size() > 1) out = file + "(";  // First one of set.
       else if(count == fTabs.size() -1) out = file + ")";   // Last one of set.
       else out = file;                                      // Middle page.
-      tab.canvas->Print(out.c_str());
+      canv->Print(out.c_str());
    }
 };
+
+void RasterHists::SaveImageFile(const string &file, const string &ending){
+   // Save the canvasses  as set of PNG files.
+#ifdef __APPLE__
+   std::cout << "This method of saving histograms is known to be fucked on Apple system. \n";
+   std::cout << "The histograms will not be resized, and so look too small and grainy.\n";
+   std::cout << "Please save to pdf instead.\n";
+#endif
+   for(int count =0; count < fTabs.size(); ++count){
+      auto tab = fTabs.at(count);
+      TCanvas *cc = tab.canvas->GetCanvas();
+      TCanvas *canv = dynamic_cast<TCanvas *>(cc->DrawClone()); // Make a copy.
+#ifndef __APPLE__
+      canv->SetWindowSize(3000,2400);
+      canv->SetCanvasSize(3000,2400);
+#endif
+      canv->Draw();
+      string out;
+      out = file + "_" + std::to_string(count) + "." +  ending;
+      canv->Print(out.c_str());
+      canv->Close();
+      delete canv;
+   }
+};
+
 
 void RasterHists::SaveRoot(const string &file, bool overwrite){
    // Save the histograms to a ROOT file.
@@ -538,6 +582,10 @@ void RasterHists::SaveRoot(const string &file, bool overwrite){
 
       for(auto &hist: fHists) hist.GetTH1()->Write();
       for(auto &graph: fGraphs) graph.graph->Write();
+      for(auto &tab: fTabs){
+         TCanvas *canv = tab.canvas->GetCanvas();
+         canv->Write();
+      }
       out_file->Write();
       out_file->Close();
 

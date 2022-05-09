@@ -20,14 +20,15 @@ void RasterMonGui::Init(UInt_t w, UInt_t h){
          0,               0
    };
 
-   static const char *gfFileSaveTypes [] = {"ROOT File", "*.root", "PDF File", "*.pdf"};
+   static const char *gfFileSaveTypes [] = {"PDF File", "*.pdf", "PNG Image set", "*.png", "ROOT File", "*.root"};
 
    fFileInfo.SetIniDir("/data");
    fFileInfo.fFileTypes = gfFileTypes;
    fFileInfo.SetMultipleSelection(true);
-   fSaveFileInfo.SetIniDir(".");
+   fSaveFileInfo.SetIniDir(std::filesystem::current_path().c_str());
    fSaveFileInfo.fFileTypes = gfFileSaveTypes;
-   fSaveFileInfo.SetFilename("RasterMonHists.root");
+   fSaveFileInfo.SetFilename("RasterMonHists");
+
    SetupGUI(w, h);
    fHistUpdateTimer = std::make_unique<TTimer>(this, fUpdateRate) ;
    fEvio = fRHists->GetEvioPtr();
@@ -205,16 +206,21 @@ void RasterMonGui::HandleMenu(int choice) {
             if(fDebug) std::cout << "Saving histograms to file: " << fSaveFileInfo.fFilename << "\n";
             string save_file(fSaveFileInfo.fFilename);
             std::string::size_type const p(save_file.find_last_of('.')); // Find extension.
-            if( p == (std::string::size_type) -1 ){   // no extension, save as pdf
-               save_file.append(".pdf");
+            auto file_ending = save_file.substr(p+1);
+            string file_stub = save_file.substr(0, p);
+
+            if( file_ending == "" ) {   // no extension, save as pdf
+               file_ending = "pdf";
+            }
+
+            if( file_ending == "pdf"){
                fRHists->SavePDF(save_file);
-            }else if( save_file.substr(p+1) == "pdf"){
-               fRHists->SavePDF(save_file);
-            }else if ( save_file.substr(p+1) == "root"){
+            }else if ( file_ending == "root"){
                fRHists->SaveRoot(save_file, fSaveFileInfo.fOverwrite);
+            }else {  // Try the ROOT "SaveAs" for each canvas.
+               fRHists->SaveImageFile(file_stub, file_ending);
             }
             break;
-
             }
          break;
 

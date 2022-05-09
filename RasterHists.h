@@ -6,6 +6,7 @@
 #define RASTERMON_RASTERHISTS_H
 
 #include <TROOT.h>
+#include <TStyle.h>
 #include <TObject.h>
 #include <TQObject.h>
 #include <TSystem.h>
@@ -218,6 +219,7 @@ public:
    void SetDebug(int level){ fDebug = level;}
    int GetDebug(){ return(fDebug);}
    void SavePDF(const string &file, bool overwrite=true);
+   void SaveImageFile(const string &file, const string &ending);
    void SaveRoot(const string &file, bool overwrite=true);
 
 #pragma clang diagnostic push

@@ -28,6 +28,7 @@
 #include <thread>
 #include <vector>
 #include <chrono>
+#include <filesystem>
 
 #include "RasterHists.h"
 #include "RasterEvioTool.h"
