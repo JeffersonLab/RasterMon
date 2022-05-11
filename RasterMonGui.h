@@ -107,11 +107,14 @@ public:
       }else{
          if(fDebug) std::cout << "Rate not updates.\n";
       }
-
-
    }
+
    unsigned int GetUpdateRate() const {return fUpdateRate;}
 
+   void SetDebug(int level){
+      cout << "RasterMonGui::SetDebug to level " << level << endl;
+      fDebug = level;
+   }
    void Go(){
       if(fDebug>1) std::cout << "Go \n";
       Pause(-1);

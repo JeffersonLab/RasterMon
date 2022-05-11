@@ -32,7 +32,7 @@ void RasterHists::InitTabs() {
    fHists.back().scale_x = 0.004;
    fHists.back().offset_x = -8.0;
    fHists.emplace_back(tab, 2, 59, 19, 1,  59, 19, 3,
-                       "Raster_Ixy", "Raster Pos y vs x;x[mm];y[xx]", 400, -10., 10.,  400, -10., 10.);
+                       "Raster_xy", "Raster Pos y vs x;x[mm];y[xx]", 400, -10., 10.,  400, -10., 10.);
    fTabs.back().hists.push_back( fHists.size()-1);
    fHists.back().scale_x = 0.004;
    fHists.back().offset_x = -8.0;

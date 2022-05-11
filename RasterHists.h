@@ -208,7 +208,7 @@ public:
    // does not include the fNumber identifier. We could derive from TPad, but then TCanvas->Divide() would malfunction.
    // We could *also* derive our own TCanvas, but that would be more of a mess than multiple SubPad#Resize() functions.
    void SubPadResized(int i);
-   void SubPad1Resized(){ SubPadResized(1);};
+   void SubPad1Resized(){ SubPadResized(1);};  // TODO: Reimplement using gTQSender ???
    void SubPad2Resized(){ SubPadResized(2);};
    void SubPad3Resized(){ SubPadResized(3);};
    void SubPad4Resized(){ SubPadResized(4);};

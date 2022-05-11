@@ -156,7 +156,7 @@ void RasterMonGui::StatusBarUpdate(){
    time1 = time2;
    if(fDebug>1){
       printf("Events processed:   %'10ld    delta: %5ld     Update #%5d\n", fEvio->fNEventsProcessed, delta_evt, n_updates);
-      printf("Time elapsed total: %'10lld   delta t: %5lld\n", total_t.count(), delta_t.count());
+      printf("Time elapsed total: %'10ld   delta t: %5ld\n", (long)total_t.count(), (long)delta_t.count());
       printf("Average rate:       %8.3f kHz  Current rate: %8.3f kHz\n",
              1000.*fEvio->fNEventsProcessed/total_t.count() ,1000.*delta_evt/delta_t.count());
    }
@@ -198,9 +198,11 @@ void RasterMonGui::HandleMenu(int choice) {
          new TGFileDialog(gClient->GetRoot(), this, kFDOpen, &fFileInfo);
          if(fFileInfo.fFilename){
             if(fDebug) std::cout << "Adding file " << fFileInfo.fFilename << "\n";
+            if(fEvio->fiInputFile >= fEvio->fInputFiles.size()) fEvio->fiInputFile--; // The Next() in fEvio will increase this again before opening next file!
             fEvio->AddFile(fFileInfo.fFilename);
          }
          if(fFileInfo.fFileNamesList){
+            if(fEvio->fiInputFile >= fEvio->fInputFiles.size()) fEvio->fiInputFile--;
             for(const auto &&ff: *fFileInfo.fFileNamesList){
                if(fDebug) std::cout << "Adding file " << ff->GetName() << "\n";
                fEvio->AddFile(ff->GetName());
