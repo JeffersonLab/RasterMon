@@ -194,13 +194,14 @@ public:
    void DrawCanvas(int tab_no);
    void HistFillWorker(int seed=0);
    RasterEvioTool *GetEvioPtr() const{return fEvio;}
-   void pause(){ fPause = true;}
-   void unpause(){ fPause = false;}
-   void go();
-   void stop();
-   void clear(int active_tab=-1);
+   void Pause(){ fPause = true;}
+   void UnPause(){ fPause = false;}
+   void Go();
+   void Stop();
+   void Clear(int active_tab=-1);
    void DoDraw(int active_tab=-1);
-   bool isworking(){return(fKeepWorking);}
+   bool IsWorking(){return(fKeepWorking);}
+   bool IsPaused(){return(fPause);}
 
    static TAxis * GetTopAxisFromPad(TPad *pad);
    void SubPadCopyRange(TPad *one, TPad *two);

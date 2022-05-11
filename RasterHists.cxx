@@ -412,7 +412,7 @@ void RasterHists::DrawCanvas(int tab_no) {
    canv->Update();
 }
 
-void RasterHists::stop(){
+void RasterHists::Stop(){
    fKeepWorking = false;
    for(auto &&worker : fWorkers) {
       worker.join();
@@ -420,7 +420,7 @@ void RasterHists::stop(){
    fWorkers.clear();
 }
 
-void RasterHists::go(){
+void RasterHists::Go(){
    fPause = false;
    if(fKeepWorking) return;  // Do not allow multiple go() clicks.
    fKeepWorking = true;
@@ -440,7 +440,7 @@ void RasterHists::DoDraw(int active_tab){
    }
 }
 
-void RasterHists::clear(int active_tab){
+void RasterHists::Clear(int active_tab){
    // Clear the histograms
    if(active_tab<0){ // Clear everything
       if(fDebug) std::cout << "RasterHists::clear() \n";
@@ -466,7 +466,7 @@ void RasterHists::clear(int active_tab){
          fEvio->fAdcAverageBuf.at(i_g).clear();
       }
    }
-   DoDraw();    // Draw so that even during a pause the display is updated.
+   DoDraw();    // Draw so that even during a Pause the display is updated.
 }
 
 void RasterHists::HistFillWorker(int thread_num){

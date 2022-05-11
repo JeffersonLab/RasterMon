@@ -118,27 +118,27 @@ public:
    void Go(){
       if(fDebug>1) std::cout << "Go \n";
       Pause(-1);
-      fRHists->go();
+      fRHists->Go();
    };
 
-   void Pause(int set_state=0);  // set_state: -1 = go, 0=toggle, 1 = pause;
+   void Pause(int set_state=0);  // set_state: -1 = go, 0=toggle, 1 = Pause;
 
    void Stop(){
       if(fDebug>1) std::cout << "Stop \n";
       Pause(1);
-      fRHists->stop();
+      fRHists->Stop();
    };
 
    void ClearAll(){
-      fRHists->clear(-1);
+      fRHists->Clear(-1);
    }
 
    void ClearTab(){
-      fRHists->clear(fTabAreaTabs->GetCurrent());
+      fRHists->Clear(fTabAreaTabs->GetCurrent());
    }
 
    void Clear(int what= -1){
-      fRHists->clear(what);
+      fRHists->Clear(what);
    }
 
    void Exit(){

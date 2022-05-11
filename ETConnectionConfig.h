@@ -75,18 +75,19 @@ public:
       fEvio->fETHost = HostNameToIP(fTextEntryHostName->GetText());
       fEvio->fETPort = fNumberEntryPort->GetIntNumber();
       fEvio->fETName = fTextEntryBufName->GetText();
-      cout << "Set ET system to: \n";
-      cout << "Name: " << fEvio->fETStationName << endl;
-      cout << "Host: " << fEvio->fETHost << endl;
-      cout << "Port: " << fEvio->fETPort << endl;
-      cout << "Buff: " << fEvio->fETName << endl;
-      if(fEvio) {
-         fEvio->OpenEt(fEvio->fETStationName, fEvio->fETName, fEvio->fETHost, fEvio->fETPort);
+      if(fEvio->fDebug) {
+         cout << "Set ET system to: \n";
+         cout << "Name: " << fEvio->fETStationName << endl;
+         cout << "Host: " << fEvio->fETHost << endl;
+         cout << "Port: " << fEvio->fETPort << endl;
+         cout << "Buff: " << fEvio->fETName << endl;
       }
+      if(fEvio->fIsOpen) fEvio->Close();
+      fEvio->OpenEt(fEvio->fETStationName, fEvio->fETName, fEvio->fETHost, fEvio->fETPort);
    }
 
    void Cancel(){
-      std::cout << "ETDialog Cancel\n";
+      if(fEvio->fDebug) std::cout << "ETDialog Cancel\n";
       fEvio->Close();
       fEtDialog->CloseWindow();
    }
@@ -114,7 +115,7 @@ public:
    }
 
    void CloseWindow(){
-      std::cout << "ETDialog CloseWindow\n";
+      if(fEvio->fDebug) std::cout << "ETDialog CloseWindow\n";
       Cancel();
    }
 

@@ -245,6 +245,10 @@ void RasterMonGui::HandleMenu(int choice) {
          hd->Popup();
          break;
       case M_ET_CONNECT:
+         if(fRHists->IsWorking()){
+            std::cout << "Don't mess with the ET while we are processing data! Called Stop. \n";
+            fRHists->Stop();
+         }
          et_dialog = new ETConnectionConfig(this, fEvio);
          et_dialog->Run();
          break;
@@ -279,20 +283,20 @@ void RasterMonGui::DoDraw() {
    }else {
       fRHists->DoDraw(-1);
    }
-   if (!fRHists->isworking() && !fPause) Stop();  // Stop if you detect the worker threads ended.
+   if (!fRHists->IsWorking() && !fPause) Stop();  // Stop if you detect the worker threads ended.
    // But not if Paused, because Pause calls DoDraw to make sure canvasses are updated, and we don't want to loop.
 }
 
 void RasterMonGui::Pause(int set_state){
-   // Pause or unpause, there is no try.
-   // If set_state == 1  then go to pause state -- for stop()
-   // If set_state == -1 then go to unpause state -- for go()
+   // Pause or UnPause, there is no try.
+   // If set_state == 1  then go to Pause state -- for stop()
+   // If set_state == -1 then go to UnPause state -- for go()
    if(set_state == 0){
-      if(fRHists->isworking()) {
+      if(fRHists->IsWorking()) {
          if (fPause) set_state = -1;
       }
       else{
-         if(fDebug) std::cout << "Cannot pause when I am not working. \n";
+         if(fDebug) std::cout << "Cannot Pause when I am not working. \n";
          return;
       }
    }
@@ -303,13 +307,13 @@ void RasterMonGui::Pause(int set_state){
       if(fDebug>1) std::cout << "Un-Pause \n";
       fHistUpdateTimer->TurnOn();
       fPause = false;
-      fRHists->unpause();
+      fRHists->UnPause();
    }else{
       // Pause
       if(set_state == 0) fPauseButton->SetText("&UnPause");
       if(fDebug>1) std::cout << "Pause \n";
       fHistUpdateTimer->TurnOff();
-      // fRHists->pause();
+      // fRHists->Pause();
       fPause = true;
       fUpdateSelectedTabOnly = false;  // Update all the canvases, so they show something.
       DoDraw();

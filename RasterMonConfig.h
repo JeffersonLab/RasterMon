@@ -47,7 +47,6 @@ public:
    double fScale_y = 0.004;
    double fOffset_y = -8;
 
-
 public:
    RasterMonConfig(const TGWindow *parent_window, RasterEvioTool *evio, RasterHists *hists): fParentWindow(parent_window), fEvio(evio), fHists(hists) {
       // Handle the user input for configurable settings of the program.
