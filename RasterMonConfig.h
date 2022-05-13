@@ -228,14 +228,12 @@ public:
    };
 
    void OK(){
-      cout << "OK - debug set to : " << fDebugLevelChooser->GetSelected() << "\n";
       CloseWindow();
    };
 
    void DebugSelection(int level){
       std::cout << "Debug changed to level " << level << std::endl;
       fHists->fDebug = level;
-
    }
 
    void GetScaleOffset(){

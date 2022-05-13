@@ -186,7 +186,11 @@ public:
       }
       if(fEvio->fIsOpen) fEvio->Close();
       // TODO:: Make this asynchronous, so the app does not go into spinning ball mode?
-      fEvio->OpenEt(fEvio->fETStationName, fEvio->fETName, fEvio->fETHost, fEvio->fETPort);
+      int stat = fEvio->OpenEt(fEvio->fETStationName, fEvio->fETName, fEvio->fETHost, fEvio->fETPort);
+      if(stat != ET_OK){
+         cout << "Could not properly connect to the ET ring. ReadFromEt = " << fEvio->fReadFromEt <<  " \n";
+         fEvio->fReadFromEt = false;
+      }
    }
 
    void Cancel(){

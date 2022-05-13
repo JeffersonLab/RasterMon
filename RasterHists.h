@@ -178,7 +178,8 @@ public:
 
    // For the worker fill threads.
    int  fDebug = 0;
-   bool fKeepWorking = false;  // Set to true in Go();
+   bool fKeepWorking = false;    // Set to true in Go();
+   bool fIsTryingToRead = false; // To detect if a read is hung.
    bool fPause = true;
 
    int fNWorkers = 1;

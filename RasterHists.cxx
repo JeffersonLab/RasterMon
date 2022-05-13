@@ -419,7 +419,23 @@ void RasterHists::DrawCanvas(int tab_no) {
 void RasterHists::Stop(){
    fKeepWorking = false;
    for(auto &&worker : fWorkers) {
+      if(fIsTryingToRead){
+         // The worker is actively reading. If it is hung (no event from ET) then worker.join() will hang until
+         // an event appears on the ET, which may take forever.
+         std::this_thread::sleep_for(std::chrono::seconds(1)); // Sleep for a whole 1 second.
+         for(int i=10; i>=0 && fIsTryingToRead; --i ){
+            std::this_thread::sleep_for(std::chrono::seconds(1)); // Sleep for another second.
+            std::cout << "The worker thread is still waiting for an event from ET. \n";
+            std::cout << "We cannot stop the thread until an event is received. Waiting for " << i << " more seconds.\n";
+         }
+      }
+      if(fIsTryingToRead) {
+         std::cout
+               << "Reader thread has hung. We are aborting stop(). This condition will clear with the next event on the ET.\n";
+         return;  // <-- We abandon the thread? :-(.
+      }
       worker.join();
+
    }
    fWorkers.clear();
 }
@@ -484,7 +500,9 @@ void RasterHists::HistFillWorker(int thread_num){
    while(fKeepWorking){
       if(!fPause) {
          fEvioReadLock.lock();
+         fIsTryingToRead = true;
          int stat = fEvio->Next();
+         fIsTryingToRead = false;
          if(stat != EvioTool::EvioTool_Status_OK){
             fKeepWorking = false;
             fEvioReadLock.unlock();
