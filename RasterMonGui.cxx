@@ -257,7 +257,6 @@ void RasterMonGui::HandleMenu(int choice) {
             fRHists->Stop();
          }
          et_dialog = new ETConnectionConfig(this, fEvio);
-         et_dialog->Run();
          break;
 
       case M_CONFIGURE:
@@ -274,15 +273,19 @@ void RasterMonGui::HandleMenu(int choice) {
 }
 
 void RasterMonGui::DoConfigure(){
-   cout << "Start Configure dialog.";
    if(fConfig == nullptr){
-      fConfig = new RasterMonConfig(this, fEvio, fRHists);
-      fConfig->fRasGui = this;
-      fConfig->fRefreshRate = fUpdateRate;
-      fConfig->Run();
+      if(fDebug>1) std::cout << "Start Configure new configure dialog.\n";
+      fConfig = new RasterMonConfig(this, fEvio, fRHists, fUpdateRate, 0);
    }else{
-      fConfig->fConfigDialog->RaiseWindow();
-      fConfig->fConfigDialog->Move(0,0);
+      auto x = this->GetX();
+      auto y = this->GetY();
+      int x2, y2;
+      this->GetWMPosition(x2, y2);
+      if(fDebug>1){
+         std::cout << "Configure already open. Raise and recenter. \n";
+         printf("POS: (%d, %d) WM (%d, %d) \n",x,y,x2,y2);
+      }
+      fConfig->RaiseWindow();
    }
 }
 

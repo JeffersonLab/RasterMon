@@ -19,14 +19,10 @@
 
 #include "RasterEvioTool.h"
 
-class ETConnectionConfig {
-
-   RQ_OBJECT("ETConnectionConfig");
+class ETConnectionConfig: public TGTransientFrame {
 
 public:
-   const TGWindow *fParentWindow;
    RasterEvioTool *fEvio;
-   TGTransientFrame *fEtDialog;
    TGComboBox *fPredefCombo;
    TGTextEntry *fTextEntryStationName;
    TGTextEntry *fTextEntryHostName;
@@ -54,9 +50,115 @@ public:
 
 
 public:
-   ETConnectionConfig(const TGWindow *parent_window, RasterEvioTool *evio): fParentWindow(parent_window), fEvio(evio) {
+   ETConnectionConfig(TGWindow *parent_window, RasterEvioTool *evio): fEvio(evio),
+   TGTransientFrame(gClient->GetRoot(), parent_window, 400, 200){
       // Handle the user input for making the ET ring "work".
       // See the tutorial/gui/guitest.C class TestDialog for examples on building dialogs.
+      // Pop up the window and process user input.
+      int label_width = 100;
+      int field_width = 200;
+      SetWindowName("ET Configure Dialog");
+      Connect("CloseWindow()", "ETConnectionConfig", this, "CloseWindow()");
+      DontCallClose(); // to avoid double deletions.
+      // use hierarchical cleaning
+      SetCleanup(kDeepCleanup);
+
+      // Bottom buttons:  Reconnect, Cancal, OK.
+      auto Frame1 = new TGHorizontalFrame(this, 400, 20, kFixedWidth);
+      auto OkButton = new TGTextButton(Frame1, "&Ok", 991);
+      OkButton->Connect("Clicked()", "ETConnectionConfig", this, "OK()");
+      OkButton->Connect("Clicked()", "RasterMonGui", (TGWindow *)parent_window, "CloseETConfigure()");
+      auto CancelButton = new TGTextButton(Frame1, "&Cancel", 992);
+      CancelButton->Connect("Clicked()", "ETConnectionConfig", this, "Cancel()");
+      CancelButton->Connect("Clicked()", "RasterMonGui", (TGWindow *)parent_window, "CloseETConfigure()");
+      auto ReconnectButton = new TGTextButton(Frame1, "&Reconnect", 993);
+      ReconnectButton->Connect("Clicked()", "ETConnectionConfig", this, "Reconnect()");
+      auto L1 = new TGLayoutHints(kLHintsTop | kLHintsRight , //| kLHintsExpandX,
+                                  2, 2, 2, 2);
+      auto L2 = new TGLayoutHints(kLHintsBottom | kLHintsRight, 2, 2, 5, 1);
+
+      Frame1->AddFrame(OkButton, L1);
+      Frame1->AddFrame(CancelButton, L1);
+      Frame1->AddFrame(ReconnectButton, L1);
+      Frame1->Resize(400, OkButton->GetDefaultHeight());
+      AddFrame(Frame1, L2);
+
+      auto Frame2 = new TGVerticalFrame(this, 350, 250, kFixedWidth | kFixedHeight);
+
+      auto *h_frame2 = new TGHorizontalFrame(Frame2);
+      Frame2->AddFrame(h_frame2, new TGLayoutHints(kLHintsExpandX, 10, 2, 10, 2));
+      auto label2 = new TGLabel(h_frame2,"Select Default:      ");
+      h_frame2->AddFrame(label2, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 10, 35, 5, 5));
+      label2->Resize(label_width, 25);
+      fPredefCombo = new TGComboBox(h_frame2);
+      h_frame2->AddFrame(fPredefCombo, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsCenterY ));
+      fPredefCombo->Resize(field_width-100, 25);
+      std::map<string, string>::iterator it;
+      int i = 0;
+      fPredefCombo->AddEntry("          ", i++);
+      for(it = fETSysKnown.begin(); it!= fETSysKnown.end(); ++it){
+         // cout << "Adding " << it->first << " - " << it->second << endl;
+         fPredefCombo->AddEntry(it->first.c_str(), i++);
+      }
+      int select = HostNameToChoice(fEvio->fETHost) + 1;
+      if(select >=0 ) fPredefCombo->Select(select, kFALSE);
+      fPredefCombo->Connect("Selected(const char *)","ETConnectionConfig", this, "HandleETDefault(char *)");
+
+      auto *h_frame1 = new TGHorizontalFrame(Frame2);
+      Frame2->AddFrame(h_frame1, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY, 10, 2, 20, 2));
+      auto label1 = new TGLabel(h_frame1, "ET Station Name:    ");
+      h_frame1->AddFrame(label1, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 10, 10, 5, 5));
+      label1->Resize(label_width, 25);
+      fTextEntryStationName = new TGTextEntry(h_frame1);
+      h_frame1->AddFrame(fTextEntryStationName, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsCenterY , 10, 10, 5, 5));
+      fTextEntryStationName->Resize(field_width, 25);
+      fTextEntryStationName->SetText(fEvio->fETStationName.c_str());
+      fTextEntryStationName->SetTextColor(gROOT->GetColor(kGreen + 2));
+
+      auto *h_frame3 = new TGHorizontalFrame(Frame2);
+      Frame2->AddFrame(h_frame3, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY, 10, 2, 20, 2));
+      auto label3 = new TGLabel(h_frame3, "ET Host Name or ip: ");
+      h_frame3->AddFrame(label3, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 10, 10, 5, 5));
+      label3->Resize(label_width, 25);
+      fTextEntryHostName = new TGTextEntry(h_frame3);
+      h_frame3->AddFrame(fTextEntryHostName, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsCenterY , 10, 10, 5, 5));
+      fTextEntryHostName->Resize(field_width, 25);
+      fTextEntryHostName->SetText(fEvio->fETHost.c_str());
+      fTextEntryHostName->SetTextColor(gROOT->GetColor(kGreen + 2));
+
+      auto *h_frame4 = new TGHorizontalFrame(Frame2);
+      Frame2->AddFrame(h_frame4, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY, 10, 2, 20, 2));
+      auto label4 = new TGLabel(h_frame4, "ET Port:            ");
+      h_frame4->AddFrame(label4, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 10, 35, 5, 5));
+      label4->Resize(label_width, 25);
+      fNumberEntryPort = new TGNumberEntry(h_frame4, fEvio->fETPort, 5, 1, TGNumberFormat::kNESInteger, TGNumberFormat::kNEAPositive);
+      h_frame4->AddFrame(fNumberEntryPort, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsCenterY , 10, 10, 5, 5));
+      fNumberEntryPort->Resize(field_width, 25);
+      fNumberEntryPort->SetIntNumber(fEvio->fETPort);
+
+      auto *h_frame5 = new TGHorizontalFrame(Frame2);
+      Frame2->AddFrame(h_frame5, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY, 10, 2, 20, 2));
+      auto label5 = new TGLabel(h_frame5, "ET Buffer name:     ");
+      h_frame5->AddFrame(label5, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 10, 10, 5, 5));
+      label5->Resize(label_width, 25);
+      fTextEntryBufName = new TGTextEntry(h_frame5);
+      h_frame5->AddFrame(fTextEntryBufName, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsCenterY , 10, 10, 5, 5));
+      fTextEntryBufName->Resize(field_width, 25);
+      fTextEntryBufName->SetText(fEvio->fETName.c_str());
+      fTextEntryBufName->SetTextColor(gROOT->GetColor(kGreen + 2));
+
+      AddFrame(Frame2, new TGLayoutHints(kLHintsTop));
+      MapSubwindows();
+
+      UInt_t width = GetDefaultWidth();
+      UInt_t height = GetDefaultHeight();
+      Resize(width, height);
+      CenterOnParent();
+      // make the message box non-resizable
+      SetWMSize(width, height);
+      SetWMSizeHints(width, height, width, height, 0, 0);
+      MapWindow();
+      fClient->WaitFor(this);
    };
    virtual ~ETConnectionConfig(){};
 
@@ -69,7 +171,7 @@ public:
    }
 
    void OK(){
-      fEtDialog->CloseWindow();
+      TGTransientFrame::CloseWindow();
       fIsOK = true;
       fEvio->fETStationName = fTextEntryStationName->GetText();
       fEvio->fETHost = HostNameToIP(fTextEntryHostName->GetText());
@@ -83,13 +185,14 @@ public:
          cout << "Buff: " << fEvio->fETName << endl;
       }
       if(fEvio->fIsOpen) fEvio->Close();
+      // TODO:: Make this asynchronous, so the app does not go into spinning ball mode?
       fEvio->OpenEt(fEvio->fETStationName, fEvio->fETName, fEvio->fETHost, fEvio->fETPort);
    }
 
    void Cancel(){
       if(fEvio->fDebug) std::cout << "ETDialog Cancel\n";
       fEvio->Close();
-      fEtDialog->CloseWindow();
+      TGTransientFrame::CloseWindow();
    }
 
    string HostNameToIP(string name){
@@ -133,110 +236,6 @@ public:
 };
 
 inline void ETConnectionConfig::Run(){
-   // Pop up the window and process user input.
-   int label_width = 100;
-   int field_width = 200;
-   fEtDialog = new TGTransientFrame(gClient->GetRoot(), fParentWindow, 400, 200);
-   fEtDialog->SetWindowName("ET Configure Dialog");
-   fEtDialog->Connect("CloseWindow()", "ETConnectionConfig", this, "CloseWindow()");
-   fEtDialog->DontCallClose(); // to avoid double deletions.
-   // use hierarchical cleaning
-   fEtDialog->SetCleanup(kDeepCleanup);
-
-   // Bottom buttons:  Reconnect, Cancal, OK.
-   auto Frame1 = new TGHorizontalFrame(fEtDialog, 400, 20, kFixedWidth);
-   auto OkButton = new TGTextButton(Frame1, "&Ok", 1);
-   OkButton->Connect("Clicked()", "ETConnectionConfig", this, "OK()");
-   auto CancelButton = new TGTextButton(Frame1, "&Cancel", 2);
-   CancelButton->Connect("Clicked()", "ETConnectionConfig", this, "Cancel()");
-   auto ReconnectButton = new TGTextButton(Frame1, "&Reconnect", 3);
-   ReconnectButton->Connect("Clicked()", "ETConnectionConfig", this, "Reconnect()");
-   auto L1 = new TGLayoutHints(kLHintsTop | kLHintsRight , //| kLHintsExpandX,
-                               2, 2, 2, 2);
-   auto L2 = new TGLayoutHints(kLHintsBottom | kLHintsRight, 2, 2, 5, 1);
-
-   Frame1->AddFrame(OkButton, L1);
-   Frame1->AddFrame(CancelButton, L1);
-   Frame1->AddFrame(ReconnectButton, L1);
-   Frame1->Resize(400, OkButton->GetDefaultHeight());
-   fEtDialog->AddFrame(Frame1, L2);
-
-   auto Frame2 = new TGVerticalFrame(fEtDialog, 350, 250, kFixedWidth | kFixedHeight);
-
-   auto *h_frame2 = new TGHorizontalFrame(Frame2);
-   Frame2->AddFrame(h_frame2, new TGLayoutHints(kLHintsExpandX, 10, 2, 10, 2));
-   auto label2 = new TGLabel(h_frame2,"Select Default:      ");
-   h_frame2->AddFrame(label2, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 10, 35, 5, 5));
-   label2->Resize(label_width, 25);
-   fPredefCombo = new TGComboBox(h_frame2);
-   h_frame2->AddFrame(fPredefCombo, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsCenterY ));
-   fPredefCombo->Resize(field_width-100, 25);
-   std::map<string, string>::iterator it;
-   int i = 0;
-   fPredefCombo->AddEntry("          ", i++);
-   for(it = fETSysKnown.begin(); it!= fETSysKnown.end(); ++it){
-      // cout << "Adding " << it->first << " - " << it->second << endl;
-      fPredefCombo->AddEntry(it->first.c_str(), i++);
-   }
-   int select = HostNameToChoice(fEvio->fETHost) + 1;
-   if(select >=0 ) fPredefCombo->Select(select, kFALSE);
-   fPredefCombo->Connect("Selected(const char *)","ETConnectionConfig", this, "HandleETDefault(char *)");
-
-   auto *h_frame1 = new TGHorizontalFrame(Frame2);
-   Frame2->AddFrame(h_frame1, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY, 10, 2, 20, 2));
-   auto label1 = new TGLabel(h_frame1, "ET Station Name:    ");
-   h_frame1->AddFrame(label1, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 10, 10, 5, 5));
-   label1->Resize(label_width, 25);
-   fTextEntryStationName = new TGTextEntry(h_frame1);
-   h_frame1->AddFrame(fTextEntryStationName, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsCenterY , 10, 10, 5, 5));
-   fTextEntryStationName->Resize(field_width, 25);
-   fTextEntryStationName->SetText(fEvio->fETStationName.c_str());
-   fTextEntryStationName->SetTextColor(gROOT->GetColor(kGreen + 2));
-
-   auto *h_frame3 = new TGHorizontalFrame(Frame2);
-   Frame2->AddFrame(h_frame3, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY, 10, 2, 20, 2));
-   auto label3 = new TGLabel(h_frame3, "ET Host Name or ip: ");
-   h_frame3->AddFrame(label3, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 10, 10, 5, 5));
-   label3->Resize(label_width, 25);
-   fTextEntryHostName = new TGTextEntry(h_frame3);
-   h_frame3->AddFrame(fTextEntryHostName, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsCenterY , 10, 10, 5, 5));
-   fTextEntryHostName->Resize(field_width, 25);
-   fTextEntryHostName->SetText(fEvio->fETHost.c_str());
-   fTextEntryHostName->SetTextColor(gROOT->GetColor(kGreen + 2));
-
-   auto *h_frame4 = new TGHorizontalFrame(Frame2);
-   Frame2->AddFrame(h_frame4, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY, 10, 2, 20, 2));
-   auto label4 = new TGLabel(h_frame4, "ET Port:            ");
-   h_frame4->AddFrame(label4, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 10, 35, 5, 5));
-   label4->Resize(label_width, 25);
-   fNumberEntryPort = new TGNumberEntry(h_frame4, fEvio->fETPort, 5, 1, TGNumberFormat::kNESInteger, TGNumberFormat::kNEAPositive);
-   h_frame4->AddFrame(fNumberEntryPort, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsCenterY , 10, 10, 5, 5));
-   fNumberEntryPort->Resize(field_width, 25);
-   fNumberEntryPort->SetIntNumber(fEvio->fETPort);
-   
-   auto *h_frame5 = new TGHorizontalFrame(Frame2);
-   Frame2->AddFrame(h_frame5, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY, 10, 2, 20, 2));
-   auto label5 = new TGLabel(h_frame5, "ET Buffer name:     ");
-   h_frame5->AddFrame(label5, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 10, 10, 5, 5));
-   label5->Resize(label_width, 25);
-   fTextEntryBufName = new TGTextEntry(h_frame5);
-   h_frame5->AddFrame(fTextEntryBufName, new TGLayoutHints(kLHintsRight | kLHintsExpandX | kLHintsCenterY , 10, 10, 5, 5));
-   fTextEntryBufName->Resize(field_width, 25);
-   fTextEntryBufName->SetText(fEvio->fETName.c_str());
-   fTextEntryBufName->SetTextColor(gROOT->GetColor(kGreen + 2));
-
-   fEtDialog->AddFrame(Frame2, new TGLayoutHints(kLHintsTop));
-   fEtDialog->MapSubwindows();
-
-   UInt_t width = fEtDialog->GetDefaultWidth();
-   UInt_t height = fEtDialog->GetDefaultHeight();
-   fEtDialog->Resize(width, height);
-   fEtDialog->CenterOnParent();
-   // make the message box non-resizable
-   fEtDialog->SetWMSize(width, height);
-   fEtDialog->SetWMSizeHints(width, height, width, height, 0, 0);
-   fEtDialog->MapWindow();
-
 }
 
 

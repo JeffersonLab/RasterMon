@@ -92,8 +92,15 @@ public:
    void HandleMenu(int choice);
    void DoConfigure();
 
+   void CloseConfigure(){
+      fConfig->OK();
+      fConfig = nullptr;
+   }
+
+
+
    void SetUpdateRate(){
-      unsigned long rate=1000;
+      unsigned long rate=0;
       if(fConfig){
          rate = fConfig->fNumberEntryRate->GetIntNumber();
          if(fDebug) std::cout << "Set update rate to: " << rate << std::endl;

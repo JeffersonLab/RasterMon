@@ -17,6 +17,6 @@ void RasterLogBookEntry::MakeEntry(int i) {
 
 void RasterLogBookEntry::EntryDialog(int i){
    std::cout << "Should be making an entry. \n";
-   std::this_thread::sleep_for(std::chrono::seconds(10));
+   std::this_thread::sleep_for(std::chrono::seconds(30));
    std::cout << "Done typing and submitted... ? \n";
 }
