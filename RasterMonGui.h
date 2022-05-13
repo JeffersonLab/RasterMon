@@ -34,6 +34,7 @@
 #include "RasterEvioTool.h"
 #include "ETConnectionConfig.h"
 #include "RasterMonConfig.h"
+#include "RasterLogBookEntry.h"
 
 class RasterMonGui : public TGMainFrame {
 
@@ -48,6 +49,9 @@ public:
       M_HELP_ABOUT
    };
 
+   unsigned int fWindowWidth;
+   unsigned int fWindowHeight;
+
    TGTab *fTabAreaTabs = nullptr;
    std::unique_ptr<TGMenuBar> fMenuBar = nullptr;
    std::unique_ptr<TGStatusBar> fStatusBar = nullptr;
@@ -55,7 +59,7 @@ public:
    bool fPause = false;
    std::unique_ptr<TTimer> fHistUpdateTimer = nullptr;
 
-   std::unique_ptr<RasterHists> fRHists = nullptr;
+   RasterHists* fRHists = nullptr;
    RasterEvioTool *fEvio = nullptr;  // Not an object we own, just a handy pointer.
    TGFileInfo fFileInfo;             // Contains file(s) chosen by Open dialog or populated from command line.
    TGFileInfo fSaveFileInfo;         // Contains info for Histogram Save dialog.
@@ -63,6 +67,7 @@ public:
 
    RasterMonConfig *fConfig = nullptr;
    bool fUpdateSelectedTabOnly = true;
+   std::unique_ptr<RasterLogBookEntry> fLogBook = nullptr;
 
 public:
    int fDebug = 0;
@@ -76,21 +81,11 @@ public:
       // Cleanup specifically allocated memory.
    }
 
-   void Init(UInt_t w, UInt_t h);
+   void Init();
    void DoDraw();
-
-//   void AddFile(const string file){
-//      std::cout << "Adding file :" << file << std::endl;
-//      if(fFileInfo.fFileNamesList == nullptr ){
-//         fFileInfo.fFileNamesList = new TList();
-//      }
-//      auto file_obj = new TObjString(file.c_str());
-//      fFileInfo.fFileNamesList->Add(file_obj);
-//   };
-
-   void SetupGUI(UInt_t w, UInt_t h);
+   void SetupGUI();
    void AddMenuBar();
-   void AddTabArea(UInt_t w, UInt_t h);
+   void AddTabArea();
    void AddControlBar();
    void AddStatusBar();
    void StatusBarUpdate();
@@ -145,6 +140,12 @@ public:
       Stop();
       cout << "Exiting RasterMon. Bye now. \n";
       gApplication->Terminate();
+   }
+
+   void MakeLogEntry(){
+      // Receives the signal from the Log Book button.
+      cout << "Make a log book entry!\n";
+      fLogBook->MakeEntry(0);
    }
 
    Bool_t HandleTimer(TTimer *timer) override{

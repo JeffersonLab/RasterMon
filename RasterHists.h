@@ -47,7 +47,7 @@ struct Graph_t {   // Object to hold the information for each scope channel for 
    unsigned char width; // Line width
    bool show;      // Set false to not draw the TGraph, but still accumulate the data.
    int data_index; // Index into the data buffers. Filled when EVIO is setup.
-   unique_ptr<TGraph> graph = nullptr; // The TGraph object that actually contains the data.
+   TGraph *graph = nullptr; // The TGraph object that actually contains the data.
    Graph_t(unsigned char tab_number, unsigned char pad_number,
            unsigned int bank_tag, unsigned char slot, unsigned char adc_chan,
            string name, string title, string legend, unsigned int color, unsigned char width, bool show):
@@ -56,8 +56,11 @@ struct Graph_t {   // Object to hold the information for each scope channel for 
       data_index = -1;
       init_graph();
    };
+//   ~Graph_t(){                            // TODO: No destructor = potential memory leak on graph.
+//      if(graph != nullptr) delete graph;  // TODO: Add destructor, copy constructor, etc etc.
+//   }
    void init_graph(){
-      graph = make_unique<TGraph>();
+      graph = new TGraph();
       graph->SetTitle(title.c_str());
       graph->SetName(name.c_str());
       graph->SetLineColor(color);
@@ -87,12 +90,12 @@ struct Histogram_t {  // Object to hold the information for each histogram chann
    int special_draw = 0;  // Special way of drawing this histogram.
    string draw_opt = "";  // Drawing option.
    string legend="";      // Legend entry. -- Usually blank, so no legend.
-   std::unique_ptr<TH1> hist = nullptr;  // Histogram. -- Note: Must be either a unique_ptr, OR we need to be really careful with copy and move constructors.
+   TH1 *hist = nullptr;  // Histogram. -- Note: Must be either a unique_ptr, OR we need to be really careful with copy and move constructors.
    Histogram_t(unsigned char tab_number, unsigned char pad_number,
                unsigned int bank_tag, unsigned char slot, unsigned char adc_chan,
                string name, string title, int nx, double x_min, double x_max) :
-         bank_tag(bank_tag), slot(slot), adc_chan(adc_chan), tab_number(tab_number), pad_number(pad_number),
-         hist(make_unique<TH1D>(name.c_str(), title.c_str(), nx, x_min, x_max)){
+         bank_tag(bank_tag), slot(slot), adc_chan(adc_chan), tab_number(tab_number), pad_number(pad_number){
+      hist = new TH1D(name.c_str(), title.c_str(), nx, x_min, x_max);
       show = true;
    };
 
@@ -103,10 +106,11 @@ struct Histogram_t {  // Object to hold the information for each histogram chann
          bank_tag(bank_tag_x), slot(slot_x), adc_chan(adc_chan_x),
          bank_tag2(bank_tag_y), slot2(slot_y), adc_chan2(adc_chan_y),
          tab_number(tab_number), pad_number(pad_number) {
-      auto hist2d = make_unique<TH2D>(name.c_str(), title.c_str(), nx, x_min, x_max, ny, y_min, y_max);
-      hist = unique_ptr<TH1>(static_cast<TH1 *>(hist2d.release()));
+      hist = new TH2D(name.c_str(), title.c_str(), nx, x_min, x_max, ny, y_min, y_max);
       show = true;
    }
+   // TODO: No destructor = potential memory leak on graph.
+   // TODO: Add the 5 from the Rule of 5.
    // Note on *DESTRUCTOR*  == The Rule of 5.
    // IF you choose to have a non-defaulted destructor (i.e. include a ~Histogram_t()), then you *MUST* also include
    // a copy constructor, a move constructor, a copy assignment and a move assignment, because none of these will be default.
@@ -122,16 +126,16 @@ struct Histogram_t {  // Object to hold the information for each histogram chann
 
    [[nodiscard]] TH1 *GetTH1() const{
       // Return a TH1D histogram pointer. No checks are made that the histogram is there.
-      return hist.get();
+      return hist;
    }
 
    [[nodiscard]] TH1D *GetHist() const{
       // Return a TH1D histogram pointer. No checks are made that the histogram is there.
-      return dynamic_cast<TH1D *>(hist.get());
+      return dynamic_cast<TH1D *>(hist);
    }
    [[nodiscard]] TH2D *GetHist2D() const{
       // Return a TH2D histogram pointer. Note: No check is made that this is indeed a 2D histogram!
-      return dynamic_cast<TH2D *>(hist.get());
+      return dynamic_cast<TH2D *>(hist);
    }
 
 };
@@ -153,7 +157,6 @@ struct TabSpace_t{  // Object for each of the tabs.
    TabSpace_t(string name,unsigned int nx, unsigned int ny, float x_margin=0.01, float y_margin = 0.01):
       name(std::move(name)), nx(nx), ny(ny), npads(nx*ny), x_margin(x_margin), y_margin(y_margin), canvas(nullptr){ };
 };
-
 
 class RasterHists : public TQObject, public TObject{
 
@@ -189,7 +192,8 @@ public:
 
    void InitTabs();
    TGTab *AddTabArea(TGWindow *frame, int w, int h);
-   void SetupData(TabSpace_t &tab);
+   void SetupTab(TabSpace_t &tab);
+   void SetupData();
    void ResizeScopeGraphs(unsigned long size);
    void DrawCanvas(int tab_no);
    void HistFillWorker(int seed=0);
@@ -230,5 +234,6 @@ ClassDef(RasterHists, 0)
 
 };
 
+void Default_Initialize_Histograms(RasterHists *r, RasterEvioTool *e);
 
 #endif //RASTERMON_RASTERHISTS_H

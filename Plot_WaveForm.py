@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import sys
-sys.path.append("/Users/maurik/root/root.git/lib")
 import ROOT
 import numpy as np
 
@@ -17,7 +16,12 @@ except ImportError:
     print("Sorry, but to make the nice plots, you really need a computer with 'plotly' installed.")
     sys.exit(1)
 
-ROOT.gSystem.Load("cbuild/libRasterLib.dylib")
+lib_found = ROOT.gSystem.FindDynamicLibrary("libRasterLib")
+if len(lib_found):
+    ROOT.gSystem.Load("libRasterLib")
+else:
+    print("Please make sure the libRasterLib (.so, .dylib) is in your LD_LIBRARY_PATH.")
+    sys.exit(1)
 
 if len(sys.argv) < 2:
     print(f"Please specify input file. {sys.argv[0]}")

@@ -1,4 +1,7 @@
 #include "RasterMon.h"
+#include "TRint.h"
+
+extern void Initialize_Histograms(RasterHists *r, RasterEvioTool *e);
 
 int main(int argc, char **argv) {
    ROOT::EnableThreadSafety();
@@ -23,18 +26,21 @@ int main(int argc, char **argv) {
    string host;
    unsigned int port = 11111;
    string etname;
+   string config_file;
 
    options.add_options()
       ("d,debug", "Increase debug level")
       ("q,quiet", "Run extra quiet.")
-      ("t,et", "Connect to ET instead of reading from file. ")
-      ("h, host", "Host computer for the ET system, default: " ET_DEFAULT_HOST,
+      ("et", "Connect to ET instead of reading from file. ")
+      ("host", "Host computer for the ET system, default: " ET_DEFAULT_HOST,
             cxxopts::value(host)->default_value(ET_DEFAULT_HOST))
-      ("p, port", "Port to use for the ET system, default: " + to_string(ET_DEFAULT_PORT),
+      ("port", "Port to use for the ET system, default: " + to_string(ET_DEFAULT_PORT),
             cxxopts::value(port)->default_value(to_string(ET_DEFAULT_PORT)))
-      ("f, etname", "filename for ET system direct reads, default: " ET_DEFAULT_NAME,
+      ("etname", "filename for ET system direct reads, default: " ET_DEFAULT_NAME,
             cxxopts::value(etname)->default_value(ET_DEFAULT_NAME))
-      ("i,inputfiles","List of input evio files. The -i is optional. ",
+      ("config", "Configuration root macro file. default (none)",
+            cxxopts::value(config_file)->default_value(""))
+      ("inputfiles","List of input evio files. The -i is optional. ",
             cxxopts::value<std::vector<std::string>>())
       ("help", "Print help")
       ;
@@ -51,18 +57,38 @@ int main(int argc, char **argv) {
       int debug = args.count("debug");       // Debug: 0 = info,  1 = more info, 2+ debug info.
       if (args.count("quiet") > 0) debug = -1; // Debug: -1 = no info.
 
+      cout << "At this point etname = " << etname << endl;
+      cout << "options: " << args.count("etname") << " has " << args["etname"].as<string>() << "\n";
+
       TApplication theApp("App", &argc, argv);
+      // TRint theApp("App", &argc, argv);
 
       auto evio = new RasterEvioTool();
-      evio->SetETHost(host);
-      evio->SetETPort(port);
-      evio->SetETName(etname);
+      auto RHists = new RasterHists(evio);
+      auto rastermon = new RasterMonGui(RHists, gClient->GetRoot(), 800, 600);
 
       if (debug == 1) evio->fDebug = 0;
       if (debug > 1) evio->fDebug = EvioTool::EvioTool_Debug_Info;
       if (debug > 2) evio->fDebug += EvioTool::EvioTool_Debug_Info2;
       if (debug > 3) evio->fDebug += EvioTool::EvioTool_Debug_L1;
       if (debug > 4) evio->fDebug += EvioTool::EvioTool_Debug_L2;
+      RHists->SetDebug(debug);
+
+      // Parse the Config file FIRST. Then have command line options potentially override some of them (i.e. for ET)
+//      if( args.count("config")){
+//         cout << "Config file: " << config_file << " specified on command line. Parsing it.\n";
+//         cout << "This file exists? " << std::filesystem::exists( std::filesystem::path(config_file)) << "\n";
+//         string process_line = ".x " + config_file; // + "++";
+//         gROOT->ProcessLine(".x tests/config.C");
+//      }
+
+      void *test_ptr;
+      gROOT->LoadMacro("tests/config.C");
+
+
+      Default_Initialize_Histograms(RHists, evio);
+      RHists->SetupData();
+
 
       // Add the commandline files to the RasterEvioTool
       if (args.count("inputfiles")) {
@@ -72,6 +98,10 @@ int main(int argc, char **argv) {
             evio->AddFile(v.c_str());
          }
       }
+
+      if(args.count("host") || evio->fETHost.empty() ) evio->SetETHost(host);
+      if(args.count("port") || evio->fETPort == 0) evio->SetETPort(port);
+      if(args.count("etname") || evio->fETName.empty()) evio->SetETName(etname);
 
       if (args.count("et")) {
          if (debug)
@@ -84,12 +114,11 @@ int main(int argc, char **argv) {
          }
       }
 
-      auto RHists = new RasterHists(evio);
-      RHists->SetDebug(debug);
-      auto rastermon = new RasterMonGui(RHists, gClient->GetRoot(), 800, 600);
+      rastermon->SetupGUI();
       rastermon->fDebug = debug;
       theApp.Run();
-   }catch(exception e){
+
+   }catch(const cxxopts::OptionException &e){
       cout << e.what() << endl;
       std::cout << options.help() << std::endl;
       return 1;

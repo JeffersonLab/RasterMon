@@ -5,18 +5,17 @@
 #include "RasterMonGui.h"
 
 RasterMonGui::RasterMonGui(RasterHists *hist, const TGWindow *p, UInt_t w, UInt_t h)
-      : fRHists(hist), TGMainFrame(p,w,h) {
-   Init(w,h);
+      : fWindowWidth(w), fWindowHeight(h), fRHists(hist), TGMainFrame(p,w,h) {
+   Init();
 }
 
-void RasterMonGui::Init(UInt_t w, UInt_t h){
+void RasterMonGui::Init(){
 
    setlocale(LC_NUMERIC, "");  // This helps with fancy printing numbers, setting locale => printf("%'d",i) now works.
 
    static const char *gfFileTypes[] = {
          "EVIO data",   "*.evio.*",
          "EVIO File",   "*.evio",
-//      "HIPO file",   "*.hipo",
          0,               0
    };
 
@@ -28,9 +27,8 @@ void RasterMonGui::Init(UInt_t w, UInt_t h){
    fSaveFileInfo.SetIniDir(std::filesystem::current_path().c_str());
    fSaveFileInfo.fFileTypes = gfFileSaveTypes;
    fSaveFileInfo.SetFilename("RasterMonHists");
-
-   SetupGUI(w, h);
    fHistUpdateTimer = std::make_unique<TTimer>(this, fUpdateRate) ;
+   fLogBook = std::make_unique<RasterLogBookEntry>(this);
    fEvio = fRHists->GetEvioPtr();
 }
 
@@ -71,50 +69,59 @@ void RasterMonGui::AddMenuBar(){
 void RasterMonGui::AddControlBar(){
    // Bottom bar with control buttons.
 
-   auto *hframe=new TGHorizontalFrame(this, 10 ,10);
+   auto *hframe=new TGHorizontalFrame(this, fWindowWidth ,10);
+   // Add the button frame to the window.
+   AddFrame(hframe,new TGLayoutHints(kLHintsExpandX,2,4,2,2));
 
-   auto *go = new TGTextButton(hframe,"&Go");
+   auto hframe_sub = new TGHorizontalFrame(hframe, 120, 10 );
+   hframe->AddFrame(hframe_sub,new TGLayoutHints(kLHintsLeft,150,4,2,2) );
+   auto *go = new TGTextButton(hframe_sub,"&Go");
    go->Connect("Clicked()","RasterMonGui",this,"Go()");
-   hframe->AddFrame(go, new TGLayoutHints(kLHintsCenterX,
+   hframe_sub->AddFrame(go, new TGLayoutHints(kLHintsCenterX,
                                           5,5,3,4));
 
-   fPauseButton = new TGTextButton(hframe," &Pause ");
+   fPauseButton = new TGTextButton(hframe_sub," &Pause ");
    fPauseButton->Connect("Clicked()","RasterMonGui",this,"Pause()");
-   hframe->AddFrame(fPauseButton, new TGLayoutHints(kLHintsCenterX,
+   hframe_sub->AddFrame(fPauseButton, new TGLayoutHints(kLHintsCenterX,
                                              5,5,3,4));
 
    TGButton *stop;
    auto stop_pic =  gClient->GetPicture("ed_interrupt.png");
    if(stop_pic){
-      stop = new TGPictureButton(hframe, stop_pic);
+      stop = new TGPictureButton(hframe_sub, stop_pic);
    }else{
-      stop = new TGTextButton(hframe, "&Stop");
+      stop = new TGTextButton(hframe_sub, "&Stop");
    }
    stop->Connect("Clicked()","RasterMonGui",this,"Stop()");
-   hframe->AddFrame(stop, new TGLayoutHints(kLHintsCenterX,
+   hframe_sub->AddFrame(stop, new TGLayoutHints(kLHintsCenterX,
                                             5,5,3,4));
 
-   auto *cleartab = new TGTextButton(hframe,"&Clear");
+   auto *cleartab = new TGTextButton(hframe_sub,"&Clear");
    cleartab->Connect("Clicked()","RasterMonGui",this,"ClearTab()");
-   hframe->AddFrame(cleartab, new TGLayoutHints(kLHintsCenterX,
+   hframe_sub->AddFrame(cleartab, new TGLayoutHints(kLHintsCenterX,
                                              5,5,3,4));
 
-   auto *clear = new TGTextButton(hframe,"&Clear All");
+   auto *clear = new TGTextButton(hframe_sub,"&Clear All");
    clear->Connect("Clicked()","RasterMonGui",this,"ClearAll()");
-   hframe->AddFrame(clear, new TGLayoutHints(kLHintsCenterX,
+   hframe_sub->AddFrame(clear, new TGLayoutHints(kLHintsCenterX,
                                              5,5,3,4));
+
+   auto *config = new TGTextButton( hframe, "Config");
+   config->Connect("Clicked()","RasterMonGui", this, "DoConfigure()");
+   hframe->AddFrame(config, new TGLayoutHints(kLHintsCenterX, 50,5,3,4));
+
+   auto *logentry = new TGTextButton( hframe, "Log Entry");
+   logentry->Connect("Clicked()","RasterMonGui", this, "MakeLogEntry()");
+   hframe->AddFrame(logentry, new TGLayoutHints(kLHintsCenterX, 50,5,3,4));
 
    auto exit_pic =  gClient->GetPicture("ed_quit.png");
    auto *exit = new TGPictureButton(hframe, exit_pic);
 //   TGTextButton *exit = new TGTextButton(hframe,"&Exit");
    exit->Connect("Clicked()","RasterMonGui",this,"Exit()");
-   hframe->AddFrame(exit, new TGLayoutHints(kLHintsCenterX,
-                                            5,5,3,4));
-   AddFrame(hframe,new TGLayoutHints(kLHintsCenterX,2,2,2,2));
+   hframe->AddFrame(exit, new TGLayoutHints(kLHintsRight,
+                                            100,5,3,10));
 
-   auto *config = new TGTextButton( hframe, "Config");
-   config->Connect("Clicked()","RasterMonGui", this, "DoConfigure()");
-   hframe->AddFrame(config, new TGLayoutHints(kLHintsRight, 50,5,3,4));
+
 }
 
 void RasterMonGui::AddStatusBar() {
@@ -162,19 +169,19 @@ void RasterMonGui::StatusBarUpdate(){
    }
 }
 
-void RasterMonGui::AddTabArea(UInt_t w, UInt_t h) {
+void RasterMonGui::AddTabArea() {
    //--------- create the Tab widget
-   fRHists->InitTabs();
-   fTabAreaTabs = fRHists->AddTabArea(this, w, h);
+   fTabAreaTabs = fRHists->AddTabArea(this, fWindowWidth, fWindowHeight);
    AddFrame(fTabAreaTabs, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY,
                                             2, 2, 5, 1));
 }
 
-void RasterMonGui::SetupGUI(UInt_t w, UInt_t h){
+void RasterMonGui::SetupGUI(){
    // Menu bar
+
    AddMenuBar();
    //
-   AddTabArea(w,h);
+   AddTabArea();
    //
    AddControlBar();
    //
@@ -268,11 +275,15 @@ void RasterMonGui::HandleMenu(int choice) {
 
 void RasterMonGui::DoConfigure(){
    cout << "Start Configure dialog.";
-   fConfig = new RasterMonConfig(this, fEvio, fRHists.get());
-   fConfig->fRasGui = this;
-   fConfig->fRefreshRate = fUpdateRate;
-   fConfig->Run();
-   cout << "Config Run() is done.\n";
+   if(fConfig == nullptr){
+      fConfig = new RasterMonConfig(this, fEvio, fRHists);
+      fConfig->fRasGui = this;
+      fConfig->fRefreshRate = fUpdateRate;
+      fConfig->Run();
+   }else{
+      fConfig->fConfigDialog->RaiseWindow();
+      fConfig->fConfigDialog->Move(0,0);
+   }
 }
 
 void RasterMonGui::DoDraw() {

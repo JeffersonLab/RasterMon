@@ -97,8 +97,8 @@ public:
             h_t.offset_x = fOffset_x;
          }
          if( strncmp(h_t.hist->GetName(),"Raster_y", 8) == 0){
-            h_t.scale_y = fScale_y;
-            h_t.offset_y = fOffset_y;
+            h_t.scale_x = fScale_y;     // Looks confusing, BUT, this is for the x-axis of this histogram!
+            h_t.offset_x = fOffset_y;
          }
       }
    }
