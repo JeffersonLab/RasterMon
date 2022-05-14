@@ -23,8 +23,8 @@ RasterEvioTool::RasterEvioTool(string infile) : EvioTool(infile){
 //   fHelicityFADC = fHelicityCrate->AddLeaf<FADCdata>("fHelicityFADC", 57601, 0, "Raster fRasterFADC");
 
 //  for(int i=0; i<fRasterChannels.size(); ++i){
-//      fRasterTimeBuf.emplace_back(fN_buf);
-//      fRasterAdcBuf.emplace_back(fN_buf);
+//      fRasterTimeBuf.emplace_back(fAdcBufferSize);
+//      fRasterAdcBuf.emplace_back(fAdcBufferSize);
 //   }
 }
 
@@ -49,8 +49,8 @@ int RasterEvioTool::AddChannel(unsigned short bank_tag, unsigned short slot, uns
    }
    if(stat) {  // Data was actually added, so reserve space for it.
       fChannelAverage.push_back(0.);
-      fTimeBuf.emplace_back(fN_buf);
-      fAdcAverageBuf.emplace_back(fN_buf);
+      fTimeBuf.emplace_back(fAdcBufferSize);
+      fAdcAverageBuf.emplace_back(fAdcBufferSize);
       return(fChannelAverage.size()-1);
    }else{  // Data was not added, so search for it in the tree.
       for(int i_t=0; i_t < fEvioBanks.size(); ++i_t) {

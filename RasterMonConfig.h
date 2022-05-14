@@ -57,6 +57,8 @@ public:
       int label_width = 100;
       int field_width = 200;
 
+      fScopeBufDepth = fEvio->GetAdcBufferSize();
+
       SetWindowName("RasterMon Configure Dialog");
       Connect("CloseWindow()", "RasterMonConfig", this, "CloseWindow()");
       DontCallClose(); // to avoid double deletions.

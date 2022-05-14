@@ -108,7 +108,7 @@ public:
    unsigned long fMostRecentEventNumber;      // Number of last actual event that was read.
    RasterMonEventInfo *fRasterHead = nullptr; // RasterHead is tag=
 
-   size_t fN_buf = 5000;
+   size_t fAdcBufferSize = 5000;
    std::vector<EvioBank_t> fEvioBanks;
    std::vector<double> fChannelAverage;
    std::vector< CircularBuffer<double> > fTimeBuf;
@@ -152,11 +152,12 @@ public:
    unsigned int GetDataSize(){ return fChannelAverage.size(); }
    double GetData(int i){ if(i >=0 && i<fChannelAverage.size()){ return fChannelAverage[i];} else return 0;}
 
+   size_t GetAdcBufferSize(){ return fAdcBufferSize;}
    void UpdateBufferSize(unsigned long bufsize){
       std::lock_guard<std::mutex> _lck(fBufferLock);
       for(int i=0; i< fTimeBuf.size(); ++i) fTimeBuf[i] = CircularBuffer<double>(bufsize);
       for(int i=0; i< fAdcAverageBuf.size(); ++i) fAdcAverageBuf[i] = CircularBuffer<double>(bufsize);
-      fN_buf = bufsize;
+      fAdcBufferSize = bufsize;
    }
 
    void SetETHost(string host) { fETHost = host; }
