@@ -80,10 +80,10 @@ int main(int argc, char **argv) {
 //         cout << "This file exists? " << std::filesystem::exists( std::filesystem::path(config_file)) << "\n";
 //         string process_line = ".x " + config_file; // + "++";
 //         gROOT->ProcessLine(".x tests/config.C");
+//       void *test_ptr;
+//      gROOT->LoadMacro("tests/config.C");
 //      }
 
-      void *test_ptr;
-      gROOT->LoadMacro("tests/config.C");
 
 
       Default_Initialize_Histograms(RHists, evio);
