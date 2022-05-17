@@ -188,19 +188,22 @@ TGTab * RasterHists::AddTabArea(TGWindow *frame, int w, int h) {
                                                        kLHintsExpandY, 5, 5, 5, 1));
 
       tab_info.canvas = embedded_canvas;
-      SetupTab(tab_info);
+      SetupCanvas(tab_info);
    }
    return fTabAreaTabs;
 }
 
-void RasterHists::SetupTab(TabSpace_t &tab){
+void RasterHists::SetupCanvas(TabSpace_t &tab, TCanvas *canvas){
    // Process the canvasses.
-   if( tab.canvas == nullptr){
+   if( tab.canvas == nullptr && canvas == nullptr){
       cout << "ERROR - Tab has no canvas. ";
       return;
    }
 
-   auto canv = dynamic_cast<TCanvas *>(tab.canvas->GetCanvas());
+   TCanvas *canv;
+   if( canvas == nullptr) canv = dynamic_cast<TCanvas *>(tab.canvas->GetCanvas());
+   else canv = canvas;
+
    if( tab.nx>1 || tab.ny >1) canv->Divide( (Int_t)tab.nx, (Int_t)tab.ny, tab.x_margin, tab.y_margin);
    if( tab.pad_link.size()>0 ) {  // Setup signals for pad resizing.
       for (int i=1; i <= std::min(tab.pad_link.size(), (size_t) 6); i++) {  // Up to 6 pads can be linked.
@@ -351,9 +354,11 @@ void RasterHists::ResizeScopeGraphs(unsigned long size){
 //   fGRaw2_y->Set(size);
 }
 
-void RasterHists::DrawCanvas(int tab_no) {
+void RasterHists::DrawCanvas(int tab_no, TCanvas *canvas) {
    auto &tab = fTabs.at(tab_no);
-   auto canv = tab.canvas->GetCanvas();
+   TCanvas *canv;
+   if( canvas == nullptr ) canv = tab.canvas->GetCanvas();
+   else canv = canvas;
 
    unsigned char max_pads=0;
    for(int i_h: tab.hists) max_pads = std::max(max_pads, fHists.at(i_h).pad_number); // get the highest pad number.
@@ -379,7 +384,7 @@ void RasterHists::DrawCanvas(int tab_no) {
    // If an fEvio->fTimeBuf is empty, then just fill it with the correct data from another channel and set the
    // fEvio->fAdcAverageBuf to zero.
    // TODO: A problem occurs here when the data on linked pads is of different size. This is probably rare or not
-   // TODO: occurring, so we can ot worry about it for now.
+   // TODO: occurring, so we can not worry about it for now.
    max_pads = 0;
    for(int i_h: tab.graphs) max_pads = std::max(max_pads, fGraphs.at(i_h).pad_number); // get the highest pad number.
    pad_count.resize(max_pads+1);
@@ -557,7 +562,7 @@ void RasterHists::HistFillWorker(int thread_num){
          // fEvio->Next(); We just need to draw it.
 
       }else{
-         std::this_thread::sleep_for(std::chrono::milliseconds(250));
+         std::this_thread::sleep_for(std::chrono::milliseconds(1));
       }
    }
    if(fDebug>0) std::cout << "RasterHists::HistFillWorker - Exit thread "<< thread_num << "\n";
@@ -578,28 +583,72 @@ void RasterHists::SavePDF(const string &file, bool overwrite){
    }
 };
 
-void RasterHists::SaveImageFile(const string &file, const string &ending){
-   // Save the canvasses  as set of PNG files.
+void RasterHists::SaveCanvasesToPDF(const string &filename, std::vector<TCanvas *> *canvasses) {
+   // Save the canvasses to PDF file.
+   for (int i = 0; i < canvasses->size(); ++i) {
+      auto canv = canvasses->at(i);
+      string out = filename + to_string(i) + ".pdf";
+      canv->Draw();
+      canv->Print(out.c_str());
+//      canv->Destructor();
+//      delete canv;
+   }
+}
+
+void RasterHists::SaveCanvasesToImageFiles(const string &filename, const string &ending, std::vector<TCanvas *> *canvasses){
+   // Save the canvasses  as set of PNG, GIF or JPG files, depending on the "ending" provided.
+   // The tabs will be stored as filename_#.ending  where # is the tab number.
+   // Make sure they are all updated.
 #ifdef __APPLE__
-   std::cout << "This method of saving histograms is known to be fucked on Apple system. \n";
+   std::cout << "This method of saving histograms does not work well on Apple systems. \n";
    std::cout << "The histograms will not be resized, and so look too small and grainy.\n";
    std::cout << "Please save to pdf instead.\n";
 #endif
-   for(int count =0; count < fTabs.size(); ++count){
-      auto tab = fTabs.at(count);
-      TCanvas *cc = tab.canvas->GetCanvas();
-      TCanvas *canv = dynamic_cast<TCanvas *>(cc->DrawClone()); // Make a copy.
+
+   for(int i =0; i < canvasses->size(); ++i) {
+      auto canv = canvasses->at(i);
+      string out = filename + to_string(i) + "." + ending;
 #ifndef __APPLE__
       canv->SetWindowSize(3000,2400);
       canv->SetCanvasSize(3000,2400);
 #endif
+      gROOT->SetBatch(true);
       canv->Draw();
-      string out;
-      out = file + "_" + std::to_string(count) + "." +  ending;
       canv->Print(out.c_str());
+      gROOT->SetBatch(false);
       canv->Close();
+      canv->Destructor();
       delete canv;
    }
+
+#ifdef THIS_IS_GRAVEYARD_CODE
+   int num_canv = 0;
+   if( canvasses != nullptr && !canvasses->empty() ) {
+      num_canv = canvasses->size();
+   }else {
+      num_canv = fTabs.size();
+   }
+   TCanvas *canv;
+   for (int i_canv = 0; i_canv < num_canv; ++i_canv) {
+      if(canvasses != nullptr && !canvasses->empty() ) {
+         canv = canvasses->at(i_canv); // No need for copy.
+      }else {
+         auto tab = fTabs.at(i_canv);
+         TCanvas *cc = tab.canvas->GetCanvas();
+         canv = dynamic_cast<TCanvas *>(cc);   // (cc->Clone()); // Make a copy.
+      }
+#ifndef __APPLE__
+      canv->SetWindowSize(3000,2400);
+         canv->SetCanvasSize(3000,2400);
+#endif
+//      canv->Draw();
+      string out;
+      out = filename + "_" + std::to_string(i_canv) + "." + ending;
+      canv->Print(out.c_str());
+//      canv->Close();
+ //     delete canv;
+   }
+#endif
 };
 
 

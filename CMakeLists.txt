@@ -64,7 +64,7 @@ set(SOURCE_FILES
         RasterHists.cxx
         RasterEvioTool.cxx
         RasterMonEventInfo.cxx
-        RasterLogBookEntry.cpp RasterLogBookEntry.h)
+        RasterLogBookEntry.cxx)
 
 add_library(RasterLib SHARED ${SOURCE_FILES} RasterLib_dict.cxx)
 target_link_libraries(RasterLib ${ROOT_LIBRARIES} EvioTool evio)

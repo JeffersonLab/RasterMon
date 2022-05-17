@@ -152,7 +152,7 @@ public:
    void MakeLogEntry(){
       // Receives the signal from the Log Book button.
       cout << "Make a log book entry!\n";
-      fLogBook->MakeEntry(0);
+      fLogBook->MakeEntry();
    }
 
    Bool_t HandleTimer(TTimer *timer) override{

@@ -193,10 +193,10 @@ public:
 
    void InitTabs();
    TGTab *AddTabArea(TGWindow *frame, int w, int h);
-   void SetupTab(TabSpace_t &tab);
+   void SetupCanvas(TabSpace_t &tab, TCanvas *canvas = nullptr);
    void SetupData();
    void ResizeScopeGraphs(unsigned long size);
-   void DrawCanvas(int tab_no);
+   void DrawCanvas(int tab_no, TCanvas *canvas = nullptr);
    void HistFillWorker(int seed=0);
    RasterEvioTool *GetEvioPtr() const{return fEvio;}
    void Pause(){ fPause = true;}
@@ -225,7 +225,8 @@ public:
    void SetDebug(int level){ fDebug = level;}
    int GetDebug(){ return(fDebug);}
    void SavePDF(const string &file, bool overwrite=true);
-   void SaveImageFile(const string &file, const string &ending);
+   void SaveCanvasesToPDF(const string &filename, std::vector<TCanvas *> *canvasses);
+   void SaveCanvasesToImageFiles(const string &filename, const string &ending, std::vector<TCanvas *> *canvasses = nullptr);
    void SaveRoot(const string &file, bool overwrite=true);
 
 #pragma clang diagnostic push
