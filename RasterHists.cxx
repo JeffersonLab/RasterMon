@@ -190,6 +190,7 @@ TGTab * RasterHists::AddTabArea(TGWindow *frame, int w, int h) {
       tab_info.canvas = embedded_canvas;
       SetupCanvas(tab_info);
    }
+   DoDraw();
    return fTabAreaTabs;
 }
 
@@ -232,20 +233,14 @@ void RasterHists::SetupCanvas(TabSpace_t &tab, TCanvas *canvas){
       }
    }
 
+   // TODO: Setup the legends for each Pad that wants one.
+
    //   auto legend = new TLegend(0.9,0.85,1.0,1.0);
    //   legend->AddEntry(fGRaw_x.get(), "I_x");
    //   legend->AddEntry(fGRaw_y.get(),"I_y");
    //   legend->AddEntry(fGRaw2_x.get(),"G(x)");
    //   legend->AddEntry(fGRaw2_y.get(), "G(y)");
    //   legend->Draw();
-
-   // Draw the canvasses for each tab.
-   for(int t_index=0; t_index<fTabs.size(); ++t_index) {  // Find the tab in the tab store.
-      if( fTabs[t_index].name == tab.name) {
-         DoDraw((int) t_index);  // Draw the content on the tab.
-         break;
-      }
-   }
 }
 
 void RasterHists::SetupData() {
@@ -354,26 +349,35 @@ void RasterHists::ResizeScopeGraphs(unsigned long size){
 //   fGRaw2_y->Set(size);
 }
 
-void RasterHists::DrawCanvas(int tab_no, TCanvas *canvas) {
+void RasterHists::DrawCanvas(int tab_no, TCanvas *canvas, vector<Histogram_t> &histograms, vector<Graph_t> &graphs,
+                             bool batch) {
    auto &tab = fTabs.at(tab_no);
    TCanvas *canv;
    if( canvas == nullptr ) canv = tab.canvas->GetCanvas();
    else canv = canvas;
 
    unsigned char max_pads=0;
-   for(int i_h: tab.hists) max_pads = std::max(max_pads, fHists.at(i_h).pad_number); // get the highest pad number.
+   for(int i_h: tab.hists) max_pads = std::max(max_pads, histograms.at(i_h).pad_number); // get the highest pad number.
    std::vector<int> pad_count(max_pads+1); // for counting pad occurrence. Initialized to zero.
 
    for(int i_h: tab.hists) {
-      auto &h_t = fHists.at(i_h);
+      auto &h_t = histograms.at(i_h);
       auto pad = canv->cd(h_t.pad_number);
       if(h_t.special_draw == 0){
          string draw_opt = h_t.draw_opt;
+         fDrawLock.lock();
+         gROOT->SetBatch(batch);
          h_t.hist->Draw(draw_opt.c_str());
+         gROOT->SetBatch(false);
+         fDrawLock.unlock();
          pad->Modified();
       }else if(h_t.special_draw == 1){   // The helicity stack has a separate draw.
+         fDrawLock.lock();
+         gROOT->SetBatch(batch);
          fHelicity_stack->Draw("nostackb");
          fHelicity_legend->Draw();
+         gROOT->SetBatch(false);
+         fDrawLock.unlock();
       }
    }
 
@@ -390,35 +394,54 @@ void RasterHists::DrawCanvas(int tab_no, TCanvas *canvas) {
    pad_count.resize(max_pads+1);
    pad_count.assign(max_pads+1, 0);
    for(int i_h: tab.graphs){
-      auto &g_t = fGraphs.at(i_h);
+      auto &g_t = graphs.at(i_h);
       pad_count[g_t.pad_number]++;
       auto pad = canv->cd(g_t.pad_number);
       auto graph = g_t.graph;
-      if(fEvio){
+      string draw_option = g_t.draw_opt;
+      if(pad_count[g_t.pad_number]>1) draw_option += "same";
+      fDrawLock.lock();
+      gROOT->SetBatch(batch);
+      graph->Draw(draw_option.c_str());
+      gROOT->SetBatch(false);
+      fDrawLock.unlock();
+      pad->Modified();
+   }
+   fDrawLock.lock();
+   gROOT->SetBatch(batch);
+   canv->Update();
+   gROOT->SetBatch(false);
+   fDrawLock.unlock();
+}
+
+void RasterHists::FillGraphs(int tab_no, vector<Graph_t> &graphs) {
+   // Fill the graphs with the information from the fEvio buffers.
+   // We don't need to do this every event, only when we update the tab that displays the graphs.
+   // This is a relatively expensive operation, and gets pretty slow for big buffers.
+   auto &tab = fTabs.at(tab_no);
+   for (int i_h: tab.graphs) {
+      auto &g_t = graphs.at(i_h);
+      auto graph = g_t.graph;
+      if (fEvio) {
          auto data_idx = g_t.data_index;
-         if(fEvio->fTimeBuf[data_idx].empty()){
-            int not_empty =0;
-            for( ; not_empty < tab.graphs.size(); ++not_empty ) if(!fEvio->fTimeBuf[not_empty].empty()) break;
-            if( not_empty < tab.graphs.size()){ // We found the first not empty graph.
+         if (fEvio->fTimeBuf[data_idx].empty()) {
+            int not_empty = 0;
+            for (; not_empty < tab.graphs.size(); ++not_empty) if (!fEvio->fTimeBuf[not_empty].empty()) break;
+            if (not_empty < tab.graphs.size()) { // We found the first not empty graph.
                for (int i = 0; i < fEvio->fTimeBuf[not_empty].size(); ++i) {
                   graph->SetPoint(i, fEvio->fTimeBuf[not_empty].at(i), 0.);
                }
-            }else{ // All the graphs are empty!
+            } else { // All the graphs are empty!
                graph->SetPoint(0, 0., 0.);
                graph->SetPoint(1, 1., 0.);
             }
-         }else {
+         } else {
             for (int i = 0; i < fEvio->fTimeBuf[data_idx].size(); ++i) {
                graph->SetPoint(i, fEvio->fTimeBuf[data_idx].at(i), fEvio->fAdcAverageBuf[data_idx].at(i));
             }
          }
       }
-      string draw_option = g_t.draw_opt;
-      if(pad_count[g_t.pad_number]>1) draw_option += "same";
-      graph->Draw(draw_option.c_str());
-      pad->Modified();
    }
-   canv->Update();
 }
 
 void RasterHists::Stop(){
@@ -429,7 +452,7 @@ void RasterHists::Stop(){
          // an event appears on the ET, which may take forever.
          std::this_thread::sleep_for(std::chrono::seconds(1)); // Sleep for a whole 1 second.
          for(int i=10; i>=0 && fIsTryingToRead; --i ){
-            std::this_thread::sleep_for(std::chrono::seconds(1)); // Sleep for another second.
+            std::this_thread::sleep_for(std::chrono::milliseconds(500)); // Sleep for another 1/2 second.
             std::cout << "The worker thread is still waiting for an event from ET. \n";
             std::cout << "We cannot stop the thread until an event is received. Waiting for " << i << " more seconds.\n";
          }
@@ -440,7 +463,6 @@ void RasterHists::Stop(){
          return;  // <-- We abandon the thread? :-(.
       }
       worker.join();
-
    }
    fWorkers.clear();
 }
@@ -458,10 +480,13 @@ void RasterHists::Go(){
 
 void RasterHists::DoDraw(int active_tab){
    if(active_tab == -1) {
-      for(int i_tab=0; i_tab< fTabs.size(); ++i_tab)
-         DrawCanvas(i_tab);
+      for(int i_tab=0; i_tab< fTabs.size(); ++i_tab) {
+         FillGraphs(i_tab, fGraphs);
+         DrawCanvas(i_tab, nullptr, fHists, fGraphs);
+      }
    }else{
-      DrawCanvas(active_tab);
+      FillGraphs(active_tab, fGraphs);
+      DrawCanvas(active_tab, nullptr, fHists, fGraphs);
    }
 }
 
@@ -588,67 +613,37 @@ void RasterHists::SaveCanvasesToPDF(const string &filename, std::vector<TCanvas 
    for (int i = 0; i < canvasses->size(); ++i) {
       auto canv = canvasses->at(i);
       string out = filename + to_string(i) + ".pdf";
+      fDrawLock.lock();
+      gROOT->SetBatch(true);
       canv->Draw();
       canv->Print(out.c_str());
-//      canv->Destructor();
-//      delete canv;
+      gROOT->SetBatch(false);
+      fDrawLock.unlock();
+      canv->Destructor();
+      delete canv;
    }
+   canvasses->clear();
 }
 
 void RasterHists::SaveCanvasesToImageFiles(const string &filename, const string &ending, std::vector<TCanvas *> *canvasses){
    // Save the canvasses  as set of PNG, GIF or JPG files, depending on the "ending" provided.
    // The tabs will be stored as filename_#.ending  where # is the tab number.
    // Make sure they are all updated.
-#ifdef __APPLE__
-   std::cout << "This method of saving histograms does not work well on Apple systems. \n";
-   std::cout << "The histograms will not be resized, and so look too small and grainy.\n";
-   std::cout << "Please save to pdf instead.\n";
-#endif
 
    for(int i =0; i < canvasses->size(); ++i) {
       auto canv = canvasses->at(i);
       string out = filename + to_string(i) + "." + ending;
-#ifndef __APPLE__
-      canv->SetWindowSize(3000,2400);
-      canv->SetCanvasSize(3000,2400);
-#endif
+      fDrawLock.lock();
       gROOT->SetBatch(true);
       canv->Draw();
       canv->Print(out.c_str());
       gROOT->SetBatch(false);
+      fDrawLock.unlock();
       canv->Close();
       canv->Destructor();
       delete canv;
    }
-
-#ifdef THIS_IS_GRAVEYARD_CODE
-   int num_canv = 0;
-   if( canvasses != nullptr && !canvasses->empty() ) {
-      num_canv = canvasses->size();
-   }else {
-      num_canv = fTabs.size();
-   }
-   TCanvas *canv;
-   for (int i_canv = 0; i_canv < num_canv; ++i_canv) {
-      if(canvasses != nullptr && !canvasses->empty() ) {
-         canv = canvasses->at(i_canv); // No need for copy.
-      }else {
-         auto tab = fTabs.at(i_canv);
-         TCanvas *cc = tab.canvas->GetCanvas();
-         canv = dynamic_cast<TCanvas *>(cc);   // (cc->Clone()); // Make a copy.
-      }
-#ifndef __APPLE__
-      canv->SetWindowSize(3000,2400);
-         canv->SetCanvasSize(3000,2400);
-#endif
-//      canv->Draw();
-      string out;
-      out = filename + "_" + std::to_string(i_canv) + "." + ending;
-      canv->Print(out.c_str());
-//      canv->Close();
- //     delete canv;
-   }
-#endif
+   canvasses->clear();
 };
 
 

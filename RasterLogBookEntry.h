@@ -27,11 +27,12 @@ public:
    RasterLogBookEntry(const TGWindow *parent_window, RasterHists *rhists);
 
    void MakeEntry();
-   void EntryDialog(int i);
+   void EntryDialog();
 
 private:
    RasterHists *fRHists;  // Pointer to the histograms and graphs.
-   std::vector<std::thread> fThreadPool;
+   bool fAlreadyMakingEntry=false;
+   std::thread fEntryThread;
 
 };
 
