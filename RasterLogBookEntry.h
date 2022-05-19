@@ -19,7 +19,7 @@
 #include "TGFrame.h"
 
 #ifndef DEFAULT_HISTOGRAM_PATH
-#define DEFAULT_HISTOGRAM_PATH  "/data/CLAS12/RasterMon/images/"    //  "/home/clasrun/raster/"
+#define DEFAULT_HISTOGRAM_PATH  "/home/clasrun/raster"     // This *should* have been overwritten in CMakeLists.txt
 #endif
 
 class RasterLogBookEntry: public TGTransientFrame{

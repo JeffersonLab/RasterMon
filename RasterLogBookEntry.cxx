@@ -56,7 +56,7 @@ void RasterLogBookEntry::EntryDialog(){
    time_t t_now = time(NULL);
    strftime(buf, 50, "rastermon_%Y_%m_%d_%H_%M_%S_", localtime(&t_now));
    string filename(buf);
-   string directory(DEFAULT_HISTOGRAM_PATH);
+   string directory(DEFAULT_HISTOGRAM_PATH"/");
    fRHists->SaveCanvasesToImageFiles(directory+filename,"png", &canvs);
    //fRHists->SaveCanvasesToPDF(directory+filename, &canvs);
    canvs.clear();
