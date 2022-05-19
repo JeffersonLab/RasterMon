@@ -27,12 +27,31 @@ public:
    RasterLogBookEntry(const TGWindow *parent_window, RasterHists *rhists);
 
    void MakeEntry();
-   void EntryDialog();
+   void SubmitToLogBook();
+   void SaveCanvassesToFile();
+   void CloseWindow() override{
+      TGTransientFrame::CloseWindow();
+   };
+   void Cancel(){
+      CloseWindow();
+   }
+   void OK(){
+      TGTransientFrame::CloseWindow();
+      SubmitToLogBook();
+   }
 
 private:
    RasterHists *fRHists;  // Pointer to the histograms and graphs.
    bool fAlreadyMakingEntry=false;
    std::thread fEntryThread;
+
+   std::string fTitle;
+   std::string fBody;
+   std::vector<std::string> fLogBooks = {"HBLOG"};
+   std::string fEntryMakers;
+   std::string fTags{"BeamLine"};
+   std::string fReference;
+   std::string fEmailNotify;
 
 };
 

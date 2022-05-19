@@ -7,27 +7,65 @@
 #include "RasterLogBookEntry.h"
 
 RasterLogBookEntry::RasterLogBookEntry(const TGWindow *parent_window, RasterHists *rhists): fRHists(rhists),
-   TGTransientFrame(gClient->GetRoot(), parent_window, 400, 200){
-
+   TGTransientFrame(gClient->GetRoot(), parent_window, 400, 400){
+   SetWindowName("Logbook Entry Dialog");
+   DontCallClose(); // to avoid double deletions.
+   // use hierarchical cleaning
+   SetCleanup(kDeepCleanup);
 };
 
 void RasterLogBookEntry::MakeEntry() {
+
+   // We spin off a thread to save the canvasses to file, otherwise the entire app blocks while these are being
+   // written, and writing them can be slow. We use a lock mechanism (see fRHists->fDrawLock) to allow the thread to
+   // write the files in batch mode.
+
    if(!fAlreadyMakingEntry) {
-      fEntryThread = ::thread(&RasterLogBookEntry::EntryDialog, this);
-      //EntryDialog(0);
-      fEntryThread.detach();
+ //     fEntryThread = ::thread(&RasterLogBookEntry::SaveCanvassesToFile, this);
+      //SaveCanvassesToFile(0);
       fAlreadyMakingEntry = true;
    }
+
+   // Next we open the dialog window for the user to interact with.
+   Connect("CloseWindow()", "RasterLogBookEntry", this, "CloseWindow()");
+
+   auto Frame1 = new TGHorizontalFrame(this, 400, 400, kFixedWidth);
+
+   auto CancelButton = new TGTextButton(Frame1, "&Cancel", 990);
+   CancelButton->Connect("Clicked()", "RasterLogBookEntry", this, "Cancel()");
+   Frame1->AddFrame(CancelButton, new TGLayoutHints(kLHintsTop | kLHintsRight , 2, 2, 2, 2));
+
+   auto OkButton = new TGTextButton(Frame1, "&Ok", 991);
+   OkButton->Connect("Clicked()", "RasterLogBookEntry", this, "OK()");
+   Frame1->AddFrame(OkButton, new TGLayoutHints(kLHintsTop | kLHintsRight , 2, 2, 2, 2));
+
+
+
+   AddFrame(Frame1, new TGLayoutHints(kLHintsBottom | kLHintsRight, 2, 2, 5, 1));
+   MapSubwindows();
+
+   UInt_t width = GetDefaultWidth();
+   UInt_t height = GetDefaultHeight();
+   Resize(width, height);
+   CenterOnParent();
+   MapWindow();
+
 }
 
-void RasterLogBookEntry::EntryDialog(){
+void RasterLogBookEntry::SubmitToLogBook() {
+   fEntryThread.join();
+}
+
+void RasterLogBookEntry::SaveCanvassesToFile(){
    // This is where all the work is done for the logbook entry. Reminder: this runs multi-threaded,
    // so resources must be local to this thread, or global to all log entries open.
    //
    // First step: Snapshot of all the canvases, so that we get an accurate copy of the current state.
 //   std::vector<TCanvas *> canvasses;
-   std::vector<TCanvas *> canvs;
 
+
+   // Here we do the work to save the images of the canvasses.
+   std::vector<TCanvas *> canvs;
    fRHists->Pause();                                        // Pause, so all histos and graphs are at the same event.
    std::vector<Histogram_t> histo_copy = fRHists->fHists;   // Copy the histograms and graphs. (vector copy assignment.)
    std::vector<Graph_t> graph_copy = fRHists->fGraphs;

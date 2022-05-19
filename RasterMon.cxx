@@ -1,3 +1,30 @@
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                        RasterMon
+//
+// Author: Maurik Holtrop  - UNH - 2022
+//
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Some notes:
+// In general you want a GUI to be multithreaded. It turns out that this is trickier than it should be, for many
+// reasons, the biggest of which is that we are dealing with lots of legacy code. XLib, the windowing used on Linux
+// is still not properly thread safe! (Yes, Metal, Cocoa and Windows are, but we use Linux at the lab.)
+// We are not using ROOT 7 yet, and ROOT 6.x is also not properly thread safe, see
+// https://root.cern.ch/root/htmldoc/guides/users-guide/Threads.html
+// Also note that officially the TThread class in ROOT is obsolete, so probably don't use it.
+//
+// The main implementations issues then for a GUI code are that *all the GUI stuff* has to be done from the main
+// thread. This can be okay with cooperative multi-tasking, i.e. a loop that checks for signals, which is how the
+// GUI is implemented, Qt style. (I am not using Qt, though I would like to, because of the embedding of a TCanvas
+// in a Qt app, which seems fragile at this point. ROOT7 and QtWeb may improve this in the the future.)
+//
+// TODO:: Currently the histograms are not following the ROOT::TThreadedObject<TH1D> to create the histograms.
+//        We are filling histograms in a single thread right now.
+//
+// TODO:: Port this to ROOT7.
+//        Useful thread: https://root-forum.cern.ch/t/is-one-canvas-per-thread-possible/47014/27
+//
+
 #include "RasterMon.h"
 #include "TRint.h"
 
