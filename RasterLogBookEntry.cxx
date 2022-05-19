@@ -30,8 +30,8 @@ void RasterLogBookEntry::EntryDialog(){
 
    fRHists->Pause();                                        // Pause, so all histos and graphs are at the same event.
    std::vector<Histogram_t> histo_copy{fRHists->fHists};   // Copy the histograms and graphs. (vector copy assignment.)
-   // std::vector<Graph_t> graph_copy{fRHists->fGraphs};   // Barfs on gcc 9.3.0 ????
-   std::vector<Graph_t> graph_copy;
+   // std::vector<Graph_t> graph_copy{fRHists->fGraphs};   // Barfs on gcc 9.3.0 ????  TODO:: Figure out what is wrong here!!!
+   std::vector<Graph_t> graph_copy;                        // So create the vector and fill it separately.
    graph_copy.insert(graph_copy.begin(),fRHists->fGraphs.begin(),fRHists->fGraphs.end());
    for(int i_tab=0; i_tab < fRHists->fTabs.size(); ++i_tab) {
       fRHists->FillGraphs(i_tab, graph_copy);       // Update the graph contents.

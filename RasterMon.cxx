@@ -56,10 +56,7 @@ int main(int argc, char **argv) {
 
       int debug = args.count("debug");       // Debug: 0 = info,  1 = more info, 2+ debug info.
       if (args.count("quiet") > 0) debug = -1; // Debug: -1 = no info.
-
-      cout << "At this point etname = " << etname << endl;
-      cout << "options: " << args.count("etname") << " has " << args["etname"].as<string>() << "\n";
-
+      
       TApplication theApp("App", &argc, argv);
       // TRint theApp("App", &argc, argv);
 
