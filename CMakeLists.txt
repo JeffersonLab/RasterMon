@@ -10,6 +10,14 @@ set(CMAKE_EXPORT_NO_PACKAGE_REGISTRY True)
 
 set(CMAKE_CXX_STANDARD 17)
 
+
+include(cmake/FindElog.cmake)
+
+if(${ELOG_FOUND})
+    message(STATUS "The elog library was found at ${ELOG_LIBRARIES} + ${ELOG_INCLUDE_DIR}")
+    set(CMAKE_CXX_FLAGS "-Wno-deprecated-declarations -fpermissive")
+endif()
+
 # find_package(EvioTool CONFIG)  # EvioTool will also find fEvio.
 
 if(${EvioTool_FOUND})
@@ -60,7 +68,9 @@ include(${ROOT_USE_FILE})
 # For dictionary compile step to find include files.
 # The target properties for include directories need to be explicitly added to the include_directories.
 include_directories(${PROJECT_SOURCE_DIR})
-
+if(${ELOG_FOUND})
+    include_directories(${ELOG_INCLUDE_DIR})
+endif()
 ROOT_GENERATE_DICTIONARY(RasterLib_dict RasterLib.h DEPENDENCIES EvioTool evio et LINKDEF RasterLibLinkDef.h)
 list(APPEND ADDITIONAL_CLEAN_FILES RasterLib_dict.cxx)
 
@@ -74,16 +84,24 @@ set(SOURCE_FILES
 add_library(RasterLib SHARED ${SOURCE_FILES} RasterLib_dict.cxx)
 
 target_compile_definitions(RasterLib PRIVATE "DEFAULT_HISTOGRAM_PATH=\"${DEFAULT_HISTOGRAM_PATH}\"")
+if(${ELOG_FOUND})
+    message(STATUS "Setting HAS_LOGBOOK=1")
 
-target_link_libraries(RasterLib ${ROOT_LIBRARIES} EvioTool evio)
+    set_source_files_properties(ELogBookShim.cxx PROPERTIES COMPILE_FLAGS --std=c++11)
+    add_library(ELogBookShim STATIC ELogBookShim.cxx )
+    target_link_libraries(ELogBookShim elog)
+    install(TARGETS ELogBookShim LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
+
+    target_compile_definitions(RasterLib PRIVATE "HAS_LOGBOOK=1")
+    target_link_libraries(RasterLib ${ROOT_LIBRARIES} EvioTool evio et ELogBookShim elog)
+else()
+    message(STATUS "WARNING: Logbook entry into the elog entry will not be enabled. Code will still work.")
+    target_link_libraries(RasterLib ${ROOT_LIBRARIES} EvioTool evio et)
+endif()
+
 add_executable(RasterMon RasterMon.cxx)
 target_link_libraries(RasterMon RasterLib )
 
 install(TARGETS RasterLib  LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 install(FILES ${PROJECT_BINARY_DIR}/libRasterLib_dict_rdict.pcm  DESTINATION lib)
 install(TARGETS RasterMon DESTINATION bin)
-
-#ROOT_GENERATE_DICTIONARY(RootFrame_dict RootFrame.h LINKDEF RootFrameLinkDef.h)
-#list(APPEND ADDITIONAL_CLEAN_FILES RootFrame_dict.cxx)
-#add_executable(test_buffer test_buffer.cpp RootFrame_dict.cxx)
-#target_link_libraries(test_buffer ${ROOT_LIBRARIES})

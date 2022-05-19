@@ -625,11 +625,11 @@ void RasterHists::SaveCanvasesToPDF(const string &filename, std::vector<TCanvas 
    canvasses->clear();
 }
 
-void RasterHists::SaveCanvasesToImageFiles(const string &filename, const string &ending, std::vector<TCanvas *> *canvasses){
+std::vector<std::string> RasterHists::SaveCanvasesToImageFiles(const string &filename, const string &ending, std::vector<TCanvas *> *canvasses){
    // Save the canvasses  as set of PNG, GIF or JPG files, depending on the "ending" provided.
    // The tabs will be stored as filename_#.ending  where # is the tab number.
    // Make sure they are all updated.
-
+   std::vector<std::string> out_filenames;
    for(int i =0; i < canvasses->size(); ++i) {
       auto canv = canvasses->at(i);
       string out = filename + to_string(i) + "." + ending;
@@ -639,11 +639,14 @@ void RasterHists::SaveCanvasesToImageFiles(const string &filename, const string 
       canv->Print(out.c_str());
       gROOT->SetBatch(false);
       fDrawLock.unlock();
+      out_filenames.push_back(out);
       canv->Close();
       canv->Destructor();
       delete canv;
    }
    canvasses->clear();
+
+   return out_filenames;
 };
 
 

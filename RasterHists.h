@@ -113,7 +113,8 @@ public:
    int GetDebug(){ return(fDebug);}
    void SavePDF(const string &file, bool overwrite=true);
    void SaveCanvasesToPDF(const string &filename, std::vector<TCanvas *> *canvasses);
-   void SaveCanvasesToImageFiles(const string &filename, const string &ending, std::vector<TCanvas *> *canvasses = nullptr);
+   std::vector<std::string> SaveCanvasesToImageFiles(const string &filename, const string &ending,
+                                                     std::vector<TCanvas *> *canvasses = nullptr);
    void SaveRoot(const string &file, bool overwrite=true);
 
 #pragma clang diagnostic push

@@ -17,6 +17,10 @@
 
 #include "RasterHists.h"
 #include "TGFrame.h"
+#include "TGButton.h"
+#include "TGTextEntry.h"
+#include "TGTextEdit.h"
+#include "TGLabel.h"
 
 #ifndef DEFAULT_HISTOGRAM_PATH
 #define DEFAULT_HISTOGRAM_PATH  "/home/clasrun/raster"     // This *should* have been overwritten in CMakeLists.txt
@@ -26,33 +30,43 @@ class RasterLogBookEntry: public TGTransientFrame{
 public:
    RasterLogBookEntry(const TGWindow *parent_window, RasterHists *rhists);
 
+   TGTextEntry* AddTextLine(string label_text, string init_text, string tooltip);
    void MakeEntry();
    void SubmitToLogBook();
    void SaveCanvassesToFile();
    void CloseWindow() override{
+      if(fEntryThread.joinable()) fEntryThread.join();
       TGTransientFrame::CloseWindow();
    };
    void Cancel(){
       CloseWindow();
    }
    void OK(){
-      TGTransientFrame::CloseWindow();
       SubmitToLogBook();
+      TGTransientFrame::CloseWindow();
    }
 
-private:
+public:
    RasterHists *fRHists;  // Pointer to the histograms and graphs.
-   bool fAlreadyMakingEntry=false;
+   bool fAlreadyWritingImages=false;  // Right now, only one thread to write images.
    std::thread fEntryThread;
 
    std::string fTitle;
-   std::string fBody;
-   std::vector<std::string> fLogBooks = {"HBLOG"};
+   TGTextEntry* fTitleEntry;
+   std::string fLogBooks = {"HBLOG"};
+   TGTextEntry* fLogBooksEntry;
    std::string fEntryMakers;
+   TGTextEntry* fEntryMakersEntry;
    std::string fTags{"BeamLine"};
+   TGTextEntry* fTagsEntry;
    std::string fReference;
+   TGTextEntry* fReferenceEntry;
    std::string fEmailNotify;
-
+   TGTextEntry* fEmailNotifyEntry;
+   std::string fBody;
+   TGTextEdit *fBodyEdit;
+   std::vector<std::string> fAttachments;
+   std::vector<std::string> fAttachmentCaptions;
 };
 
 

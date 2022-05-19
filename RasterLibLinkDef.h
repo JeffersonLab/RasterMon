@@ -9,3 +9,8 @@
 #pragma link C++ struct EvioSlot_t;
 #pragma link C++ class RasterHists;
 #pragma link C++ class RasterMonEventInfo+;
+#pragma link C++ class RasterLogBookEntry+;
+#pragma link C++ struct Graph_t;
+#pragma link C++ struct Histogram_t;
+#pragma link C++ struct TabSpace_t;
+

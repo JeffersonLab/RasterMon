@@ -6,6 +6,10 @@
 #include <ctime>
 #include "RasterLogBookEntry.h"
 
+#ifdef HAS_LOGBOOK
+#include "ELogBookShim.h"
+#endif
+
 RasterLogBookEntry::RasterLogBookEntry(const TGWindow *parent_window, RasterHists *rhists): fRHists(rhists),
    TGTransientFrame(gClient->GetRoot(), parent_window, 400, 400){
    SetWindowName("Logbook Entry Dialog");
@@ -14,32 +18,67 @@ RasterLogBookEntry::RasterLogBookEntry(const TGWindow *parent_window, RasterHist
    SetCleanup(kDeepCleanup);
 };
 
+TGTextEntry* RasterLogBookEntry::AddTextLine(string label_text, string init_text, string tooltip){
+   // Add a single entry line with label to the dialog.
+   int label_width = 90;
+   auto Frame = new TGHorizontalFrame(this, 0, 50, kLHintsExpandX);
+   auto LabelFrame = new TGHeaderFrame( Frame, label_width, 50, kFixedWidth);
+   Frame->AddFrame(LabelFrame, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 0, 0, 0, 0));
+   auto label = new TGLabel(LabelFrame, label_text.c_str());
+   LabelFrame->AddFrame(label, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 2, 5, 2, 2));
+   auto TextEntry = new TGTextEntry(Frame, init_text.c_str(), 0);
+   TextEntry->SetToolTipText(tooltip.c_str());
+   Frame->AddFrame(TextEntry, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY, 2, 2, 2, 2));
+   AddFrame(Frame, new TGLayoutHints(kLHintsTop | kLHintsExpandX, 2, 15, 5, 2));
+   return TextEntry;
+}
+
 void RasterLogBookEntry::MakeEntry() {
 
    // We spin off a thread to save the canvasses to file, otherwise the entire app blocks while these are being
    // written, and writing them can be slow. We use a lock mechanism (see fRHists->fDrawLock) to allow the thread to
    // write the files in batch mode.
 
-   if(!fAlreadyMakingEntry) {
- //     fEntryThread = ::thread(&RasterLogBookEntry::SaveCanvassesToFile, this);
+   if(!fAlreadyWritingImages) {
+      fEntryThread = ::thread(&RasterLogBookEntry::SaveCanvassesToFile, this);
       //SaveCanvassesToFile(0);
-      fAlreadyMakingEntry = true;
+      fAlreadyWritingImages = true;
    }
 
+#ifdef HAS_LOGBOOK
    // Next we open the dialog window for the user to interact with.
    Connect("CloseWindow()", "RasterLogBookEntry", this, "CloseWindow()");
 
-   auto Frame1 = new TGHorizontalFrame(this, 400, 400, kFixedWidth);
-
-   auto CancelButton = new TGTextButton(Frame1, "&Cancel", 990);
-   CancelButton->Connect("Clicked()", "RasterLogBookEntry", this, "Cancel()");
-   Frame1->AddFrame(CancelButton, new TGLayoutHints(kLHintsTop | kLHintsRight , 2, 2, 2, 2));
+   auto Frame1 = new TGHorizontalFrame(this, 800, 50, kFixedWidth | kFitHeight);
 
    auto OkButton = new TGTextButton(Frame1, "&Ok", 991);
    OkButton->Connect("Clicked()", "RasterLogBookEntry", this, "OK()");
    Frame1->AddFrame(OkButton, new TGLayoutHints(kLHintsTop | kLHintsRight , 2, 2, 2, 2));
 
+   auto CancelButton = new TGTextButton(Frame1, "&Cancel", 990);
+   CancelButton->Connect("Clicked()", "RasterLogBookEntry", this, "Cancel()");
+   Frame1->AddFrame(CancelButton, new TGLayoutHints(kLHintsTop | kLHintsRight , 2, 2, 2, 2));
 
+   fTitle = "RasterMon for run " + to_string(fRHists->fEvio->GetRunNumber());
+   fTitleEntry = AddTextLine("Title:", fTitle, "Update the title for the logbook entery, or leave as is.");
+   fLogBooksEntry = AddTextLine("Logbook(s):", fLogBooks, "A list of logbooks (separate by a comma) where this entry should be logged.");
+   fTagsEntry = AddTextLine("Tags:", fTags, "Optional tags can be used to classify entries.");
+   fEntryMakersEntry = AddTextLine("Entry makers:", fEntryMakers, "A list of usernames (separated by commas) of individuals who should be associated with authorship of the entry.");
+   fEmailNotifyEntry = AddTextLine("Email notify:", fEmailNotify,"A list of email addresses (separated by commas) to receive an email copy of the entry after it is posted.");
+
+   fBodyEdit = new TGTextEdit(this, 0, 500);
+   AddFrame(fBodyEdit, new TGLayoutHints(kLHintsExpandX, 10, 10, 10, 10));
+
+   fBodyEdit->AddLine("RasterMon auto generated logbook entry.");
+   fBodyEdit->AddLine("");
+   int i_tab =1;
+   for(auto tab: fRHists->fTabs){
+      string line = "Tab: " + tab.name;
+      fBodyEdit->AddLine(line.c_str());
+      line = "[Figure:" + to_string(i_tab) + "]";
+      fBodyEdit->AddLine(line.c_str());
+      i_tab++;
+   }
 
    AddFrame(Frame1, new TGLayoutHints(kLHintsBottom | kLHintsRight, 2, 2, 5, 1));
    MapSubwindows();
@@ -49,11 +88,38 @@ void RasterLogBookEntry::MakeEntry() {
    Resize(width, height);
    CenterOnParent();
    MapWindow();
-
+#endif
 }
 
 void RasterLogBookEntry::SubmitToLogBook() {
-   fEntryThread.join();
+#ifdef HAS_LOGBOOK
+   fTitle = fTitleEntry->GetText();
+   fLogBooks = fLogBooksEntry->GetText();
+   fTags = fTagsEntry->GetText();
+   fEntryMakers = fEntryMakersEntry->GetText();
+   fEmailNotify = fEmailNotifyEntry->GetText();
+   auto body_tgtext = fBodyEdit->GetText();
+   fBody = body_tgtext->AsString();
+   while( fAlreadyWritingImages ){
+      gSystem->ProcessEvents();
+      gSystem->Sleep(50);
+   }
+   if(fEntryThread.joinable()) fEntryThread.join();
+   // At this point the attachments should be ready.
+   for(int i=0; i< fRHists->fTabs.size(); ++i){
+      auto tab = fRHists->fTabs.at(i);
+      fAttachmentCaptions.push_back("Histograms for tab " + tab.name);
+   }
+   ELogBookShim lb;
+   lb.fTitle = fTitle;
+   lb.fLogBooks = fLogBooks;
+   lb.fTags = fTitle;
+   lb.fEntryMakers = fEntryMakers;
+   lb.fEmailNotify = fEmailNotify;
+   lb.fBody = fBody;
+   lb.fAttachments = fAttachments;
+   lb.fAttachmentCaptions = fAttachmentCaptions;
+#endif
 }
 
 void RasterLogBookEntry::SaveCanvassesToFile(){
@@ -61,9 +127,6 @@ void RasterLogBookEntry::SaveCanvassesToFile(){
    // so resources must be local to this thread, or global to all log entries open.
    //
    // First step: Snapshot of all the canvases, so that we get an accurate copy of the current state.
-//   std::vector<TCanvas *> canvasses;
-
-
    // Here we do the work to save the images of the canvasses.
    std::vector<TCanvas *> canvs;
    fRHists->Pause();                                        // Pause, so all histos and graphs are at the same event.
@@ -97,12 +160,9 @@ void RasterLogBookEntry::SaveCanvassesToFile(){
    strftime(buf, 50, "rastermon_%Y_%m_%d_%H_%M_%S_", localtime(&t_now));
    string filename(buf);
    string directory(DEFAULT_HISTOGRAM_PATH"/");
-   fRHists->SaveCanvasesToImageFiles(directory+filename,"png", &canvs);
+   fAttachments = fRHists->SaveCanvasesToImageFiles(directory+filename,"png", &canvs);
    //fRHists->SaveCanvasesToPDF(directory+filename, &canvs);
    canvs.clear();
-   // Now we bring up a dialog for the user to add information.
-   fAlreadyMakingEntry = false;
-
+   fAlreadyWritingImages = false;
    // End of thread.
-
 }
