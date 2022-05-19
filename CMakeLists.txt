@@ -10,8 +10,6 @@ set(CMAKE_EXPORT_NO_PACKAGE_REGISTRY True)
 
 set(CMAKE_CXX_STANDARD 17)
 
-#
-
 # find_package(EvioTool CONFIG)  # EvioTool will also find fEvio.
 
 if(${EvioTool_FOUND})
@@ -48,6 +46,13 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
                  "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
+#
+# Some items need control.
+#
+if (NOT DEFINED DEFAULT_HISTOGRAM_PATH)
+    set(DEFAULT_HISTOGRAM_PATH "/home/clasrun/raster")
+endif()
+message(STATUS "DEFAULT_HISTOGRAM_PATH set to ${DEFAULT_HISTOGRAM_PATH}")
 
 #---Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
@@ -67,6 +72,9 @@ set(SOURCE_FILES
         RasterLogBookEntry.cxx)
 
 add_library(RasterLib SHARED ${SOURCE_FILES} RasterLib_dict.cxx)
+
+target_compile_definitions(RasterLib PRIVATE "DEFAULT_HISTOGRAM_PATH=\"${DEFAULT_HISTOGRAM_PATH}\"")
+
 target_link_libraries(RasterLib ${ROOT_LIBRARIES} EvioTool evio)
 add_executable(RasterMon RasterMon.cxx)
 target_link_libraries(RasterMon RasterLib )
