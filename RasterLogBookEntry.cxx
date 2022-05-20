@@ -2,8 +2,10 @@
 // Created by Maurik Holtrop on 5/12/22.
 //
 #include <iostream>
+#include <sstream>
 #include <thread>
 #include <ctime>
+#include <cstdlib>
 #include "RasterLogBookEntry.h"
 
 #ifdef HAS_LOGBOOK
@@ -45,7 +47,7 @@ void RasterLogBookEntry::MakeEntry() {
       fAlreadyWritingImages = true;
    }
 
-#ifdef HAS_LOGBOOK
+//#ifdef HAS_LOGBOOK
    // Next we open the dialog window for the user to interact with.
    Connect("CloseWindow()", "RasterLogBookEntry", this, "CloseWindow()");
 
@@ -88,11 +90,10 @@ void RasterLogBookEntry::MakeEntry() {
    Resize(width, height);
    CenterOnParent();
    MapWindow();
-#endif
+// #endif
 }
 
 void RasterLogBookEntry::SubmitToLogBook() {
-#ifdef HAS_LOGBOOK
    fTitle = fTitleEntry->GetText();
    fLogBooks = fLogBooksEntry->GetText();
    fTags = fTagsEntry->GetText();
@@ -110,6 +111,8 @@ void RasterLogBookEntry::SubmitToLogBook() {
       auto tab = fRHists->fTabs.at(i);
       fAttachmentCaptions.push_back("Histograms for tab " + tab.name);
    }
+
+#ifdef HAS_LOGBOOK
    ELogBookShim lb;
    lb.fTitle = fTitle;
    lb.fLogBooks = fLogBooks;
@@ -119,6 +122,44 @@ void RasterLogBookEntry::SubmitToLogBook() {
    lb.fBody = fBody;
    lb.fAttachments = fAttachments;
    lb.fAttachmentCaptions = fAttachmentCaptions;
+#else
+   string cmd = "echo '" + fBody + "' | logentry -t '" + fTitle + "' ";
+   if(!fLogBooks.empty()) {
+      stringstream ss(fLogBooks);
+      while(ss.good()) {
+         string substr;
+         getline(ss, substr, ',');
+         cmd += " -l " + substr + " ";
+      }
+   }else {
+      cmd += " -l HBLOG ";
+   }
+   if(!fTags.empty()) {
+      stringstream ss(fTags);
+      while (ss.good()) {
+         string substr;
+         getline(ss, substr, ',');
+         cmd += " --tag " + substr + " ";
+      }
+   }
+   if(!fEntryMakers.empty()) cmd += "--entrymaker '" + fEntryMakers +"' ";
+   if(!fEmailNotify.empty()) {
+      stringstream ss(fEmailNotify);
+      while (ss.good()) {
+         string substr;
+         getline(ss, substr, ',');
+         cmd += " --notify '" + substr + "' ";
+      }
+   }
+   for(int i=0; i< fAttachments.size(); ++i) {
+      cmd += " --attach '" + fAttachments[i] + "' --caption '" + fAttachmentCaptions[i] + "' ";
+   }
+   if(fRHists->fDebug){
+      std::cout << "Logbook command: \n";
+      std::cout << cmd << std::endl;
+   }
+   std::system(cmd.c_str());
+
 #endif
 }
 
