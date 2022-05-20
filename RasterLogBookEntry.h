@@ -26,7 +26,7 @@
 #define DEFAULT_HISTOGRAM_PATH  "/home/clasrun/raster"     // This *should* have been overwritten in CMakeLists.txt
 #endif
 
-class RasterLogBookEntry: public TGTransientFrame{
+class RasterLogBookEntry: public TObject {
 public:
    RasterLogBookEntry(const TGWindow *parent_window, RasterHists *rhists);
 
@@ -34,19 +34,22 @@ public:
    void MakeEntry();
    void SubmitToLogBook();
    void SaveCanvassesToFile();
-   void CloseWindow() override{
+   void CloseWindow(){
       if(fEntryThread.joinable()) fEntryThread.join();
-      TGTransientFrame::CloseWindow();
+      fMain->CloseWindow();
    };
    void Cancel(){
       CloseWindow();
    }
    void OK(){
       SubmitToLogBook();
-      TGTransientFrame::CloseWindow();
+      CloseWindow();
    }
 
 public:
+
+   const TGWindow *fParentWindow;
+   TGTransientFrame *fMain;
    RasterHists *fRHists;  // Pointer to the histograms and graphs.
    bool fAlreadyWritingImages=false;  // Right now, only one thread to write images.
    std::thread fEntryThread;

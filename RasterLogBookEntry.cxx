@@ -12,18 +12,14 @@
 #include "ELogBookShim.h"
 #endif
 
-RasterLogBookEntry::RasterLogBookEntry(const TGWindow *parent_window, RasterHists *rhists): fRHists(rhists),
-   TGTransientFrame(gClient->GetRoot(), parent_window, 400, 400){
-   SetWindowName("Logbook Entry Dialog");
-   DontCallClose(); // to avoid double deletions.
-   // use hierarchical cleaning
-   SetCleanup(kDeepCleanup);
+RasterLogBookEntry::RasterLogBookEntry(const TGWindow *parent_window, RasterHists *rhists): fRHists(rhists) {
+   fParentWindow = parent_window;
 };
 
 TGTextEntry* RasterLogBookEntry::AddTextLine(string label_text, string init_text, string tooltip){
    // Add a single entry line with label to the dialog.
    int label_width = 90;
-   auto Frame = new TGHorizontalFrame(this, 0, 50, kLHintsExpandX);
+   auto Frame = new TGHorizontalFrame(fMain, 0, 50, kLHintsExpandX);
    auto LabelFrame = new TGHeaderFrame( Frame, label_width, 50, kFixedWidth);
    Frame->AddFrame(LabelFrame, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 0, 0, 0, 0));
    auto label = new TGLabel(LabelFrame, label_text.c_str());
@@ -31,27 +27,32 @@ TGTextEntry* RasterLogBookEntry::AddTextLine(string label_text, string init_text
    auto TextEntry = new TGTextEntry(Frame, init_text.c_str(), 0);
    TextEntry->SetToolTipText(tooltip.c_str());
    Frame->AddFrame(TextEntry, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY, 2, 2, 2, 2));
-   AddFrame(Frame, new TGLayoutHints(kLHintsTop | kLHintsExpandX, 2, 15, 5, 2));
+   fMain->AddFrame(Frame, new TGLayoutHints(kLHintsTop | kLHintsExpandX, 2, 15, 5, 2));
    return TextEntry;
 }
 
 void RasterLogBookEntry::MakeEntry() {
 
+   fMain = new TGTransientFrame(gClient->GetRoot(), fParentWindow, 400, 400);
+   fMain->SetWindowName("Logbook Entry Dialog");
+   fMain->DontCallClose(); // to avoid double deletions.
+   // use hierarchical cleaning
+   fMain->SetCleanup(kDeepCleanup);
    // We spin off a thread to save the canvasses to file, otherwise the entire app blocks while these are being
    // written, and writing them can be slow. We use a lock mechanism (see fRHists->fDrawLock) to allow the thread to
    // write the files in batch mode.
 
    if(!fAlreadyWritingImages) {
-      fEntryThread = ::thread(&RasterLogBookEntry::SaveCanvassesToFile, this);
+      //fEntryThread = std::thread(&RasterLogBookEntry::SaveCanvassesToFile, this);
       //SaveCanvassesToFile(0);
-      fAlreadyWritingImages = true;
+      // fAlreadyWritingImages = true;
    }
 
 //#ifdef HAS_LOGBOOK
    // Next we open the dialog window for the user to interact with.
-   Connect("CloseWindow()", "RasterLogBookEntry", this, "CloseWindow()");
+   fMain->Connect("CloseWindow()", "RasterLogBookEntry", this, "CloseWindow()");
 
-   auto Frame1 = new TGHorizontalFrame(this, 800, 50, kFixedWidth | kFitHeight);
+   auto Frame1 = new TGHorizontalFrame(fMain, 800, 50, kFixedWidth | kFitHeight);
 
    auto OkButton = new TGTextButton(Frame1, "&Ok", 991);
    OkButton->Connect("Clicked()", "RasterLogBookEntry", this, "OK()");
@@ -68,8 +69,8 @@ void RasterLogBookEntry::MakeEntry() {
    fEntryMakersEntry = AddTextLine("Entry makers:", fEntryMakers, "A list of usernames (separated by commas) of individuals who should be associated with authorship of the entry.");
    fEmailNotifyEntry = AddTextLine("Email notify:", fEmailNotify,"A list of email addresses (separated by commas) to receive an email copy of the entry after it is posted.");
 
-   fBodyEdit = new TGTextEdit(this, 0, 500);
-   AddFrame(fBodyEdit, new TGLayoutHints(kLHintsExpandX, 10, 10, 10, 10));
+   fBodyEdit = new TGTextEdit(fMain, 0, 500);
+   fMain->AddFrame(fBodyEdit, new TGLayoutHints(kLHintsExpandX, 10, 10, 10, 10));
 
    fBodyEdit->AddLine("RasterMon auto generated logbook entry.");
    fBodyEdit->AddLine("");
@@ -82,14 +83,14 @@ void RasterLogBookEntry::MakeEntry() {
       i_tab++;
    }
 
-   AddFrame(Frame1, new TGLayoutHints(kLHintsBottom | kLHintsRight, 2, 2, 5, 1));
-   MapSubwindows();
+   fMain->AddFrame(Frame1, new TGLayoutHints(kLHintsBottom | kLHintsRight, 2, 2, 5, 1));
+   fMain->MapSubwindows();
 
-   UInt_t width = GetDefaultWidth();
-   UInt_t height = GetDefaultHeight();
-   Resize(width, height);
-   CenterOnParent();
-   MapWindow();
+   UInt_t width = fMain->GetDefaultWidth();
+   UInt_t height = fMain->GetDefaultHeight();
+   fMain->Resize(width, height);
+   fMain->CenterOnParent();
+   fMain->MapWindow();
 // #endif
 }
 
