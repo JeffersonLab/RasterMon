@@ -23,6 +23,10 @@
 #define ET_DEFAULT_HOST "clondaq6"
 #endif
 
+#ifndef FADC_TIME_CONVERSION
+#define FADC_TIME_CONVERSION 4.0e-9   // The FADCs run at 250 MHz, so one tick is 4ns.
+#endif
+
 struct EvioSlot_t {
    unsigned short slot;
    vector<unsigned short> channels;   // Channels for this slot that we need to parse out.

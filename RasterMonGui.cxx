@@ -28,7 +28,7 @@ void RasterMonGui::Init(){
    fSaveFileInfo.fFileTypes = gfFileSaveTypes;
    fSaveFileInfo.SetFilename("RasterMonHists");
    fHistUpdateTimer = std::make_unique<TTimer>(this, fUpdateRate) ;
-   fLogBook = std::make_unique<RasterLogBookEntry>(this);
+   fLogBook = std::make_unique<RasterLogBookEntry>(this, fRHists);
    fEvio = fRHists->GetEvioPtr();
 }
 
@@ -78,12 +78,12 @@ void RasterMonGui::AddControlBar(){
    auto *go = new TGTextButton(hframe_sub,"&Go");
    go->Connect("Clicked()","RasterMonGui",this,"Go()");
    hframe_sub->AddFrame(go, new TGLayoutHints(kLHintsCenterX,
-                                          5,5,3,4));
+                                              5,5,3,4));
 
    fPauseButton = new TGTextButton(hframe_sub," &Pause ");
    fPauseButton->Connect("Clicked()","RasterMonGui",this,"Pause()");
    hframe_sub->AddFrame(fPauseButton, new TGLayoutHints(kLHintsCenterX,
-                                             5,5,3,4));
+                                                        5,5,3,4));
 
    TGButton *stop;
    auto stop_pic =  gClient->GetPicture("ed_interrupt.png");
@@ -94,17 +94,17 @@ void RasterMonGui::AddControlBar(){
    }
    stop->Connect("Clicked()","RasterMonGui",this,"Stop()");
    hframe_sub->AddFrame(stop, new TGLayoutHints(kLHintsCenterX,
-                                            5,5,3,4));
+                                                5,5,3,4));
 
    auto *cleartab = new TGTextButton(hframe_sub,"&Clear");
    cleartab->Connect("Clicked()","RasterMonGui",this,"ClearTab()");
    hframe_sub->AddFrame(cleartab, new TGLayoutHints(kLHintsCenterX,
-                                             5,5,3,4));
+                                                    5,5,3,4));
 
    auto *clear = new TGTextButton(hframe_sub,"&Clear All");
    clear->Connect("Clicked()","RasterMonGui",this,"ClearAll()");
    hframe_sub->AddFrame(clear, new TGLayoutHints(kLHintsCenterX,
-                                             5,5,3,4));
+                                                 5,5,3,4));
 
    auto *config = new TGTextButton( hframe, "Config");
    config->Connect("Clicked()","RasterMonGui", this, "DoConfigure()");
@@ -157,7 +157,7 @@ void RasterMonGui::StatusBarUpdate(){
    auto delta_t = std::chrono::duration_cast<std::chrono::microseconds>(time2-time1);
    auto total_t = std::chrono::duration_cast<std::chrono::microseconds>(time2-time0);
    sprintf(text1,"<rate> = %8.3f kHz i: %8.3f kHz",
-          1000.*fEvio->fNEventsProcessed/total_t.count() ,1000.*delta_evt/delta_t.count());
+           1000.*fEvio->fNEventsProcessed/total_t.count() ,1000.*delta_evt/delta_t.count());
    fStatusBar->SetText( text1, 3);
 
    time1 = time2;
@@ -224,7 +224,13 @@ void RasterMonGui::HandleMenu(int choice) {
             if(fDebug) std::cout << "Saving histograms to file: " << fSaveFileInfo.fFilename << "\n";
             string save_file(fSaveFileInfo.fFilename);
             std::string::size_type const p(save_file.find_last_of('.')); // Find extension.
-            auto file_ending = save_file.substr(p+1);
+            std::string file_ending;
+            if( p == save_file.npos ){
+               std::cout << "No extension give. Will use .pdf \n";
+               file_ending=".pdf";
+            }else {
+               file_ending = save_file.substr(p + 1);
+            }
             string file_stub = save_file.substr(0, p);
 
             if( file_ending == "" ) {   // no extension, save as pdf
@@ -236,10 +242,16 @@ void RasterMonGui::HandleMenu(int choice) {
             }else if ( file_ending == "root"){
                fRHists->SaveRoot(save_file, fSaveFileInfo.fOverwrite);
             }else {  // Try the ROOT "SaveAs" for each canvas.
-               fRHists->SaveImageFile(file_stub, file_ending);
+               std::vector<TCanvas *> canvs;
+               for(int count =0; count < fRHists->fTabs.size(); ++count) {
+                  auto tab = fRHists->fTabs.at(count);
+                  TCanvas *canv = (TCanvas *) tab.canvas->GetCanvas()->DrawClone();
+                  canvs.push_back(canv);
+               }
+               fRHists->SaveCanvasesToImageFiles(file_stub, file_ending, &canvs);
+               canvs.clear();
             }
-            break;
-            }
+         }
          break;
 
       case M_HELP_ABOUT:
