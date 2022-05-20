@@ -26,7 +26,7 @@
 #define DEFAULT_HISTOGRAM_PATH  "/home/clasrun/raster"     // This *should* have been overwritten in CMakeLists.txt
 #endif
 
-class RasterLogBookEntry: public TObject {
+class RasterLogBookEntry {
 public:
    RasterLogBookEntry(const TGWindow *parent_window, RasterHists *rhists);
 
