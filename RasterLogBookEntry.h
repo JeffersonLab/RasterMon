@@ -60,7 +60,7 @@ public:
    TGTextEntry* fLogBooksEntry;
    std::string fEntryMakers;
    TGTextEntry* fEntryMakersEntry;
-   std::string fTags{"BeamLine"};
+   std::string fTags;
    TGTextEntry* fTagsEntry;
    std::string fReference;
    TGTextEntry* fReferenceEntry;
