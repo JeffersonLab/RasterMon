@@ -43,7 +43,7 @@ void RasterLogBookEntry::MakeEntry() {
    // write the files in batch mode.
 
    if(!fAlreadyWritingImages) {
-      //fEntryThread = std::thread(&RasterLogBookEntry::SaveCanvassesToFile, this);
+      fEntryThread = std::thread(&RasterLogBookEntry::SaveCanvassesToFile, this);
       //SaveCanvassesToFile(0);
       // fAlreadyWritingImages = true;
    }
