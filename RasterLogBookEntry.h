@@ -27,6 +27,7 @@
 #include "TGTextEntry.h"
 #include "TGTextEdit.h"
 #include "TGLabel.h"
+#include "TGComboBox.h"
 #include "RQ_OBJECT.h"
 
 #ifndef DEFAULT_HISTOGRAM_PATH
@@ -48,6 +49,7 @@ public:
    void MakeEntry();
    void SubmitToLogBook();
    void SaveCanvassesToFile();
+   void ScrubString(string &instr);
    void CloseWindow(){
       if(fEntryThread.joinable()) fEntryThread.join();
       fMain->CloseWindow();
@@ -72,15 +74,17 @@ public:
 
    std::string fTitle;
    TGTextEntry* fTitleEntry;
-   std::string fLogBooks = {"HBLOG"};
-   TGTextEntry* fLogBooksEntry;
-   std::string fEntryMakers;
+   std::string fLogBooks{"HBLOG"};
+   std::vector<std::string> fLogBookChoices = {"HBLOG", "ELOG", "HBLOG,ELOG"};
+   TGComboBox* fLogBookCBox;
+   std::string fEntryMakers{""};
    TGTextEntry* fEntryMakersEntry;
-   std::string fTags;
-   TGTextEntry* fTagsEntry;
-   std::string fReference;
+   std::string fTags{"Beamline"};
+   std::vector<std::string> fTagChoices = {"","Beamline"};
+   TGComboBox* fTagsCBox;
+   std::string fReference{""};
    TGTextEntry* fReferenceEntry;
-   std::string fEmailNotify;
+   std::string fEmailNotify{""};
    TGTextEntry* fEmailNotifyEntry;
    std::string fBody;
    TGTextEdit *fBodyEdit;
