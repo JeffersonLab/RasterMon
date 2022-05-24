@@ -136,11 +136,9 @@ void RasterLogBookEntry::SubmitToLogBook() {
    fBody = body_tgtext->AsString();
    fRHists->fDrawLock.unlock();
    while( fAlreadyWritingImages ){
-      std::cout << ".";
       gSystem->ProcessEvents();
       gSystem->Sleep(50);
    }
-   std::cout << ". Join. \n";
    if(fEntryThread.joinable()) fEntryThread.join();
    // At this point the attachments should be ready.
    for(int i=0; i< fRHists->fTabs.size(); ++i){
@@ -169,6 +167,12 @@ void RasterLogBookEntry::SubmitToLogBook() {
       }
    }else {
       cmd += " -l HBLOG ";
+   }
+
+   if(!fTitle.empty()){
+      cmd += " --title '" + fTitle + "' ";
+   }else{
+      cmd += "--title 'RasterMon for run " + to_string(fRHists->fEvio->GetRunNumber()) + "' ";
    }
    if(!fTags.empty()) {
       stringstream ss(fTags);
