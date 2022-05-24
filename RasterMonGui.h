@@ -151,13 +151,11 @@ public:
 
    void MakeLogEntry(){
       // Receives the signal from the Log Book button.
-      cout << "Make a log book entry!\n";
       fLogentry->SetEnabled(false);
       fLogBook->MakeEntry();
    }
 
    void DoneLogEntry(){
-      cout << "Got a DoneLogEntry()\n";
       fLogentry->SetEnabled(true);
    }
 
