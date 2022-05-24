@@ -20,6 +20,7 @@
 #ifndef RASTERMON_RASTERLOGBOOKENTRY_H
 #define RASTERMON_RASTERLOGBOOKENTRY_H
 
+#include <filesystem>
 #include "RasterHists.h"
 #include "TGFrame.h"
 #include "TGButton.h"
