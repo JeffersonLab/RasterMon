@@ -631,12 +631,14 @@ std::vector<std::string> RasterHists::SaveCanvasesToImageFiles(const string &fil
    // Make sure they are all updated.
    std::vector<std::string> out_filenames;
    for(int i =0; i < canvasses->size(); ++i) {
+      gSystem->ProcessEvents();
       auto canv = canvasses->at(i);
       string out = filename + to_string(i) + "." + ending;
       fDrawLock.lock();
       gROOT->SetBatch(true);
       canv->Draw();
       canv->Print(out.c_str());
+      gSystem->Sleep(250);
       gROOT->SetBatch(false);
       fDrawLock.unlock();
       out_filenames.push_back(out);

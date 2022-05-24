@@ -39,6 +39,9 @@
 
 class RasterHists : public TQObject, public TObject{
 
+private:
+   bool fPause = true;
+
 public:
    RasterEvioTool *fEvio = nullptr;
    TGTab *fTabAreaTabs = nullptr;    // Pointer to the tab area
@@ -59,7 +62,7 @@ public:
    int  fDebug = 0;
    bool fKeepWorking = false;    // Set to true in Go();
    bool fIsTryingToRead = false; // To detect if a read is hung.
-   bool fPause = true;
+
 
    int fNWorkers = 1;
    std::vector<std::thread> fWorkers;
@@ -86,14 +89,14 @@ public:
    void FillGraphs(int tab_no, vector<Graph_t> &graphs);
    void HistFillWorker(int seed=0);
    RasterEvioTool *GetEvioPtr() const{return fEvio;}
-   void Pause(){ fPause = true;}
-   void UnPause(){ fPause = false;}
+   bool Pause(){ bool prevstate = fPause; fPause = true; return prevstate;}
+   bool UnPause(){ bool prevstate = fPause; fPause = false; return prevstate;}
+   bool IsPaused(){return fPause;}
    void Go();
    void Stop();
    void Clear(int active_tab=-1);
    void DoDraw(int active_tab=-1);
    bool IsWorking(){return(fKeepWorking);}
-   bool IsPaused(){return(fPause);}
 
    static TAxis * GetTopAxisFromPad(TPad *pad);
    void SubPadCopyRange(TPad *one, TPad *two);

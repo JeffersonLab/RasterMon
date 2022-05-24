@@ -57,6 +57,7 @@ public:
    std::unique_ptr<TGStatusBar> fStatusBar = nullptr;
    TGTextButton *fPauseButton = nullptr;
    bool fPause = false;
+   TGTextButton *fLogentry;
    std::unique_ptr<TTimer> fHistUpdateTimer = nullptr;
 
    RasterHists* fRHists = nullptr;
@@ -96,8 +97,6 @@ public:
       fConfig->OK();
       fConfig = nullptr;
    }
-
-
 
    void SetUpdateRate(){
       unsigned long rate=0;
@@ -146,13 +145,20 @@ public:
    void Exit(){
       Stop();
       cout << "Exiting RasterMon. Bye now. \n";
+      CloseWindow();
       gApplication->Terminate();
    }
 
    void MakeLogEntry(){
       // Receives the signal from the Log Book button.
       cout << "Make a log book entry!\n";
+      fLogentry->SetEnabled(false);
       fLogBook->MakeEntry();
+   }
+
+   void DoneLogEntry(){
+      cout << "Got a DoneLogEntry()\n";
+      fLogentry->SetEnabled(true);
    }
 
    Bool_t HandleTimer(TTimer *timer) override{

@@ -306,14 +306,14 @@ public:
       void UpdateADCBufDepth(){
       double rnum = fNumberEntryScopeBufDepth->GetNumber();
       unsigned long bufsize = (unsigned long)(rnum*1000.);
-      fHists->fPause = true;  // Pause the worker threads.
+      bool prevstate = fHists->Pause();   // Pause the worker threads.
       if(fEvio){
          fEvio->UpdateBufferSize(bufsize);
       }
       if(fHists){
          fHists->ResizeScopeGraphs(bufsize);
       }
-      fHists->fPause = false;
+      if(!prevstate) fHists->UnPause();
    }
 
 };

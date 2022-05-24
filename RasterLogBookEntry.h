@@ -6,10 +6,15 @@
 // "logentry" commandline code: (e.g. https://github.com/JeffersonLab/clas12-epics/blob/9f362753cb429c5cd5476663ffafa8e735501a29/apps/mollerSetupApp/src/makeLogEntry.c#L62-L84).
 //
 // Library location at JLab:
+// /cs/certified/apps/...
 // /apps/acctools/cs/certified/apps/eloglib/2.5/inc  - contains: adminExtension.h  attachment.h  base64.h  body.h
 //      comment.h  elog.h  logentry.h  logException.h  logItem.h  logObj.h  mimeReader.h  pathSet.h  problemReport.h
 //      timeHandler.h  xmlutl.h
 // /apps/acctools/cs/certified/apps/eloglib/2.5/lib/rhel-7-x86_64  - contains: libelog.a libelog.so
+//
+// The cli program is at:
+//  /cs/certified/apps/logentrycli/PRO/bin/logentry
+// ONLY that location works.
 
 
 #ifndef RASTERMON_RASTERLOGBOOKENTRY_H
@@ -21,12 +26,20 @@
 #include "TGTextEntry.h"
 #include "TGTextEdit.h"
 #include "TGLabel.h"
+#include "RQ_OBJECT.h"
 
 #ifndef DEFAULT_HISTOGRAM_PATH
 #define DEFAULT_HISTOGRAM_PATH  "/home/clasrun/raster"     // This *should* have been overwritten in CMakeLists.txt
 #endif
 
+#ifndef CLI_LOGENTRY_PROGRAM
+#define CLI_LOGENTRY_PROGRAM "/cs/certified/apps/logentrycli/PRO/bin/logentry"
+#endif
+
 class RasterLogBookEntry {
+
+   RQ_OBJECT("RasterLogBookEntry")
+
 public:
    RasterLogBookEntry(const TGWindow *parent_window, RasterHists *rhists);
 
@@ -37,6 +50,7 @@ public:
    void CloseWindow(){
       if(fEntryThread.joinable()) fEntryThread.join();
       fMain->CloseWindow();
+      Emit("CloseWindow()");
    };
    void Cancel(){
       CloseWindow();
@@ -48,6 +62,7 @@ public:
 
 public:
 
+   bool fLogEntryOK = false;
    const TGWindow *fParentWindow;
    TGTransientFrame *fMain;
    RasterHists *fRHists;  // Pointer to the histograms and graphs.

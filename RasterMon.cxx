@@ -43,7 +43,12 @@ int main(int argc, char **argv) {
 
          " Version: 1.0.0, using ROOT version: ";
    help_string += gROOT->GetVersion();
-   help_string += "\n Compiled with " __VERSION__ "\n";
+   help_string += "\n Compiled with gcc " __VERSION__ " with ABI " + std::to_string(__GXX_ABI_VERSION) + " \n";
+#ifdef HAS_LOGBOOK
+   help_string += " Code submits directly to the logbook using the libelog c++ api.\n";
+#else
+   help_string += " Code submits to the logbook using the logentry cli program. \n";
+#endif
 
    cxxopts::Options options(argv[0], help_string);
    options
@@ -108,11 +113,8 @@ int main(int argc, char **argv) {
 //      gROOT->LoadMacro("tests/config.C");
 //      }
 
-
-
       Default_Initialize_Histograms(RHists, evio);
       RHists->SetupData();
-
 
       // Add the commandline files to the RasterEvioTool
       if (args.count("inputfiles")) {
@@ -131,10 +133,15 @@ int main(int argc, char **argv) {
          if (debug)
             cout << "Using the ET system with host: " << host << ", port: " << port << " , et file: " << etname
                  << ". \n";
-         int stat = evio->OpenEt("RasterMon",etname, host, port);
-         if (stat != 0) {
-            cout << "ERROR -- could not attach to ET system. abort. \n";
-            return (3);
+         try {
+            int stat = evio->OpenEt("RasterMon", etname, host, port);
+            if (stat != 0) {
+               cout << "ERROR -- could not attach to ET system. abort. \n";
+               return (3);
+            }
+         }catch(exception e){
+            std::cout << "Error connecting to ET caused exception.\n";
+            std::cout << e.what() << std::endl;
          }
       }
 

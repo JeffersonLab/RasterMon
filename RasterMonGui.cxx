@@ -29,6 +29,8 @@ void RasterMonGui::Init(){
    fSaveFileInfo.SetFilename("RasterMonHists");
    fHistUpdateTimer = std::make_unique<TTimer>(this, fUpdateRate) ;
    fLogBook = std::make_unique<RasterLogBookEntry>(this, fRHists);
+   fLogBook->Connect("CloseWindow()", "RasterMonGui", this, "DoneLogEntry()");
+
    fEvio = fRHists->GetEvioPtr();
 }
 
@@ -76,11 +78,13 @@ void RasterMonGui::AddControlBar(){
    auto hframe_sub = new TGHorizontalFrame(hframe, 120, 10 );
    hframe->AddFrame(hframe_sub,new TGLayoutHints(kLHintsLeft,150,4,2,2) );
    auto *go = new TGTextButton(hframe_sub,"&Go");
+   go->SetToolTipText("Start processing data, and start updating screen.");
    go->Connect("Clicked()","RasterMonGui",this,"Go()");
    hframe_sub->AddFrame(go, new TGLayoutHints(kLHintsCenterX,
                                               5,5,3,4));
 
    fPauseButton = new TGTextButton(hframe_sub," &Pause ");
+   fPauseButton->SetToolTipText("Pause the screen updates, but keep processing incoming events.");
    fPauseButton->Connect("Clicked()","RasterMonGui",this,"Pause()");
    hframe_sub->AddFrame(fPauseButton, new TGLayoutHints(kLHintsCenterX,
                                                         5,5,3,4));
@@ -92,36 +96,40 @@ void RasterMonGui::AddControlBar(){
    }else{
       stop = new TGTextButton(hframe_sub, "&Stop");
    }
+   stop->SetToolTipText("Stop processing data and stop updating screen.");
    stop->Connect("Clicked()","RasterMonGui",this,"Stop()");
    hframe_sub->AddFrame(stop, new TGLayoutHints(kLHintsCenterX,
                                                 5,5,3,4));
 
    auto *cleartab = new TGTextButton(hframe_sub,"&Clear");
+   cleartab->SetToolTipText("Clear only the histograms in this tab.");
    cleartab->Connect("Clicked()","RasterMonGui",this,"ClearTab()");
    hframe_sub->AddFrame(cleartab, new TGLayoutHints(kLHintsCenterX,
                                                     5,5,3,4));
 
    auto *clear = new TGTextButton(hframe_sub,"&Clear All");
+   clear->SetToolTipText("Clear the histograms in all the tabls.");
    clear->Connect("Clicked()","RasterMonGui",this,"ClearAll()");
    hframe_sub->AddFrame(clear, new TGLayoutHints(kLHintsCenterX,
                                                  5,5,3,4));
 
    auto *config = new TGTextButton( hframe, "Config");
+   config->SetToolTipText("Pop up a config window. The gui remains fully active, and config changes will be instant.");
    config->Connect("Clicked()","RasterMonGui", this, "DoConfigure()");
    hframe->AddFrame(config, new TGLayoutHints(kLHintsCenterX, 50,5,3,4));
 
-   auto *logentry = new TGTextButton( hframe, "Log Entry");
-   logentry->Connect("Clicked()","RasterMonGui", this, "MakeLogEntry()");
-   hframe->AddFrame(logentry, new TGLayoutHints(kLHintsCenterX, 50,5,3,4));
+   fLogentry = new TGTextButton( hframe, "Log Entry");
+   fLogentry->SetToolTipText("Create a PNG file for each tab and pop up a log entry window to make a log entry.");
+   fLogentry->Connect("Clicked()","RasterMonGui", this, "MakeLogEntry()");
+   hframe->AddFrame(fLogentry, new TGLayoutHints(kLHintsCenterX, 50,5,3,4));
 
    auto exit_pic =  gClient->GetPicture("ed_quit.png");
    auto *exit = new TGPictureButton(hframe, exit_pic);
+   exit->SetToolTipText("Exit this program.");
 //   TGTextButton *exit = new TGTextButton(hframe,"&Exit");
    exit->Connect("Clicked()","RasterMonGui",this,"Exit()");
    hframe->AddFrame(exit, new TGLayoutHints(kLHintsRight,
                                             100,5,3,10));
-
-
 }
 
 void RasterMonGui::AddStatusBar() {
