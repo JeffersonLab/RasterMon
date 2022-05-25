@@ -29,8 +29,8 @@ void RMConfig(long r_h_pointer_long) {  // Function name *must* be the same as t
    if(r->fDebug) printf("We are configuring RasterHists from pointer 0x%lx \n",r_h_pointer_long);
 
    // Default_Initialize_Histograms(r);  // Calling this function will setup the code as if no config file was provided.
-   int tab = 0;
 
+   // Tab 0:
    // Add a tab called "Main", with a canvas that is not divided: (nx=1, ny=1).
    r->fTabs.emplace_back("Main", 1, 1);
    // Add a 2-D histogram. (tab_number, pad_number, bank_tag_x, slot_x, adc_chan_x, bank_tag_y, slot_y, adc_chan_y,
@@ -49,8 +49,9 @@ void RMConfig(long r_h_pointer_long) {  // Function name *must* be the same as t
    r->fHists.back().draw_opt = "colz"; // Plot with colz.
    r->fHists.back().hist->SetStats(false); // No statistics box.
 
-   tab++;
+   // Next tab - 1
    // Add a canvas that is divided into 4 pads, in a 2x2 grid.
+   // In this tab we repeat the histogram from tab 0.
    r->fTabs.emplace_back("Raster", 2, 2);
    r->fHists.emplace_back(59, 19, 1,
                           "Raster_x", "Raster Pos x;x[mm]", 400, -10., 10.);
@@ -67,14 +68,12 @@ void RMConfig(long r_h_pointer_long) {  // Function name *must* be the same as t
    r->fTabs.back().hists.push_back( i_r_xy); // Add the histogram from tab 0.
    r->fTabs.back().hist_pads.push_back(2); // Show on pad 2
 
-
-   tab++;
-   Default_Setup_Raw_Raster_Tab(r, tab);
-   tab++;
-   Default_Setup_1_Channel_Scope(r, tab);
-//   Default_Setup_3_Channel_Scope(r, tab);
+   Default_Setup_Raw_Raster_Tab(r);
+   // Next Tab
+   Default_Setup_1_Channel_Scope(r);
+//   Default_Setup_3_Channel_Scope(r);
 
    // Overrides
    cout << "Changing the Scope buffer size.\n";
-   if (r->fEvio != nullptr) r->fEvio->UpdateBufferSize(1000);
+   if (r->fEvio != nullptr) r->fEvio->UpdateBufferSize(10000);
 }

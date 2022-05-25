@@ -7,7 +7,7 @@ RasterHists::~RasterHists(){
 // Cleanup.
 }
 
-void Default_Setup_Raster_Tab(RasterHists *r, int tab){
+void Default_Setup_Raster_Tab(RasterHists *r){
    r->fTabs.emplace_back("Raster", 2, 2);
 
    r->fHists.emplace_back(59, 19, 1,
@@ -33,7 +33,7 @@ void Default_Setup_Raster_Tab(RasterHists *r, int tab){
    r->fHists.back().draw_opt = "colz";
    r->fHists.back().hist->SetStats(false);
 }
-void Default_Setup_Raw_Raster_Tab(RasterHists *r, int tab){
+void Default_Setup_Raw_Raster_Tab(RasterHists *r){
    r->fTabs.emplace_back("Raw1", 2, 2);
    r->fHists.emplace_back(59, 19, 1,
                           "RawIx", "Raw ADC 3, I_x;ADC(1) channel", 4096, -0.5, 4095.5);
@@ -57,7 +57,7 @@ void Default_Setup_Raw_Raster_Tab(RasterHists *r, int tab){
    r->fHists.back().hist->SetStats(false);
 }
 
-void Default_Setup_Raw_Raster_Tab2(RasterHists *r, int tab){
+void Default_Setup_Raw_Raster_Tab2(RasterHists *r){
    r->fTabs.emplace_back("Raw2", 2, 2);
    r->fHists.emplace_back(59, 19, 5,
                           "RawGx", "Raw ADC 5, G(x); ADC(5) channel", 4096, -0.5, 4095.5);
@@ -81,7 +81,7 @@ void Default_Setup_Raw_Raster_Tab2(RasterHists *r, int tab){
    r->fHists.back().hist->SetStats(false);
 
 }
-void Default_Setup_Raw_Raster_Tab3(RasterHists *r, int tab){
+void Default_Setup_Raw_Raster_Tab3(RasterHists *r){
    r->fTabs.emplace_back("Raw3", 2, 2);
    r->fHists.emplace_back(59, 19, 9,
                           "RawVx", "Raw ADC 9, G(x); ADC(5) channel", 4096, -0.5, 4095.5);
@@ -99,7 +99,7 @@ void Default_Setup_Raw_Raster_Tab3(RasterHists *r, int tab){
    r->fHists.back().hist->SetStats(false);
 }
 
-void Default_Setup_1_Channel_Scope(RasterHists *r, int tab){
+void Default_Setup_1_Channel_Scope(RasterHists *r){
    r->fTabs.emplace_back("Scope", 1, 1, 0, 0);
    r->fTabs.back().grid = {1};
    r->fTabs.back().calc = {0}; // Calc 1 - modify the bottom margin.
@@ -113,7 +113,7 @@ void Default_Setup_1_Channel_Scope(RasterHists *r, int tab){
 }
 
 
-void Default_Setup_2_Channel_Scope(RasterHists *r, int tab){
+void Default_Setup_2_Channel_Scope(RasterHists *r){
    r->fTabs.emplace_back("Scope", 1, 2, 0, 0);
    r->fTabs.back().grid = {1, 1};
    r->fTabs.back().calc = {1, 0}; // Calc 1 - modify the bottom margin.
@@ -135,7 +135,7 @@ void Default_Setup_2_Channel_Scope(RasterHists *r, int tab){
    r->fTabs.back().pad_link = {2, 1};
 }
 
-void Default_Setup_3_Channel_Scope(RasterHists *r, int tab){
+void Default_Setup_3_Channel_Scope(RasterHists *r){
    r->fTabs.emplace_back("Scope", 1, 3, 0, 0);
    r->fTabs.back().grid = {1, 1, 1};
    r->fTabs.back().calc = {1, 1, 0}; // Calc 1 - modify the bottom margin.
@@ -168,7 +168,7 @@ void Default_Setup_3_Channel_Scope(RasterHists *r, int tab){
    r->fTabs.back().pad_link = {2, 3, 1};
 }
 
-void Default_Setup_Helicity(RasterHists *r, int tab){
+void Default_Setup_Helicity(RasterHists *r){
    r->fTabs.emplace_back("Helicity", 2, 2);
    r->fTabs.back().logy = {true, true, true, true};
 
@@ -233,28 +233,21 @@ void Default_Initialize_Histograms(RasterHists *r){
    if(r->fEvio != nullptr) r->fEvio->UpdateBufferSize(10000);   // Set default Scope buffer to 50k.
    // Note: PAD numbering starts at 1, with 0 being the Canvas (i.e. only one object on the screen)
    // TAB 0 == Histograms that are NOT raw.
-   int tab = 0;
-   Default_Setup_Raster_Tab(r, tab);
+   Default_Setup_Raster_Tab(r);
 
    // TAB 1
-   tab++;
-   Default_Setup_Raw_Raster_Tab(r, tab);
+   Default_Setup_Raw_Raster_Tab(r);
 
    // TAB 2
-   tab++;
-   Default_Setup_Raw_Raster_Tab2(r, tab);
-
+   Default_Setup_Raw_Raster_Tab2(r);
    // TAB 3
-   tab++;
-   Default_Setup_Raw_Raster_Tab3(r, tab);
+   Default_Setup_Raw_Raster_Tab3(r);
 
    // TAB 4 Scope
-   tab++;
-   Default_Setup_3_Channel_Scope(r, tab);
+   Default_Setup_3_Channel_Scope(r);
 
    // Tab 5 Helicity
-   tab++;
-   Default_Setup_Helicity(r, tab);
+   Default_Setup_Helicity(r);
 }
 
 TGTab * RasterHists::AddTabArea(TGWindow *frame, int w, int h) {
