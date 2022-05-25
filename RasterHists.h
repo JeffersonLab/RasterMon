@@ -127,6 +127,14 @@ ClassDef(RasterHists, 0)
 
 };
 
-void Default_Initialize_Histograms(RasterHists *r, RasterEvioTool *e);
+void Default_Setup_Raster_Tab(RasterHists *r, int tab);
+void Default_Setup_Raw_Raster_Tab(RasterHists *r, int tab);
+void Default_Setup_Raw_Raster_Tab2(RasterHists *r, int tab);
+void Default_Setup_Raw_Raster_Tab3(RasterHists *r, int tab);
+void Default_Setup_1_Channel_Scope(RasterHists *r, int tab);
+void Default_Setup_2_Channel_Scope(RasterHists *r, int tab);
+void Default_Setup_3_Channel_Scope(RasterHists *r, int tab);
+void Default_Setup_Helicity(RasterHists *r, int tab);
+void Default_Initialize_Histograms(RasterHists *r);
 
 #endif //RASTERMON_RASTERHISTS_H

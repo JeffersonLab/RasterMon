@@ -25,10 +25,21 @@
 //        Useful thread: https://root-forum.cern.ch/t/is-one-canvas-per-thread-possible/47014/27
 //
 
-#include "RasterMon.h"
-#include "TRint.h"
 
-extern void Initialize_Histograms(RasterHists *r, RasterEvioTool *e);
+#include <TROOT.h>
+#include <TApplication.h>
+#include <TGClient.h>
+#include <iostream>
+#include <thread>
+#include <vector>
+#include <sstream>
+
+#include "RasterMonGui.h"
+#include "RasterEvioTool.h"
+#include "RasterMonEventInfo.h"
+#include "cxxopts.hpp"
+
+extern void Initialize_Histograms(RasterHists *r);
 
 int main(int argc, char **argv) {
    ROOT::EnableThreadSafety();
@@ -104,16 +115,18 @@ int main(int argc, char **argv) {
       RHists->SetDebug(debug);
 
       // Parse the Config file FIRST. Then have command line options potentially override some of them (i.e. for ET)
-//      if( args.count("config")){
-//         cout << "Config file: " << config_file << " specified on command line. Parsing it.\n";
-//         cout << "This file exists? " << std::filesystem::exists( std::filesystem::path(config_file)) << "\n";
-//         string process_line = ".x " + config_file; // + "++";
-//         gROOT->ProcessLine(".x tests/config.C");
-//       void *test_ptr;
-//      gROOT->LoadMacro("tests/config.C");
-//      }
-
-      Default_Initialize_Histograms(RHists, evio);
+      if( args.count("config")){
+         cout << "Config file: " << config_file << " specified on command line. Parsing it.\n";
+         cout << "This file exists? " << std::filesystem::exists( std::filesystem::path(config_file)) << "\n";
+         std::ostringstream process_line;
+         process_line << ".x " << config_file << "(";
+         process_line << RHists;
+         process_line << ")";
+         cout << "Parsing config file with line: " << process_line.str() << std::endl;
+         gROOT->ProcessLine(process_line.str().c_str());
+      }else {
+         Default_Initialize_Histograms(RHists);
+      }
       RHists->SetupData();
 
       // Add the commandline files to the RasterEvioTool
