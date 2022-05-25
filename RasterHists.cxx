@@ -10,19 +10,22 @@ RasterHists::~RasterHists(){
 void Default_Setup_Raster_Tab(RasterHists *r, int tab){
    r->fTabs.emplace_back("Raster", 2, 2);
 
-   r->fHists.emplace_back(tab, 4, 59, 19, 1,
+   r->fHists.emplace_back(59, 19, 1,
                           "Raster_x", "Raster Pos x;x[mm]", 400, -10., 10.);
    r->fTabs.back().hists.push_back(r->fHists.size()-1);
+   r->fTabs.back().hist_pads.push_back(4); // Show on pad 4.
    r->fHists.back().scale_x = 0.004;
    r->fHists.back().offset_x = -8.0;
-   r->fHists.emplace_back(tab, 1, 59, 19, 3,
+   r->fHists.emplace_back(59, 19, 3,
                           "Raster_y", "Raster Pos y;y[mm]", 400, -10., 10.);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
+   r->fTabs.back().hist_pads.push_back(1); // Show on pad 1.
    r->fHists.back().scale_x = 0.004;
    r->fHists.back().offset_x = -8.0;
-   r->fHists.emplace_back(tab, 2, 59, 19, 1,  59, 19, 3,
+   r->fHists.emplace_back(59, 19, 1,  59, 19, 3,
                           "Raster_xy", "Raster Pos y vs x;x[mm];y[xx]", 400, -10., 10.,  400, -10., 10.);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
+   r->fTabs.back().hist_pads.push_back(2); // Show on pad 2.
    r->fHists.back().scale_x = 0.004;
    r->fHists.back().offset_x = -8.0;
    r->fHists.back().scale_y = 0.004;
@@ -32,70 +35,80 @@ void Default_Setup_Raster_Tab(RasterHists *r, int tab){
 }
 void Default_Setup_Raw_Raster_Tab(RasterHists *r, int tab){
    r->fTabs.emplace_back("Raw1", 2, 2);
-   r->fHists.emplace_back(tab, 4, 59, 19, 1,
+   r->fHists.emplace_back(59, 19, 1,
                           "RawIx", "Raw ADC 3, I_x;ADC(1) channel", 4096, -0.5, 4095.5);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
-   r->fHists.emplace_back(tab, 1, 59, 19, 3,
+   r->fTabs.back().hist_pads.push_back(4); // Show on pad 4.
+   r->fHists.emplace_back(59, 19, 3,
                           "RawIy", "Raw ADC 1, I_{y};ADC(3) channel", 4096, -0.5, 4095.5);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
-   r->fHists.emplace_back(tab, 2, 59, 19, 1, 59, 19, 3,
+   r->fTabs.back().hist_pads.push_back(1); // Show on pad 1.
+   r->fHists.emplace_back(59, 19, 1, 59, 19, 3,
                           "RawIxy", "Raw ADC 3-2, I_{y} vs I_{x};ADC(1) channel;ADC(3) channel", 409, -0.5, 4095.5, 409, -0.5, 4095.5);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
+   r->fTabs.back().hist_pads.push_back(2); // Show on pad 4.
    r->fHists.back().draw_opt = "colz";
    r->fHists.back().hist->SetStats(false);
-   r->fHists.emplace_back(tab, 3, 59, 19, 5, 59, 19, 1,
+   r->fHists.emplace_back(59, 19, 5, 59, 19, 1,
                           "RawIGx", "Raw ADC 3-2, G(x) vs I_{x};ADC(1) channel; ADC(5) channel", 409, -0.5, 4095.5, 409, -0.5, 4095.5);
    r->fTabs.back().hists.push_back(r->fHists.size()-1);
+   r->fTabs.back().hist_pads.push_back(3); // Show on pad 3.
    r->fHists.back().draw_opt = "colz";
    r->fHists.back().hist->SetStats(false);
 }
 
 void Default_Setup_Raw_Raster_Tab2(RasterHists *r, int tab){
    r->fTabs.emplace_back("Raw2", 2, 2);
-   r->fHists.emplace_back(tab,4,59, 19, 5,
+   r->fHists.emplace_back(59, 19, 5,
                           "RawGx", "Raw ADC 5, G(x); ADC(5) channel", 4096, -0.5, 4095.5);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
-   r->fHists.emplace_back(tab, 1, 59, 19, 7,
+   r->fTabs.back().hist_pads.push_back(4); // Show on pad 4.
+   r->fHists.emplace_back(59, 19, 7,
                           "RawGy", "Raw ADC 7, G(y); ADC(7) channel", 4096, -0.5, 4095.5);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
-   r->fHists.emplace_back(tab,2,59, 19, 5, 59, 19, 7,
+   r->fTabs.back().hist_pads.push_back(1); // Show on pad 1.
+   r->fHists.emplace_back(59, 19, 5, 59, 19, 7,
                           "RawGxy", "Raw ADC 7-5, G(y) vs G(x)", 409, -0.5, 4095.5, 409, -0.5, 4095.5);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
+   r->fTabs.back().hist_pads.push_back(2); // Show on pad 2.
    r->fHists.back().draw_opt = "colz";
    r->fHists.back().hist->SetStats(false);
-   r->fHists.emplace_back(tab,3,59, 19, 3, 59, 19, 7,
+   r->fHists.emplace_back(59, 19, 3, 59, 19, 7,
                           "RawIGy", "Raw ADC 7-5, G(y) vs I_{y}", 409, -0.5, 4095.5, 409, -0.5, 4095.5);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
+   r->fTabs.back().hist_pads.push_back(3); // Show on pad 3.
    r->fHists.back().draw_opt = "colz";
    r->fHists.back().hist->SetStats(false);
 
 }
 void Default_Setup_Raw_Raster_Tab3(RasterHists *r, int tab){
    r->fTabs.emplace_back("Raw3", 2, 2);
-   r->fHists.emplace_back(tab,4,59, 19, 9,
+   r->fHists.emplace_back(59, 19, 9,
                           "RawVx", "Raw ADC 9, G(x); ADC(5) channel", 4096, -0.5, 4095.5);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
-   r->fHists.emplace_back(tab, 1, 59, 19, 11,
+   r->fTabs.back().hist_pads.push_back(4); // Show on pad 4.
+   r->fHists.emplace_back(59, 19, 11,
                           "RawVy", "Raw ADC 11, G(y); ADC(7) channel", 4096, -0.5, 4095.5);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
-   r->fHists.emplace_back(tab,2,59, 19, 9, 59, 19, 11,
+   r->fTabs.back().hist_pads.push_back(1); // Show on pad 1.
+   r->fHists.emplace_back(59, 19, 9, 59, 19, 11,
                           "RawVxy", "Raw ADC 11-9, G(y) vs G(x)", 409, -0.5, 4095.5, 409, -0.5, 4095.5);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
+   r->fTabs.back().hist_pads.push_back(2); // Show on pad 2.
    r->fHists.back().draw_opt = "colz";
    r->fHists.back().hist->SetStats(false);
-
 }
 
 void Default_Setup_1_Channel_Scope(RasterHists *r, int tab){
    r->fTabs.emplace_back("Scope", 1, 1, 0, 0);
    r->fTabs.back().grid = {1};
    r->fTabs.back().calc = {0}; // Calc 1 - modify the bottom margin.
-   r->fGraphs.emplace_back(tab, 1, 59, 19, 1,
-                           "IX0", ";t (s)", "I_{x}", kRed+1, 2, true);
+   r->fGraphs.emplace_back(59, 19, 1, "IX0", ";t (s)", "I_{x}", kRed+1, 2, true);
    r->fTabs.back().graphs.push_back(r->fGraphs.size() - 1);
-   r->fGraphs.emplace_back(tab, 1, 59, 19, 3,
-                           "IY0", ";t(s)", "I_{y}", kGreen+1, 2, true);
+   r->fTabs.back().graph_pads.push_back(0); // Show on pad 0.
+   r->fGraphs.emplace_back(59, 19, 3,"IY0", ";t(s)", "I_{y}", kGreen+1, 2, true);
    r->fTabs.back().graphs.push_back(r->fGraphs.size() - 1);
+   r->fTabs.back().graph_pads.push_back(0); // Show on pad 0.
    r->fTabs.back().pad_link = {1};
 }
 
@@ -104,19 +117,21 @@ void Default_Setup_2_Channel_Scope(RasterHists *r, int tab){
    r->fTabs.emplace_back("Scope", 1, 2, 0, 0);
    r->fTabs.back().grid = {1, 1};
    r->fTabs.back().calc = {1, 0}; // Calc 1 - modify the bottom margin.
-   r->fGraphs.emplace_back(tab, 1, 59, 19, 1, ""
-                                              "IX0", ";t (s)", "I_{x}", kRed+1, 2, true);
+   r->fGraphs.emplace_back(59, 19, 1, "IX0", ";t (s)", "I_{x}", kRed+1, 2, true);
    r->fTabs.back().graphs.push_back(r->fGraphs.size() - 1);
-   r->fGraphs.emplace_back(tab, 1, 59, 19, 3,
-                           "IY0", ";t(s)", "I_{y}", kGreen+1, 2, true);
+   r->fTabs.back().graph_pads.push_back(1); // Show on pad 1.
+   r->fGraphs.emplace_back(59, 19, 3, "IY0", ";t(s)", "I_{y}", kGreen+1, 2, true);
    r->fTabs.back().graphs.push_back(r->fGraphs.size() - 1);
+   r->fTabs.back().graph_pads.push_back(1); // Show on pad 1.
 
-   r->fGraphs.emplace_back(tab, 2, 59, 19, 5,
+   r->fGraphs.emplace_back(59, 19, 5,
                            "GX1", ";t(s)", "G(x)", kBlue+1, 2, true);
    r->fTabs.back().graphs.push_back(r->fGraphs.size() - 1);
-   r->fGraphs.emplace_back(tab, 2, 59, 19, 7,
+   r->fTabs.back().graph_pads.push_back(2); // Show on pad 2.
+   r->fGraphs.emplace_back(59, 19, 7,
                            "GY1", ";t(s)", "G(y)", kMagenta+1, 2, true);
    r->fTabs.back().graphs.push_back(r->fGraphs.size() - 1);
+   r->fTabs.back().graph_pads.push_back(2); // Show on pad 2.
    r->fTabs.back().pad_link = {2, 1};
 }
 
@@ -124,69 +139,81 @@ void Default_Setup_3_Channel_Scope(RasterHists *r, int tab){
    r->fTabs.emplace_back("Scope", 1, 3, 0, 0);
    r->fTabs.back().grid = {1, 1, 1};
    r->fTabs.back().calc = {1, 1, 0}; // Calc 1 - modify the bottom margin.
-   r->fGraphs.emplace_back(tab, 1, 59, 19, 1, ""
+   r->fGraphs.emplace_back(59, 19, 1, ""
                                               "IX0", ";t (s)", "I_{x}", kRed+1, 2, true);
    r->fTabs.back().graphs.push_back(r->fGraphs.size() - 1);
-   r->fGraphs.emplace_back(tab, 1, 59, 19, 3,
+   r->fTabs.back().graph_pads.push_back(1); // Show on pad 1.
+   r->fGraphs.emplace_back(59, 19, 3,
                            "IY0", ";t(s)", "I_{y}", kGreen+1, 2, true);
    r->fTabs.back().graphs.push_back(r->fGraphs.size() - 1);
+   r->fTabs.back().graph_pads.push_back(1); // Show on pad 1.
 
-   r->fGraphs.emplace_back(tab, 2, 59, 19, 5,
+   r->fGraphs.emplace_back(59, 19, 5,
                            "GX1", ";t(s)", "G(x)", kBlue+1, 2, true);
    r->fTabs.back().graphs.push_back(r->fGraphs.size() - 1);
-   r->fGraphs.emplace_back(tab, 2, 59, 19, 7,
+   r->fTabs.back().graph_pads.push_back(2); // Show on pad 2.
+   r->fGraphs.emplace_back(59, 19, 7,
                            "GY1", ";t(s)", "G(y)", kMagenta+1, 2, true);
    r->fTabs.back().graphs.push_back(r->fGraphs.size() - 1);
+   r->fTabs.back().graph_pads.push_back(2); // Show on pad 2.
 
-   r->fGraphs.emplace_back(tab, 3, 59, 19, 9,
+   r->fGraphs.emplace_back(59, 19, 9,
                            "VX1", ";t(s)", "V_{x}", kAzure+1, 2, true);
    r->fTabs.back().graphs.push_back(r->fGraphs.size() - 1);
-   r->fGraphs.emplace_back(tab, 3, 59, 19, 11,
+   r->fTabs.back().graph_pads.push_back(3); // Show on pad 3.
+   r->fGraphs.emplace_back(59, 19, 11,
                            "VY1", ";t(s)", "V_{y}", kViolet+1, 2, true);
    r->fTabs.back().graphs.push_back(r->fGraphs.size() - 1);
+   r->fTabs.back().graph_pads.push_back(3); // Show on pad 3.
    r->fTabs.back().pad_link = {2, 3, 1};
 }
 
 void Default_Setup_Helicity(RasterHists *r, int tab){
    r->fTabs.emplace_back("Helicity", 2, 2);
-   r->fTabs.back().logy = {true, false, true, true};
+   r->fTabs.back().logy = {true, true, true, true};
 
    r->fHelicity_stack = new THStack("Helicity_stack","Helicity Histograms");
    r->fHelicity_legend = new TLegend(0.9,0.8,1.0 ,1.0);
 
-   r->fHists.emplace_back(tab, 1, 19, 19, 0,
+   r->fHists.emplace_back(19, 19, 0,
                           "HelicityRaw", "Helicity raw", 256, -2, 4097.);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
+   r->fTabs.back().hist_pads.push_back(1); // Show on pad 1.
 
-   r->fHists.emplace_back(tab, 3, 19, 19, 2,
+   r->fHists.emplace_back(19, 19, 2,
                           "SyncRaw", "Sync raw", 256, -2, 4097.);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
+   r->fTabs.back().hist_pads.push_back(2); // Show on pad 2.
 
-   r->fHists.emplace_back(tab, 4, 19, 19, 4,
+   r->fHists.emplace_back(19, 19, 4,
                           "QuartedRaw", "Quarted raw", 256, -2, 4097.);
    r->fTabs.back().hists.push_back(r->fHists.size()-1);
+   r->fTabs.back().hist_pads.push_back(3); // Show on pad 3.
 
-   r->fHists.emplace_back(tab, 2, 19, 19, 0,              // Special - do not fill with raw info.
+   r->fHists.emplace_back(19, 19, 0,              // Special - do not fill with raw info.
                           "Helicity", "Helicity", 3, -1.5, 1.5);
    r->fTabs.back().hists.push_back(r->fHists.size()-1);
+   r->fTabs.back().hist_pads.push_back(4); // Show on pad 4.
    r->fHists.back().hist->SetFillColor(kRed);
    r->fHists.back().special_fill = 1;
    r->fHists.back().special_draw = -1;
    r->fHelicity_stack->Add(r->fHists.back().GetHist());
    r->fHelicity_legend->AddEntry(r->fHists.back().GetHist(), "Helicity");
 
-   r->fHists.emplace_back(tab, 2, 19, 19, 2,              // Special - do not fill with raw info.
+   r->fHists.emplace_back(19, 19, 2,              // Special - do not fill with raw info.
                           "Sync", "Sync", 3, -1.5, 1.5);
    r->fTabs.back().hists.push_back(r->fHists.size()-1);
+   r->fTabs.back().hist_pads.push_back(4); // Show on pad 4.
    r->fHists.back().hist->SetFillColor(kGreen);
    r->fHists.back().special_fill = 1;
    r->fHists.back().special_draw = -1;
    r->fHelicity_stack->Add(r->fHists.back().GetHist());
    r->fHelicity_legend->AddEntry(r->fHists.back().GetHist(), "Sync");
 
-   r->fHists.emplace_back(tab, 2, 19, 19, 4,              // Special - do not fill with raw info.
+   r->fHists.emplace_back(19, 19, 4,              // Special - do not fill with raw info.
                           "Quartet", "Quartet", 3, -1.5, 1.5);
    r->fTabs.back().hists.push_back(r->fHists.size()-1);
+   r->fTabs.back().hist_pads.push_back(4); // Show on pad 4.
    r->fHists.back().hist->SetFillColor(kBlue);
    r->fHists.back().special_fill = 1;
    r->fHists.back().special_draw = 1;
@@ -276,7 +303,7 @@ void RasterHists::SetupCanvas(TabSpace_t &tab, TCanvas *canvas){
       pad->SetLogy(tab.logy[i]);
    }
 
-   for(int i=0; i< tab.grid.size(); ++i){    // Set the logy for pads that want this. Can be set/unset by clicking on pad.
+   for(int i=0; i< tab.grid.size(); ++i){    // Set the grid for pads that want this.
       auto pad = canv->cd(i+1);
       pad->SetGrid(tab.grid[i], tab.grid[i]);
    }
@@ -411,15 +438,19 @@ void RasterHists::DrawCanvas(int tab_no, TCanvas *canvas, vector<Histogram_t> &h
    if( canvas == nullptr ) canv = tab.canvas->GetCanvas();
    else canv = canvas;
 
-   unsigned char max_pads=0;
-   for(int i_h: tab.hists) max_pads = std::max(max_pads, histograms.at(i_h).pad_number); // get the highest pad number.
+   unsigned short max_pads=0;
+   for(auto i_h: tab.hist_pads) max_pads = std::max(max_pads, i_h); // get the highest pad number.
    std::vector<int> pad_count(max_pads+1); // for counting pad occurrence. Initialized to zero.
 
-   for(int i_h: tab.hists) {
+   for(int i=0; i < tab.hists.size(); ++i) {
+      int i_h = tab.hists[i];
+      unsigned short pad_number = tab.hist_pads[i];
+      pad_count[pad_number]++;
       auto &h_t = histograms.at(i_h);
-      auto pad = canv->cd(h_t.pad_number);
+      auto pad = canv->cd(pad_number);
       if(h_t.special_draw == 0){
          string draw_opt = h_t.draw_opt;
+         if(pad_count[pad_number]>1) draw_opt += "same";
          fDrawLock.lock();
          gROOT->SetBatch(batch);
          h_t.hist->Draw(draw_opt.c_str());
@@ -445,16 +476,18 @@ void RasterHists::DrawCanvas(int tab_no, TCanvas *canvas, vector<Histogram_t> &h
    // TODO: A problem occurs here when the data on linked pads is of different size. This is probably rare or not
    // TODO: occurring, so we can not worry about it for now.
    max_pads = 0;
-   for(int i_h: tab.graphs) max_pads = std::max(max_pads, fGraphs.at(i_h).pad_number); // get the highest pad number.
+   for(auto i_h: tab.graph_pads) max_pads = std::max(max_pads, i_h); // get the highest pad number.
    pad_count.resize(max_pads+1);
    pad_count.assign(max_pads+1, 0);
-   for(int i_h: tab.graphs){
+   for(int i=0; i < tab.graphs.size(); ++i){
+      auto i_h = tab.graphs[i];
+      unsigned short pad_number = tab.graph_pads[i];
       auto &g_t = graphs.at(i_h);
-      pad_count[g_t.pad_number]++;
-      auto pad = canv->cd(g_t.pad_number);
+      pad_count[pad_number]++;
+      auto pad = canv->cd(pad_number);
       auto graph = g_t.graph;
       string draw_option = g_t.draw_opt;
-      if(pad_count[g_t.pad_number]>1) draw_option += "same";
+      if(pad_count[pad_number]>1) draw_option += "same";
       fDrawLock.lock();
       gROOT->SetBatch(batch);
       graph->Draw(draw_option.c_str());

@@ -17,8 +17,6 @@ struct Histogram_t {  // Object to hold the information for each histogram chann
    unsigned char slot2 = 0;
    unsigned char adc_chan2 = 0;  // Channel for the slot of the FADC module.
    int data_index2 = -1;
-   unsigned char tab_number; // Number of the tab where graphs are to be shown.
-   unsigned char pad_number; // Number of the pad in the canvas (tab). 0 = canvas, 1 is first pad etc.
    bool show;      // Set false to not draw the THist, but still accumulate the data.
    double scale_x = 1.;  // Conversion from ADC integer to real
    double offset_x = 0.; // Offset for conversion to real.
@@ -29,21 +27,18 @@ struct Histogram_t {  // Object to hold the information for each histogram chann
    std::string draw_opt;  // Drawing option.
    std::string legend;      // Legend entry. -- Usually blank, so no legend.
    TH1 *hist = nullptr;  // Histogram. -- Note: Must be either a unique_ptr, OR we need to be really careful with copy and move constructors.
-   Histogram_t(unsigned char tab_number, unsigned char pad_number,
-               unsigned int bank_tag, unsigned char slot, unsigned char adc_chan,
+   Histogram_t(unsigned int bank_tag, unsigned char slot, unsigned char adc_chan,
                const std::string &name, const std::string &title, int nx, double x_min, double x_max) :
-         bank_tag(bank_tag), slot(slot), adc_chan(adc_chan), tab_number(tab_number), pad_number(pad_number){
+         bank_tag(bank_tag), slot(slot), adc_chan(adc_chan) {
       hist = new TH1D(name.c_str(), title.c_str(), nx, x_min, x_max);
       show = true;
    };
 
-   Histogram_t(unsigned char tab_number, unsigned char pad_number,
-               unsigned int bank_tag_x, unsigned char slot_x, unsigned char adc_chan_x,
+   Histogram_t(unsigned int bank_tag_x, unsigned char slot_x, unsigned char adc_chan_x,
                unsigned int bank_tag_y, unsigned char slot_y, unsigned char adc_chan_y,
                const std::string &name, const std::string &title, int nx, double x_min, double x_max, int ny, double y_min, double y_max) :
          bank_tag(bank_tag_x), slot(slot_x), adc_chan(adc_chan_x),
-         bank_tag2(bank_tag_y), slot2(slot_y), adc_chan2(adc_chan_y),
-         tab_number(tab_number), pad_number(pad_number) {
+         bank_tag2(bank_tag_y), slot2(slot_y), adc_chan2(adc_chan_y) {
       hist = new TH2D(name.c_str(), title.c_str(), nx, x_min, x_max, ny, y_min, y_max);
       show = true;
    }
@@ -58,8 +53,8 @@ struct Histogram_t {  // Object to hold the information for each histogram chann
    // Copy constructor - Explicit, because we do not want to copy the pointer to the histogram, but the histogram itself.
    // Currently, only two types of histograms that may need copying, TH1D and TH2D.
    Histogram_t(const Histogram_t &that): bank_tag(that.bank_tag), slot(that.slot), adc_chan(that.adc_chan), data_index(that.data_index),
-                                         bank_tag2(that.bank_tag2), slot2(that.slot2), adc_chan2(that.adc_chan2), data_index2(that.data_index2), tab_number(that.tab_number),
-                                         pad_number(that.pad_number), show(that.show), scale_x(that.scale_x), offset_x(that.offset_x), scale_y(that.scale_y), offset_y(that.offset_x),
+                                         bank_tag2(that.bank_tag2), slot2(that.slot2), adc_chan2(that.adc_chan2), data_index2(that.data_index2),
+                                         show(that.show), scale_x(that.scale_x), offset_x(that.offset_x), scale_y(that.scale_y), offset_y(that.offset_x),
                                          special_fill(that.special_fill), special_draw(that.special_draw), draw_opt(that.draw_opt), legend(that.legend)
    {
       if(strncmp(that.hist->ClassName(),"TH1D",4) == 0) hist = new TH1D( *(TH1D *)that.hist);
@@ -74,8 +69,6 @@ struct Histogram_t {  // Object to hold the information for each histogram chann
       slot2 = that.slot2;
       adc_chan2 = that.adc_chan2;
       data_index2 = that.data_index2;
-      tab_number = that.tab_number;
-      pad_number = that.pad_number;
       show = that.show;
       scale_x = that.scale_x;
       offset_x = that.offset_x;
@@ -96,8 +89,6 @@ struct Histogram_t {  // Object to hold the information for each histogram chann
       slot2 = that.slot2;
       adc_chan2 = that.adc_chan2;
       data_index2 = that.data_index2;
-      tab_number = that.tab_number;
-      pad_number = that.pad_number;
       show = that.show;
       scale_x = that.scale_x;
       offset_x = that.offset_x;
@@ -122,8 +113,6 @@ struct Histogram_t {  // Object to hold the information for each histogram chann
       slot2 = that.slot2;
       adc_chan2 = that.adc_chan2;
       data_index2 = that.data_index2;
-      tab_number = that.tab_number;
-      pad_number = that.pad_number;
       show = that.show;
       scale_x = that.scale_x;
       offset_x = that.offset_x;
@@ -138,10 +127,7 @@ struct Histogram_t {  // Object to hold the information for each histogram chann
       return *this;
    };
    //   ~Histogram_t();                              // destructor
-
-
    [[nodiscard]] bool Is2D() const{ return bank_tag2>0; }
-
    [[nodiscard]] TH1 *GetTH1() const{
       // Return a TH1D histogram pointer. No checks are made that the histogram is there.
       return hist;
@@ -155,7 +141,6 @@ struct Histogram_t {  // Object to hold the information for each histogram chann
       // Return a TH2D histogram pointer. Note: No check is made that this is indeed a 2D histogram!
       return dynamic_cast<TH2D *>(hist);
    }
-
 };
 
 

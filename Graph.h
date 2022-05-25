@@ -12,8 +12,6 @@ struct Graph_t {   // Object to hold the information for each scope channel for 
    unsigned char bank_tag;
    unsigned char slot;
    unsigned char adc_chan;  // Channel for the slot of the FADC module.
-   unsigned char tab_number; // Number of the tab where graphs are to be shown.
-   unsigned char pad_number; // Number of the pad in the canvas (tab). 0 is top. Max is 3, for 4 pads.
    std::string  legend;      // Legend entry.
    std::string draw_opt; // Draw option.
    unsigned int color;  // Line color, as in kRed = 632.
@@ -22,11 +20,9 @@ struct Graph_t {   // Object to hold the information for each scope channel for 
    int data_index; // Index into the data buffers. Filled when EVIO is setup.
    TGraph *graph = nullptr; // The TGraph object that actually contains the data.
    Graph_t(){};
-   Graph_t(unsigned char tab_number, unsigned char pad_number,
-           unsigned int bank_tag, unsigned char slot, unsigned char adc_chan,
+   Graph_t(unsigned int bank_tag, unsigned char slot, unsigned char adc_chan,
            const std::string &name, const std::string &title, const std::string &legend, unsigned int color, unsigned char width, bool show):
-         bank_tag(bank_tag), slot(slot), adc_chan(adc_chan), tab_number(tab_number), pad_number(pad_number),
-         legend(legend), color(color), width(width), show(show) {
+         bank_tag(bank_tag), slot(slot), adc_chan(adc_chan), legend(legend), color(color), width(width), show(show) {
       data_index = -1;
       graph = new TGraph();
       graph->SetTitle(title.c_str());
@@ -44,8 +40,6 @@ struct Graph_t {   // Object to hold the information for each scope channel for 
       bank_tag = that.bank_tag;
       slot = that.slot;
       adc_chan = that.adc_chan;
-      tab_number = that.tab_number;
-      pad_number = that.pad_number;
       legend = that.legend;
       draw_opt =that.draw_opt;
       color = that.color;
@@ -59,8 +53,6 @@ struct Graph_t {   // Object to hold the information for each scope channel for 
       bank_tag = that.bank_tag;
       slot = that.slot;
       adc_chan = that.adc_chan;
-      tab_number = that.tab_number;
-      pad_number = that.pad_number;
       legend = std::move(that.legend);
       draw_opt = std::move(that.draw_opt);
       color = that.color;
@@ -74,8 +66,6 @@ struct Graph_t {   // Object to hold the information for each scope channel for 
       bank_tag= that.bank_tag;
       slot = that.slot;
       adc_chan = that.adc_chan;
-      tab_number = that.tab_number;
-      pad_number = that.pad_number;
       legend = that.legend;
       draw_opt = that.draw_opt;
       color = that.color;
@@ -89,8 +79,6 @@ struct Graph_t {   // Object to hold the information for each scope channel for 
       bank_tag = that.bank_tag;
       slot = that.slot;
       adc_chan = that.adc_chan;
-      tab_number = that.tab_number;
-      pad_number = that.pad_number;
       legend = std::move(that.legend);
       draw_opt = std::move(that.draw_opt);
       color = that.color;
