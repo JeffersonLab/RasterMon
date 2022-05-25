@@ -32,6 +32,22 @@ void Default_Setup_Raster_Tab(RasterHists *r){
    r->fHists.back().offset_y = -8.0;
    r->fHists.back().draw_opt = "colz";
    r->fHists.back().hist->SetStats(false);
+
+   r->fHists.emplace_back(59, 19, 1, "Raster_R", "Raster Radius;r[mm]", 400, 0., 15.);
+   r->fTabs.back().hists.push_back( r->fHists.size()-1);
+   r->fTabs.back().hist_pads.push_back(3); // Show on pad 3.
+   // Special case - 2 inputs but a 1-D histogrsm
+   r->fHists.back().special_fill = 2;
+   r->fHists.back().bank_tag2 = 59;
+   r->fHists.back().slot2 = 19;
+   r->fHists.back().adc_chan2 = 3;
+   r->fHists.back().scale_x = 0.004;
+   r->fHists.back().offset_x = -8.0;
+   r->fHists.back().scale_y = 0.004;
+   r->fHists.back().offset_y = -8.0;
+   r->fHists.back().hist->SetLineColor(kRed);
+
+
 }
 void Default_Setup_Raw_Raster_Tab(RasterHists *r){
    r->fTabs.emplace_back("Raw1", 2, 2);
@@ -648,7 +664,7 @@ void RasterHists::HistFillWorker(int thread_num){
                int indx = h.data_index;
                double x = fEvio->GetData(h.data_index)*h.scale_x + h.offset_x;
                if (h.Is2D()) {
-                  double y = fEvio->GetData(h.data_index2) * h.scale_y + h.offset_y;
+                  double y = fEvio->GetData(h.data_index2)*h.scale_y + h.offset_y;
                   h.GetHist2D()->Fill(x, y);
                }
                else {
@@ -662,6 +678,12 @@ void RasterHists::HistFillWorker(int thread_num){
                   h.GetHist()->Fill(1);
                else
                   h.GetHist()->Fill(-1);
+            }else if(h.special_fill == 2){
+               // Compute the radius from x and y.
+               double x = fEvio->GetData(h.data_index )*h.scale_x + h.offset_x;
+               double y = fEvio->GetData(h.data_index2)*h.scale_y + h.offset_y;
+               double r = sqrt(x*x + y*y);
+               h.GetHist()->Fill(r);
             }
          }
          // Nothing to do for Scope, the buffer is filled in
