@@ -16,16 +16,6 @@ RasterEvioTool::RasterEvioTool(string infile) : EvioTool(infile){
    // EVIO Data structure unpack:
    fEvioHead = AddLeaf<unsigned int>("fEvioHead", 49152, 0, "Evio Event Header Info");
    fRasterHead =  new RasterMonEventInfo(this);  // Calls AddBank internally.
-//   fRasterCrate = AddBank("Raster", fRasterBankTag, 0, "Raster fRasterFADC banks");
-//   fRasterCrateTI = fRasterCrate->AddLeaf<unsigned int>("RasterCrateTI", 57610, 0, "Raster Crate TI info");
-//   fRasterFADC = fRasterCrate->AddLeaf<FADCdata>("fRasterFADC", 57601, 0, "Raster fRasterFADC");
-//   fHelicityCrate = AddBank("Helicity", fHelicityBankTag, 0, "Raster fRasterFADC banks");
-//   fHelicityFADC = fHelicityCrate->AddLeaf<FADCdata>("fHelicityFADC", 57601, 0, "Raster fRasterFADC");
-
-//  for(int i=0; i<fRasterChannels.size(); ++i){
-//      fRasterTimeBuf.emplace_back(fAdcBufferSize);
-//      fRasterAdcBuf.emplace_back(fAdcBufferSize);
-//   }
 }
 
 int RasterEvioTool::AddChannel(unsigned short bank_tag, unsigned short slot, unsigned short channel){

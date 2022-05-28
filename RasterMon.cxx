@@ -37,6 +37,7 @@
 #include "RasterMonGui.h"
 #include "RasterEvioTool.h"
 #include "RasterMonEventInfo.h"
+#include "RasterMonDefaultConfig.h"
 #include "cxxopts.hpp"
 
 extern void Initialize_Histograms(RasterHists *r);

@@ -138,8 +138,9 @@ public:
       if( fEvioHead->size()>2 ) return(fEvioHead->GetData(0));
       else return(0);
    }
-   unsigned int GetRunNumber() const {return(fRasterHead->GetRunNumber());}
-   unsigned int GetTimeStamp() const {return(fRasterHead->GetTimeStamp());}
+   unsigned int GetRunNumber() const {return fRasterHead->GetRunNumber();}
+   unsigned int GetTimeStamp() const {return fRasterHead->GetTimeStamp();}
+   unsigned int GetTrigger() const {return fRasterHead->GetTrigger1();}
    unsigned long GetTimeCrate(unsigned short i=0) const {
       if(fEvioBanks.size()>i){ // Assume first crate is raster
          return fEvioBanks[i].GetRefTime();

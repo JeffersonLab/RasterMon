@@ -49,6 +49,9 @@ void RMConfig(long r_h_pointer_long) {  // Function name *must* be the same as t
    r->fHists.back().draw_opt = "colz"; // Plot with colz.
    r->fHists.back().hist->SetStats(false); // No statistics box.
 
+   //
+   r->fTabs.emplace_back("Two Up", 2, 1);
+
    // Next tab - 1
    // Add a canvas that is divided into 4 pads, in a 2x2 grid.
    // In this tab we repeat the histogram from tab 0.
