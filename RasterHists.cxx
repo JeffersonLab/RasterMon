@@ -83,6 +83,7 @@ void RasterHists::SetupData() {
    // the default function.
 
    for(auto &h_t: fHists){
+      if( h_t.bank_tag == 0) continue;  // Not a real request for data, so a special fill.
       int his_index = fEvio->AddChannel(h_t.bank_tag, h_t.slot, h_t.adc_chan);
       if(his_index>=0) h_t.data_index = his_index;
       if(h_t.Is2D()){
@@ -93,6 +94,7 @@ void RasterHists::SetupData() {
 
    // Same for the graphs.
    for(auto &g_t: fGraphs){
+      if( g_t.bank_tag == 0) continue;  // Not a real request for data, so a special fill.
       int his_index = fEvio->AddChannel(g_t.bank_tag, g_t.slot, g_t.adc_chan);
       if(his_index>=0) g_t.data_index = his_index;
    }
@@ -194,11 +196,12 @@ void RasterHists::DrawCanvas(int tab_no, TCanvas *canvas, vector<Histogram_t> &h
 
    for(int i=0; i < tab.hists.size(); ++i) {
       int i_h = tab.hists[i];
+      auto &h_t = histograms.at(i_h);
+
       unsigned short pad_number = tab.hist_pads[i];
       pad_count[pad_number]++;
-      auto &h_t = histograms.at(i_h);
       auto pad = canv->cd(pad_number);
-      if(h_t.special_draw == 0){
+      if(h_t.special_draw == kHist_Special_Draw_Normal){
          string draw_opt = h_t.draw_opt;
          if(pad_count[pad_number]>1) draw_opt += "same";
          fDrawLock.lock();
@@ -207,7 +210,7 @@ void RasterHists::DrawCanvas(int tab_no, TCanvas *canvas, vector<Histogram_t> &h
          gROOT->SetBatch(false);
          fDrawLock.unlock();
          pad->Modified();
-      }else if(h_t.special_draw == 1){   // The helicity stack has a separate draw.
+      }else if(h_t.special_draw == kHist_Special_Draw_Stack){   // The helicity stack has a separate draw.
          fDrawLock.lock();
          gROOT->SetBatch(batch);
          fHelicity_stack->Draw("nostackb");
@@ -358,6 +361,12 @@ void RasterHists::Clear(int active_tab){
 }
 
 void RasterHists::HistFillWorker(int thread_num){
+   // This is the main worker component of the program. It is currently setup to run in a single thread.
+   // If multiple threads are needed, more care needs to be taken to fill histograms efficiently since a simple
+   // histogram fill mutex lock will not scale well.
+   //
+   // This code mostly directly fills histograms from the EVIO data. Some histograms have special calculations or
+   // conditions as directed by Histogram_t.special_fill.
    TRandom3 rndm(thread_num);
 
    std::vector<double> local_data;
@@ -370,6 +379,8 @@ void RasterHists::HistFillWorker(int thread_num){
          fEvioReadLock.lock();
          fIsTryingToRead = true;
          int stat = fEvio->Next();
+         unsigned int trigger_bits = fEvio->GetTrigger();
+
          fIsTryingToRead = false;
          if(stat != EvioTool::EvioTool_Status_OK){
             fKeepWorking = false;
@@ -401,7 +412,8 @@ void RasterHists::HistFillWorker(int thread_num){
          // The part below would benefit from multiple threads *if* the Fill() ends up being too slow.
          //
          for(auto &h: fHists) {
-            if (h.special_fill == 0) {
+            if( trigger_bits && !(h.trigger_bits & trigger_bits) ) continue;    // Skip if bits do not agree with trigger bits set.
+            if (h.special_fill == kHist_Special_Fill_Normal) {
                int indx = h.data_index;
                double x = fEvio->GetData(h.data_index)*h.scale_x + h.offset_x;
                if (h.Is2D()) {
@@ -411,7 +423,7 @@ void RasterHists::HistFillWorker(int thread_num){
                else {
                   h.GetHist()->Fill(x);
                }
-            }else if(h.special_fill == 1){
+            }else if(h.special_fill == kHist_Special_Fill_Helicity){
                // The helicity histgrams are -1 or 1
                // TODO: determine hi and low level?
                int indx = h.data_index;
@@ -419,12 +431,17 @@ void RasterHists::HistFillWorker(int thread_num){
                   h.GetHist()->Fill(1);
                else
                   h.GetHist()->Fill(-1);
-            }else if(h.special_fill == 2){
+            }else if(h.special_fill == kHist_Special_Fill_Radius){
                // Compute the radius from x and y.
                double x = fEvio->GetData(h.data_index )*h.scale_x + h.offset_x;
                double y = fEvio->GetData(h.data_index2)*h.scale_y + h.offset_y;
                double r = sqrt(x*x + y*y);
                h.GetHist()->Fill(r);
+            }else if(h.special_fill == kHist_Special_Fill_Trigger){
+               unsigned int trig_bits = fEvio->GetTrigger();
+               for(int i=0; i<32; ++i){
+                  if( trig_bits & (1<<i)) h.GetHist()->Fill(i);
+               }
             }
          }
          // Nothing to do for Scope, the buffer is filled in

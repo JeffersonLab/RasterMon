@@ -8,6 +8,21 @@
 #include "TH2D.h"
 #include <string>
 
+// Specify special algorithms for filling histograms
+enum kHist_Special_Fill{
+   kHist_Special_Fill_Normal=0,    // Fill normal
+   kHist_Special_Fill_Helicity=1,  // Fill for helicity signal, -1 for ADC<1500, +1 for ADC>=1500
+   kHist_Special_Fill_Radius=2,     // Fill for radius  = sqrt(x*x + y*y)
+   kHist_Special_Fill_Trigger=3     // Fill with the trigger bits.
+};
+
+// Specify spacial ways of drawing histograms
+enum kHist_Special_Draw{
+   kHist_Special_Draw_Normal=0,
+   kHist_Special_Draw_NoDraw=1,
+   kHist_Special_Draw_Stack=2
+};
+
 struct Histogram_t {  // Object to hold the information for each histogram channel.
    unsigned char bank_tag;
    unsigned char slot;
@@ -22,8 +37,9 @@ struct Histogram_t {  // Object to hold the information for each histogram chann
    double offset_x = 0.; // Offset for conversion to real.
    double scale_y = 1.;
    double offset_y = 0.;
-   int special_fill = 0;  // Special calculation for filling this histogram, i.e. exceptions. -1 = no fill.
-   int special_draw = 0;  // Special way of drawing this histogram.
+   kHist_Special_Fill special_fill = kHist_Special_Fill_Normal;  // Special calculation for filling this histogram, i.e. exceptions. -1 = no fill.
+   kHist_Special_Draw special_draw = kHist_Special_Draw_Normal;  // Special way of drawing this histogram.
+   unsigned int trigger_bits = 0xFFFFFFFF;   // Test for trigger bits. If bit is one then fill histogram.
    std::string draw_opt;  // Drawing option.
    std::string legend;      // Legend entry. -- Usually blank, so no legend.
    TH1 *hist = nullptr;  // Histogram. -- Note: Must be either a unique_ptr, OR we need to be really careful with copy and move constructors.
@@ -55,7 +71,8 @@ struct Histogram_t {  // Object to hold the information for each histogram chann
    Histogram_t(const Histogram_t &that): bank_tag(that.bank_tag), slot(that.slot), adc_chan(that.adc_chan), data_index(that.data_index),
                                          bank_tag2(that.bank_tag2), slot2(that.slot2), adc_chan2(that.adc_chan2), data_index2(that.data_index2),
                                          show(that.show), scale_x(that.scale_x), offset_x(that.offset_x), scale_y(that.scale_y), offset_y(that.offset_x),
-                                         special_fill(that.special_fill), special_draw(that.special_draw), draw_opt(that.draw_opt), legend(that.legend)
+                                         special_fill(that.special_fill), special_draw(that.special_draw), trigger_bits(that.trigger_bits),
+                                         draw_opt(that.draw_opt), legend(that.legend)
    {
       if(strncmp(that.hist->ClassName(),"TH1D",4) == 0) hist = new TH1D( *(TH1D *)that.hist);
       if(strncmp(that.hist->ClassName(),"TH2D",4) == 0) hist = new TH2D( *(TH2D *)that.hist);
@@ -76,6 +93,7 @@ struct Histogram_t {  // Object to hold the information for each histogram chann
       offset_y = that.offset_y;
       special_fill = that.special_fill;
       special_draw = that.special_draw;
+      trigger_bits = that.trigger_bits;
       draw_opt = std::move(that.draw_opt);
       legend= std::move(that.legend);
       hist = std::exchange(that.hist, nullptr);
@@ -96,6 +114,7 @@ struct Histogram_t {  // Object to hold the information for each histogram chann
       offset_y = that.offset_y;
       special_fill = that.special_fill;
       special_draw = that.special_draw;
+      trigger_bits = that.trigger_bits;
       draw_opt = std::move(that.draw_opt);
       legend= std::move(that.legend);
       hist = std::exchange(that.hist, nullptr);
@@ -120,6 +139,7 @@ struct Histogram_t {  // Object to hold the information for each histogram chann
       offset_y = that.offset_y;
       special_fill = that.special_fill;
       special_draw = that.special_draw;
+      trigger_bits = that.trigger_bits;
       draw_opt = that.draw_opt;
       legend= that.legend;
       if(strncmp(that.hist->ClassName(),"TH1D",4) == 0) hist = new TH1D( *(TH1D *) that.hist);

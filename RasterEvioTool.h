@@ -157,7 +157,7 @@ public:
    unsigned int GetDataSize(){ return fChannelAverage.size(); }
    double GetData(int i){ if(i >=0 && i<fChannelAverage.size()){ return fChannelAverage[i];} else return 0;}
 
-   size_t GetAdcBufferSize(){ return fAdcBufferSize;}
+   size_t GetAdcBufferSize() const{ return fAdcBufferSize;}
    void UpdateBufferSize(unsigned long bufsize){
       std::lock_guard<std::mutex> _lck(fBufferLock);
       for(int i=0; i< fTimeBuf.size(); ++i) fTimeBuf[i] = CircularBuffer<double>(bufsize);

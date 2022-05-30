@@ -34,7 +34,7 @@ void Default_Setup_Raster_Tab(RasterHists *r){
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
    r->fTabs.back().hist_pads.push_back(3); // Show on pad 3.
    // Special case - 2 inputs but a 1-D histogrsm
-   r->fHists.back().special_fill = 2;
+   r->fHists.back().special_fill = kHist_Special_Fill_Radius;
    r->fHists.back().bank_tag2 = 59;
    r->fHists.back().slot2 = 19;
    r->fHists.back().adc_chan2 = 3;
@@ -208,8 +208,8 @@ void Default_Setup_Helicity(RasterHists *r){
    r->fTabs.back().hists.push_back(r->fHists.size()-1);
    r->fTabs.back().hist_pads.push_back(4); // Show on pad 4.
    r->fHists.back().hist->SetFillColor(kRed);
-   r->fHists.back().special_fill = 1;
-   r->fHists.back().special_draw = -1;
+   r->fHists.back().special_fill = kHist_Special_Fill_Helicity;
+   r->fHists.back().special_draw = kHist_Special_Draw_NoDraw;
    r->fHelicity_stack->Add(r->fHists.back().GetHist());
    r->fHelicity_legend->AddEntry(r->fHists.back().GetHist(), "Helicity");
 
@@ -218,8 +218,8 @@ void Default_Setup_Helicity(RasterHists *r){
    r->fTabs.back().hists.push_back(r->fHists.size()-1);
    r->fTabs.back().hist_pads.push_back(4); // Show on pad 4.
    r->fHists.back().hist->SetFillColor(kGreen);
-   r->fHists.back().special_fill = 1;
-   r->fHists.back().special_draw = -1;
+   r->fHists.back().special_fill = kHist_Special_Fill_Helicity;
+   r->fHists.back().special_draw = kHist_Special_Draw_NoDraw;
    r->fHelicity_stack->Add(r->fHists.back().GetHist());
    r->fHelicity_legend->AddEntry(r->fHists.back().GetHist(), "Sync");
 
@@ -228,8 +228,8 @@ void Default_Setup_Helicity(RasterHists *r){
    r->fTabs.back().hists.push_back(r->fHists.size()-1);
    r->fTabs.back().hist_pads.push_back(4); // Show on pad 4.
    r->fHists.back().hist->SetFillColor(kBlue);
-   r->fHists.back().special_fill = 1;
-   r->fHists.back().special_draw = 1;
+   r->fHists.back().special_fill = kHist_Special_Fill_Helicity;
+   r->fHists.back().special_draw = kHist_Special_Draw_Stack;
    r->fHelicity_stack->Add(r->fHists.back().GetHist());
    r->fHelicity_legend->AddEntry(r->fHists.back().GetHist(), "Quartet");
 }
