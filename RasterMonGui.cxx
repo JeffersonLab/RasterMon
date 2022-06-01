@@ -295,7 +295,7 @@ void RasterMonGui::HandleMenu(int choice) {
 void RasterMonGui::DoConfigure(){
    if(fConfig == nullptr){
       if(fDebug>1) std::cout << "Start Configure new configure dialog.\n";
-      fConfig = new RasterMonConfig(this, fEvio, fRHists, fUpdateRate, 0);
+      fConfig = new RasterMonConfig(this, fEvio, fRHists, fUpdateRate);
    }else{
       auto x = this->GetX();
       auto y = this->GetY();
@@ -340,6 +340,7 @@ void RasterMonGui::Pause(int set_state){
       fPauseButton->SetText("&Pause");
       if(fDebug>1) std::cout << "Un-Pause \n";
       fHistUpdateTimer->TurnOn();
+      if(fRHists->fHistClearTimerIsOn ) fRHists->fHistClearTimer->TurnOn();
       fPause = false;
       fRHists->UnPause();
    }else{
@@ -347,6 +348,7 @@ void RasterMonGui::Pause(int set_state){
       if(set_state == 0) fPauseButton->SetText("&UnPause");
       if(fDebug>1) std::cout << "Pause \n";
       fHistUpdateTimer->TurnOff();
+      fRHists->fHistClearTimer->TurnOff();
       // fRHists->Pause();
       fPause = true;
       fUpdateSelectedTabOnly = false;  // Update all the canvases, so they show something.

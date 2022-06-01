@@ -51,15 +51,16 @@ int main(int argc, char **argv) {
          " This is a GUI code that will monitor the raster for CLAS12, which is used by Run Group C. \n"
          " You should be able to just run the code and the defaults will work with the CLAS12 ET ring.\n"
          " You can also supply a file name, or a list of filenames, on the command line, or through the GUI \n"
-         " (File -> Open ) to have the code analyze the data in these EVIO files.\n\n"
-
-         " Version: 1.0.0, using ROOT version: ";
+         " (File -> Open ) to have the code analyze the data in these EVIO files.\n"
+         "You can specify a detailed config file with --config. This file is a ROOT macro that will be parsed.\n"
+         "Please look at the examples and the code for details, since this is fairly expert level. \n\n"
+         " Version: 1.0.2, using ROOT version: ";
    help_string += gROOT->GetVersion();
    help_string += "\n Compiled with gcc " __VERSION__ " with ABI " + std::to_string(__GXX_ABI_VERSION) + " \n";
 #ifdef HAS_LOGBOOK
    help_string += " Code submits directly to the logbook using the libelog c++ api.\n";
 #else
-   help_string += " Code submits to the logbook using the logentry cli program. \n";
+   help_string += " Code submits to the logbook using the logentry cli program. \n\n";
 #endif
 
    cxxopts::Options options(argv[0], help_string);
@@ -125,6 +126,7 @@ int main(int argc, char **argv) {
          process_line << ")";
          cout << "Parsing config file with line: " << process_line.str() << std::endl;
          gROOT->ProcessLine(process_line.str().c_str());
+
       }else {
          Default_Initialize_Histograms(RHists);
       }

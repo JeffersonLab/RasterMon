@@ -48,23 +48,27 @@ public:
 
    bool fPadSizeIsUpdating = false;  // To lock for asynchronous resizing.
 
+   // For the tabs.
    std::vector<TabSpace_t> fTabs;
    // For the scope channels.
    std::vector<Graph_t> fGraphs;
-   size_t fBufferDepth = 10000;
    // For the histograms.
    std::vector<Histogram_t> fHists;
 
    THStack *fHelicity_stack= nullptr;
    TLegend *fHelicity_legend = nullptr;
 
+   std::unique_ptr<TTimer> fHistClearTimer = nullptr;
+   double fHistClearTimerRate = 10.;
+   bool fHistClearTimerIsOn = false;
+
    // For the worker fill threads.
    int  fDebug = 0;
    bool fKeepWorking = false;    // Set to true in Go();
    bool fIsTryingToRead = false; // To detect if a read is hung.
 
-
-   int fNWorkers = 1;
+   //// Settings for the Multi-Tasking of the data processing.
+   int fNWorkers = 1;           // More than 1 worker is currently not beneficial, and would need thorough testing.
    std::vector<std::thread> fWorkers;
    std::mutex fEvioReadLock;
    // The fDrawLock is for locking ROOT Draw type processes. The issue here is that ROOT cannot (as of yet v 6.27)
@@ -76,8 +80,12 @@ public:
    std::mutex fDrawLock;
 
 public:
-   RasterHists()= default;
-   explicit RasterHists(RasterEvioTool *evio): fEvio(evio) {};
+   RasterHists()= delete;
+   explicit RasterHists(RasterEvioTool *evio): fEvio(evio) {
+      fHistClearTimer = std::make_unique<TTimer>(this, int(fHistClearTimerRate*1000));
+      if(!fHistClearTimerIsOn) fHistClearTimer->TurnOff();
+   };
+
    ~RasterHists() override;
 
    void InitTabs();
@@ -119,6 +127,14 @@ public:
    std::vector<std::string> SaveCanvasesToImageFiles(const string &filename, const string &ending,
                                                      std::vector<TCanvas *> *canvasses = nullptr);
    void SaveRoot(const string &file, bool overwrite=true);
+
+   Bool_t HandleTimer(TTimer *timer) override{
+      if(timer == fHistClearTimer.get()){
+         Clear(-2);  // Clears all histograms only.
+      }
+      return kTRUE;
+   }
+
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Winconsistent-missing-override"

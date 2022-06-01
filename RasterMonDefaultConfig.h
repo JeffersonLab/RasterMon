@@ -15,6 +15,7 @@ void Default_Setup_1_Channel_Scope(RasterHists *r);
 void Default_Setup_2_Channel_Scope(RasterHists *r);
 void Default_Setup_3_Channel_Scope(RasterHists *r);
 void Default_Setup_Helicity(RasterHists *r);
+void Default_Setup_Trigger(RasterHists *r);
 void Default_Initialize_Histograms(RasterHists *r);
 
 #endif //RASTERMON_RASTERMONDEFAULTCONFIG_H

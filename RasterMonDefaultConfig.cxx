@@ -234,6 +234,42 @@ void Default_Setup_Helicity(RasterHists *r){
    r->fHelicity_legend->AddEntry(r->fHists.back().GetHist(), "Quartet");
 }
 
+void Default_Setup_Trigger(RasterHists *r){
+   /////////////// Trigger Tab
+   r->fTabs.emplace_back("Trigger", 1, 3);
+   r->fTabs.back().logy = {true, true, true};
+   r->fTabs.back().calc = {0, 0, 0}; // Calc 1 - modify the bottom margin.
+
+   r->fHists.emplace_back(0, 0, 1, "TriggerBits", "Trigger Bits", 32, -0.5, 31.5);
+   int hist1 =  r->fHists.size()-1;
+   r->fTabs.back().hists.push_back(hist1);
+   r->fTabs.back().hist_pads.push_back(1); // Show on pad 1.
+   r->fHists.back().hist->SetFillColor(kBlue);
+   r->fHists.back().special_fill = kHist_Special_Fill_Trigger;
+
+   r->fHists.emplace_back(0, 0, 3, "TriggerBits25", "Trigger Bit 25", 32, -0.5, 31.5);
+   int hist2 =  r->fHists.size()-1;
+   r->fTabs.back().hists.push_back(hist2);
+   r->fTabs.back().hist_pads.push_back(2);
+   r->fHists.back().hist->SetFillColor(kGreen);
+   r->fHists.back().special_fill = kHist_Special_Fill_Trigger;
+   r->fHists.back().trigger_bits = 1<<25;
+
+   r->fHists.emplace_back(0, 0, 2, "TriggerBits31", "Trigger Bit 31", 32, -0.5, 31.5);
+   int hist3 = r->fHists.size()-1;
+   r->fTabs.back().hists.push_back(hist3);
+   r->fTabs.back().hist_pads.push_back(3);
+   r->fHists.back().hist->SetFillColor(kRed);
+   r->fHists.back().special_fill = kHist_Special_Fill_Trigger;
+   r->fHists.back().trigger_bits = 1<<31;
+
+   r->fTabs.back().hists.push_back(hist2);
+   r->fTabs.back().hist_pads.push_back(1);
+
+   r->fTabs.back().hists.push_back(hist3);
+   r->fTabs.back().hist_pads.push_back(1);
+}
+
 void Default_Initialize_Histograms(RasterHists *r){
    // This function is called at the start to initialize the histograms.
    // This will setup the structures for the tabs and the channels for the scope and histograms with a default layout.
@@ -261,4 +297,7 @@ void Default_Initialize_Histograms(RasterHists *r){
 
    // Tab 5 Helicity
    Default_Setup_Helicity(r);
+
+   // Tab 6
+   Default_Setup_Trigger(r);
 }

@@ -98,8 +98,7 @@ public:
       fConfig = nullptr;
    }
 
-   void SetUpdateRate(){
-      unsigned long rate=0;
+   void SetUpdateRate(unsigned long rate=0){
       if(fConfig){
          rate = fConfig->fNumberEntryRate->GetIntNumber();
          if(fDebug) std::cout << "Set update rate to: " << rate << std::endl;
@@ -161,8 +160,8 @@ public:
 
    Bool_t HandleTimer(TTimer *timer) override{
       if(timer == fHistUpdateTimer.get()){
-         DoDraw();
          StatusBarUpdate();
+         DoDraw();
       }
       return kTRUE;
    }

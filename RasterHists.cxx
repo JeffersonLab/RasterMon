@@ -287,6 +287,7 @@ void RasterHists::FillGraphs(int tab_no, vector<Graph_t> &graphs) {
 
 void RasterHists::Stop(){
    fKeepWorking = false;
+   fHistClearTimer->TurnOff();
    for(auto &&worker : fWorkers) {
       if(fIsTryingToRead){
          // The worker is actively reading. If it is hung (no event from ET) then worker.join() will hang until
@@ -317,6 +318,7 @@ void RasterHists::Go(){
    for(int i=0; i< fNWorkers; ++i) {
       fWorkers.emplace_back(&RasterHists::HistFillWorker, this, i);
    }
+   if(fHistClearTimerIsOn) fHistClearTimer->TurnOn();
 }
 
 void RasterHists::DoDraw(int active_tab){
@@ -333,8 +335,8 @@ void RasterHists::DoDraw(int active_tab){
 
 void RasterHists::Clear(int active_tab){
    // Clear the histograms
-   if(active_tab<0){ // Clear everything
-      if(fDebug) std::cout << "RasterHists::clear() \n";
+   if(active_tab== -1){ // Clears EVERYTHING
+      if(fDebug) std::cout << "RasterHists::clear() everything \n";
       for(auto &h_t: fHists){
          auto &h = h_t.hist;
          h->Reset();
@@ -345,7 +347,13 @@ void RasterHists::Clear(int active_tab){
          for(auto &buf: fEvio->fTimeBuf) buf.clear();  // Empty the buffers too.
          for(auto &buf: fEvio->fAdcAverageBuf) buf.clear();
       }
-   }else{
+   }else if(active_tab== -2) { // Clears HISTOGRAMS only
+      if (fDebug) std::cout << "RasterHists::clear() histograms. \n";
+      for (auto &h_t: fHists) {
+         auto &h = h_t.hist;
+         h->Reset();
+      }
+   }else if(active_tab>=0 && active_tab < fTabs.size() ){
       if(fDebug) std::cout << "RasterHists::clear() tab " << active_tab << "\n";
       auto tab = fTabs.at(active_tab);
       for(int i_h: tab.hists){
@@ -444,11 +452,12 @@ void RasterHists::HistFillWorker(int thread_num){
                }
             }
          }
+         std::this_thread::sleep_for(std::chrono::milliseconds(10));
          // Nothing to do for Scope, the buffer is filled in
          // fEvio->Next(); We just need to draw it.
 
       }else{
-         std::this_thread::sleep_for(std::chrono::milliseconds(1));
+         std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
    }
    if(fDebug>0) std::cout << "RasterHists::HistFillWorker - Exit thread "<< thread_num << "\n";
