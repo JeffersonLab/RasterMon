@@ -27,7 +27,7 @@ void RasterMonGui::Init(){
    fSaveFileInfo.SetIniDir(std::filesystem::current_path().c_str());
    fSaveFileInfo.fFileTypes = gfFileSaveTypes;
    fSaveFileInfo.SetFilename("RasterMonHists");
-   fHistUpdateTimer = std::make_unique<TTimer>(this, fUpdateRate) ;
+   fHistUpdateTimer = new TTimer(this, fUpdateRate) ;
    fLogBook = std::make_unique<RasterLogBookEntry>(this, fRHists);
    fLogBook->Connect("CloseWindow()", "RasterMonGui", this, "DoneLogEntry()");
 
@@ -37,7 +37,7 @@ void RasterMonGui::Init(){
 void RasterMonGui::AddMenuBar(){
    // Add the menu bar to the main window.
 
-   fMenuBar = std::make_unique<TGMenuBar>(this, 10, 10, kHorizontalFrame);
+   fMenuBar = new TGMenuBar(this, 10, 10, kHorizontalFrame);
 
    auto fMenuFile = new TGPopupMenu(gClient->GetRoot());
    fMenuFile->AddEntry(" &Open Evio file...\tCtrl+O", M_FILE_OPEN, 0,
@@ -64,19 +64,27 @@ void RasterMonGui::AddMenuBar(){
 
    fMenuBar->AddPopup("&Help", fMenuHelp, new TGLayoutHints(kLHintsTop|kLHintsRight));
 
-   AddFrame(fMenuBar.operator->(), new TGLayoutHints(kLHintsTop | kLHintsExpandX, 2, 2, 2, 5));
+   AddFrame(fMenuBar, new TGLayoutHints(kLHintsTop | kLHintsExpandX, 2, 2, 2, 5));
 
 }
 
 void RasterMonGui::AddControlBar(){
    // Bottom bar with control buttons.
 
-   auto *hframe=new TGHorizontalFrame(this, fWindowWidth ,10);
+   auto *hframe=new TGHorizontalFrame(this, fWindowWidth , 30, kFixedHeight);
    // Add the button frame to the window.
    AddFrame(hframe,new TGLayoutHints(kLHintsExpandX,2,4,2,2));
 
+   fClearProgress = new TGHProgressBar(hframe,TGProgressBar::kFancy,300);
+   fClearProgress->SetBarColor("lightblue");
+   fClearProgress->ShowPosition(kTRUE,kFALSE,"%.1f s to clear");
+   fClearProgress->SetMin(0);
+   fClearProgress->SetMax(fRHists->fHistClearTimerRate);
+   fClearProgress->Resize(300,10);
+   hframe->AddFrame(fClearProgress, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 0,0,0,0));
+
    auto hframe_sub = new TGHorizontalFrame(hframe, 120, 10 );
-   hframe->AddFrame(hframe_sub,new TGLayoutHints(kLHintsLeft,150,4,2,2) );
+   hframe->AddFrame(hframe_sub,new TGLayoutHints(kLHintsLeft ,150,4,2,2) );
    auto *go = new TGTextButton(hframe_sub,"&Go");
    go->SetToolTipText("Start processing data, and start updating screen.");
    go->Connect("Clicked()","RasterMonGui",this,"Go()");
@@ -134,12 +142,15 @@ void RasterMonGui::AddControlBar(){
 
 void RasterMonGui::AddStatusBar() {
    // status bar
-   Int_t parts[] = {10, 20, 20, 35, 15};
-   fStatusBar = std::make_unique<TGStatusBar>(this, 50, 10, kVerticalFrame);
-   fStatusBar->SetParts(parts, 5);
-   fStatusBar->Draw3DCorner(kFALSE);
-   AddFrame(fStatusBar.get(), new TGLayoutHints(kLHintsExpandX, 0, 0, 10, 0));
 
+   auto hframe = new TGHorizontalFrame(this, fWindowWidth, 24, kFixedHeight);
+   AddFrame(hframe, new TGLayoutHints(kLHintsExpandX, 0, 0, 0, 5));
+
+   Int_t parts[] = {10, 25, 25, 40};
+   fStatusBar = new TGStatusBar(hframe, fWindowWidth, 20, kHorizontalFrame);
+   fStatusBar->SetParts(parts, 4);
+   fStatusBar->Draw3DCorner(kFALSE);
+   hframe->AddFrame(fStatusBar, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY, 0, 0, 0, 0));
 }
 
 void RasterMonGui::StatusBarUpdate(){
@@ -164,7 +175,7 @@ void RasterMonGui::StatusBarUpdate(){
    auto time2 = std::chrono::system_clock::now();
    auto delta_t = std::chrono::duration_cast<std::chrono::microseconds>(time2-time1);
    auto total_t = std::chrono::duration_cast<std::chrono::microseconds>(time2-time0);
-   sprintf(text1,"<rate> = %8.3f kHz i: %8.3f kHz",
+   sprintf(text1,"<r> = %8.3f kHz r: %8.3f kHz",
            1000.*fEvio->fNEventsProcessed/total_t.count() ,1000.*delta_evt/delta_t.count());
    fStatusBar->SetText( text1, 3);
 
@@ -175,6 +186,10 @@ void RasterMonGui::StatusBarUpdate(){
       printf("Average rate:       %8.3f kHz  Current rate: %8.3f kHz\n",
              1000.*fEvio->fNEventsProcessed/total_t.count() ,1000.*delta_evt/delta_t.count());
    }
+
+   fClearProgress->SetMax(fRHists->fHistClearTimerRate);
+   double pos = double(long(fRHists->fHistClearTimer->GetAbsTime() - gSystem->Now()))/1000.;
+   fClearProgress->SetPosition(pos);
 }
 
 void RasterMonGui::AddTabArea() {
@@ -340,7 +355,10 @@ void RasterMonGui::Pause(int set_state){
       fPauseButton->SetText("&Pause");
       if(fDebug>1) std::cout << "Un-Pause \n";
       fHistUpdateTimer->TurnOn();
-      if(fRHists->fHistClearTimerIsOn ) fRHists->fHistClearTimer->TurnOn();
+      if(fRHists->fHistClearTimerIsOn ){
+         fRHists->fHistClearTimer->Reset();
+         fRHists->fHistClearTimer->TurnOn();
+      }
       fPause = false;
       fRHists->UnPause();
    }else{

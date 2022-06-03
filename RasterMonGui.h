@@ -21,6 +21,7 @@
 #include <TGTab.h>
 #include <TGFileDialog.h>
 #include <TGStatusBar.h>
+#include <TGProgressBar.h>
 #include <TRootHelpDialog.h>
 
 #include <locale>
@@ -53,12 +54,13 @@ public:
    unsigned int fWindowHeight;
 
    TGTab *fTabAreaTabs = nullptr;
-   std::unique_ptr<TGMenuBar> fMenuBar = nullptr;
-   std::unique_ptr<TGStatusBar> fStatusBar = nullptr;
+   TGMenuBar *fMenuBar = nullptr;
+   TGStatusBar *fStatusBar = nullptr;
    TGTextButton *fPauseButton = nullptr;
    bool fPause = false;
    TGTextButton *fLogentry;
-   std::unique_ptr<TTimer> fHistUpdateTimer = nullptr;
+   TTimer  *fHistUpdateTimer = nullptr;
+   TGHProgressBar *fClearProgress;
 
    RasterHists* fRHists = nullptr;
    RasterEvioTool *fEvio = nullptr;  // Not an object we own, just a handy pointer.
@@ -131,6 +133,7 @@ public:
 
    void ClearAll(){
       fRHists->Clear(-1);
+      fRHists->fHistClearTimer->Reset();
    }
 
    void ClearTab(){
@@ -159,7 +162,7 @@ public:
    }
 
    Bool_t HandleTimer(TTimer *timer) override{
-      if(timer == fHistUpdateTimer.get()){
+      if(timer == fHistUpdateTimer){
          StatusBarUpdate();
          DoDraw();
       }

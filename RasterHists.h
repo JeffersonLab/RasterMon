@@ -58,8 +58,8 @@ public:
    THStack *fHelicity_stack= nullptr;
    TLegend *fHelicity_legend = nullptr;
 
-   std::unique_ptr<TTimer> fHistClearTimer = nullptr;
-   double fHistClearTimerRate = 10.;
+   TTimer *fHistClearTimer = nullptr;
+   double fHistClearTimerRate = 0.;
    bool fHistClearTimerIsOn = false;
 
    // For the worker fill threads.
@@ -82,8 +82,8 @@ public:
 public:
    RasterHists()= delete;
    explicit RasterHists(RasterEvioTool *evio): fEvio(evio) {
-      fHistClearTimer = std::make_unique<TTimer>(this, int(fHistClearTimerRate*1000));
-      if(!fHistClearTimerIsOn) fHistClearTimer->TurnOff();
+      fHistClearTimer = new TTimer(this, int(fHistClearTimerRate*1000));
+      fHistClearTimer->TurnOff();
    };
 
    ~RasterHists() override;
@@ -129,10 +129,28 @@ public:
    void SaveRoot(const string &file, bool overwrite=true);
 
    Bool_t HandleTimer(TTimer *timer) override{
-      if(timer == fHistClearTimer.get()){
+      if(timer == fHistClearTimer){
          Clear(-2);  // Clears all histograms only.
       }
       return kTRUE;
+   }
+
+   void SetAutoClearRate(double new_rate){
+      fHistClearTimerRate = new_rate;
+      if( fHistClearTimerRate > 0.05){
+         fHistClearTimer->SetTime(fHistClearTimerRate*1000.);
+      }else{
+         fHistClearTimerIsOn = false;
+         fHistClearTimer->TurnOff();
+      }
+   }
+
+   void SetAutoClearRateOn(){
+      fHistClearTimerIsOn = true;
+   }
+
+   void SetAutoClearRateOff(){
+      fHistClearTimerIsOn = false;
    }
 
 

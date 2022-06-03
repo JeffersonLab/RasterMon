@@ -345,15 +345,9 @@ public:
    }
 
    void SetAutoClearRate(){
-      fHists->fHistClearTimerRate = fNumberEntryAutoClear->GetNumber();
-      if( fHists->fHistClearTimerRate > 0.05){
-         fHists->fHistClearTimer->SetTime(fHists->fHistClearTimerRate*1000.);
-      }else{
-         fHists->fHistClearTimerIsOn = false;
-         fHists->fHistClearTimer->TurnOff();
-         fAutoClearOnOff->SetState((EButtonState)fHists->fHistClearTimerIsOn);
-
-      }
+      double new_rate = fHists->fHistClearTimerRate = fNumberEntryAutoClear->GetNumber();
+      fHists->SetAutoClearRate(new_rate);
+      fAutoClearOnOff->SetState((EButtonState)fHists->fHistClearTimerIsOn);
    }
 
    void UpdateADCBufDepth() {

@@ -279,7 +279,11 @@ void Default_Initialize_Histograms(RasterHists *r){
 
    // Some general styling of the app.
    gStyle->SetPaperSize(TStyle::kUSLetter);   // Output for PDF is US-letter format.
-   if(r->fEvio != nullptr) r->fEvio->UpdateBufferSize(10000);   // Set default Scope buffer to 50k.
+
+   if(r->fEvio != nullptr) r->fEvio->UpdateBufferSize(10000);   // Set default Scope buffer.
+   r->SetAutoClearRate(30.);
+   r->SetAutoClearRateOn();
+
    // Note: PAD numbering starts at 1, with 0 being the Canvas (i.e. only one object on the screen)
    // TAB 0 == Histograms that are NOT raw.
    Default_Setup_Raster_Tab(r);
