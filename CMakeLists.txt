@@ -11,7 +11,7 @@ set(CMAKE_EXPORT_NO_PACKAGE_REGISTRY True)
 set(CMAKE_CXX_STANDARD 17)
 
 
-include(cmake/FindElog.cmake)
+# include(cmake/FindElog.cmake)   ## ELOG is *dead* for C++17 code. Blame OPS for being 11 years behind in C++.
 
 if(${ELOG_FOUND})
     message(STATUS "The elog library was found at ${ELOG_LIBRARIES} + ${ELOG_INCLUDE_DIR}")
