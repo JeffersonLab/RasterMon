@@ -33,12 +33,7 @@
 #include <thread>
 #include <vector>
 #include <sstream>
-
-#include "RasterMonGui.h"
-#include "RasterEvioTool.h"
-#include "RasterMonEventInfo.h"
-#include "RasterMonDefaultConfig.h"
-#include "cxxopts.hpp"
+#include "RasterMon.h"
 
 extern void Initialize_Histograms(RasterHists *r);
 
@@ -54,7 +49,7 @@ int main(int argc, char **argv) {
          " (File -> Open ) to have the code analyze the data in these EVIO files.\n"
          "You can specify a detailed config file with --config. This file is a ROOT macro that will be parsed.\n"
          "Please look at the examples and the code for details, since this is fairly expert level. \n\n"
-         " Version: 1.0.2, using ROOT version: ";
+         " Version: " RASTERMON_VERSION ", using ROOT version: ";
    help_string += gROOT->GetVersion();
    help_string += "\n Compiled with gcc " __VERSION__ " with ABI " + std::to_string(__GXX_ABI_VERSION) + " \n";
 #ifdef HAS_LOGBOOK

@@ -22,7 +22,9 @@
 #include "RasterMonGui.h"
 #include "RasterEvioTool.h"
 #include "RasterMonEventInfo.h"
+#include "RasterMonDefaultConfig.h"
 #include "cxxopts.hpp"
 
+#define RASTERMON_VERSION "1.0.5"
 
 #endif

@@ -1,7 +1,7 @@
 //
 // Created by Maurik Holtrop on 3/29/22.
 //
-
+#include "RasterMon.h"
 #include "RasterMonGui.h"
 
 RasterMonGui::RasterMonGui(RasterHists *hist, const TGWindow *p, UInt_t w, UInt_t h)
@@ -281,10 +281,17 @@ void RasterMonGui::HandleMenu(int choice) {
       case M_HELP_ABOUT:
          hd = new TRootHelpDialog(this, "About RasterMon ...", 550, 250);
          hd->SetText(""
-                     "===============  RasterMonGui ===============\n"
+                     "===============  RasterMonGui, Version: " RASTERMON_VERSION " ===============\n"
                      "This is a simple GUI program to monitor the Raster in the RGC run.\n"
                      "It can open an EVIO file or attach to the CLAS12 ET ring to process\n"
-                     "the data coming from the experiment.\n");
+                     "the data coming from the experiment.\n"
+                     "You control the app with the buttons at the bottom: go, pause, stop\n"
+                     "clear, clearall, config and exit. (stop and exit are symbols.)\n"
+                     "There is an auto-clear timer, the status of which you see on the \n"
+                     "left of the buttons. The timer is controlled from the config dialog.\n"
+                     "For more detailed help go to: \n"
+                     "https://github.com/JeffersonLab/RasterMon/wiki"
+                     );
          hd->Popup();
          break;
       case M_ET_CONNECT:
