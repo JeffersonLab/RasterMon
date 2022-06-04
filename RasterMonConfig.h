@@ -291,20 +291,18 @@ public:
       // Get the X and Y scale offsets for the raster hists.
       // Find histograms Raster_x, Raster_y, Raster_xy and get the constants on them.
       for (auto &h_t: fHists->fHists) {
-         if (strncmp(h_t.hist->GetName(), "Raster_xy", 9) == 0 ||
-               strncmp(h_t.hist->GetName(), "Raster_r", 8) == 0) {
-            h_t.scale_x = fScale_x;
-            h_t.offset_x = fOffset_x;
-            h_t.scale_y = fScale_y;
-            h_t.offset_y = fOffset_y;
-         }
-         if (strncmp(h_t.hist->GetName(), "Raster_x", 8) == 0) {
-            h_t.scale_x = fScale_x;
-            h_t.offset_x = fOffset_x;
-         }
-         if (strncmp(h_t.hist->GetName(), "Raster_y", 8) == 0) {
-            h_t.scale_x = fScale_y;     // Looks confusing, BUT, this is for the x-axis of this histogram!
-            h_t.offset_x = fOffset_y;
+         string name = h_t.hist->GetName();   // Copy name to string and make all lower case.
+         std::transform(name.begin(), name.end(), name.begin(), [](unsigned char c){ return std::tolower(c);});
+         if (name.compare(0, 6 ,"raster") == 0 ) {         // It is a "raster" type histogram.
+            if(name.compare(name.size()-2,2,"_y") == 0){   // For the _y histograms, the X axis scaling must change!
+               h_t.scale_x = fScale_y;     // Looks confusing, BUT, this is for the x-axis of this histogram!
+               h_t.offset_x = fOffset_y;
+            } else {
+               h_t.scale_x = fScale_x;
+               h_t.offset_x = fOffset_x;
+               h_t.scale_y = fScale_y;
+               h_t.offset_y = fOffset_y;
+            }
          }
       }
    }

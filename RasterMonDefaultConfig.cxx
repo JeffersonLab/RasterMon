@@ -30,10 +30,10 @@ void Default_Setup_Raster_Tab(RasterHists *r){
    r->fHists.back().draw_opt = "colz";
    r->fHists.back().hist->SetStats(false);
 
-   r->fHists.emplace_back(59, 19, 1, "Raster_R", "Raster Radius;r[mm]", 400, 0., 15.);
+   r->fHists.emplace_back(59, 19, 1, "Raster_r", "Raster Radius;r[mm]", 400, 0., 15.);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
    r->fTabs.back().hist_pads.push_back(3); // Show on pad 3.
-   // Special case - 2 inputs but a 1-D histogrsm
+   // Special case - 2 inputs but a 1-D histogram
    r->fHists.back().special_fill = kHist_Special_Fill_Radius;
    r->fHists.back().bank_tag2 = 59;
    r->fHists.back().slot2 = 19;
@@ -43,9 +43,53 @@ void Default_Setup_Raster_Tab(RasterHists *r){
    r->fHists.back().scale_y = 0.004;
    r->fHists.back().offset_y = -8.0;
    r->fHists.back().hist->SetLineColor(kRed);
-
-
 }
+
+void Default_Setup_RasterBit32_Tab(RasterHists *r){
+   r->fTabs.emplace_back("RasterPulser", 2, 2);
+
+   r->fHists.emplace_back(59, 19, 1,
+                          "RasterPulser_x", "Raster Pos x, Pulser only;x[mm]", 400, -10., 10.);
+   r->fTabs.back().hists.push_back(r->fHists.size()-1);
+   r->fTabs.back().hist_pads.push_back(4); // Show on pad 4.
+   r->fHists.back().scale_x = 0.004;
+   r->fHists.back().offset_x = -8.0;
+   r->fHists.back().trigger_bits = 1<<31;
+   r->fHists.emplace_back(59, 19, 3,
+                          "RasterPulser_y", "Raster Pos y, Pulser only;y[mm]", 400, -10., 10.);
+   r->fTabs.back().hists.push_back( r->fHists.size()-1);
+   r->fTabs.back().hist_pads.push_back(1); // Show on pad 1.
+   r->fHists.back().scale_x = 0.004;
+   r->fHists.back().offset_x = -8.0;
+   r->fHists.back().trigger_bits = 1<<31;
+   r->fHists.emplace_back(59, 19, 1,  59, 19, 3,
+                          "RasterPulser_xy", "Raster Pos y vs x, Pulser only;x[mm];y[xx]", 400, -10., 10.,  400, -10., 10.);
+   r->fTabs.back().hists.push_back( r->fHists.size()-1);
+   r->fTabs.back().hist_pads.push_back(2); // Show on pad 2.
+   r->fHists.back().scale_x = 0.004;
+   r->fHists.back().offset_x = -8.0;
+   r->fHists.back().scale_y = 0.004;
+   r->fHists.back().offset_y = -8.0;
+   r->fHists.back().draw_opt = "colz";
+   r->fHists.back().trigger_bits = 1<<31;
+   r->fHists.back().hist->SetStats(false);
+
+   r->fHists.emplace_back(59, 19, 1, "RasterPulser_r", "Raster Radius, Pulser only;r[mm]", 400, 0., 15.);
+   r->fTabs.back().hists.push_back( r->fHists.size()-1);
+   r->fTabs.back().hist_pads.push_back(3); // Show on pad 3.
+   // Special case - 2 inputs but a 1-D histogram
+   r->fHists.back().special_fill = kHist_Special_Fill_Radius;
+   r->fHists.back().bank_tag2 = 59;
+   r->fHists.back().slot2 = 19;
+   r->fHists.back().adc_chan2 = 3;
+   r->fHists.back().scale_x = 0.004;
+   r->fHists.back().offset_x = -8.0;
+   r->fHists.back().scale_y = 0.004;
+   r->fHists.back().offset_y = -8.0;
+   r->fHists.back().hist->SetLineColor(kRed);
+   r->fHists.back().trigger_bits = 1<<31;
+}
+
 void Default_Setup_Raw_Raster_Tab(RasterHists *r){
    r->fTabs.emplace_back("Raw1", 2, 2);
    r->fHists.emplace_back(59, 19, 1,
@@ -236,9 +280,9 @@ void Default_Setup_Helicity(RasterHists *r){
 
 void Default_Setup_Trigger(RasterHists *r){
    /////////////// Trigger Tab
-   r->fTabs.emplace_back("Trigger", 1, 3);
-   r->fTabs.back().logy = {true, true, true};
-   r->fTabs.back().calc = {0, 0, 0}; // Calc 1 - modify the bottom margin.
+   r->fTabs.emplace_back("Trigger", 1, 2);
+   r->fTabs.back().logy = {true, true};
+   r->fTabs.back().calc = {0, 0}; // Calc 1 - modify the bottom margin.
 
    r->fHists.emplace_back(0, 0, 1, "TriggerBits", "Trigger Bits", 32, -0.5, 31.5);
    int hist1 =  r->fHists.size()-1;
@@ -247,27 +291,24 @@ void Default_Setup_Trigger(RasterHists *r){
    r->fHists.back().hist->SetFillColor(kBlue);
    r->fHists.back().special_fill = kHist_Special_Fill_Trigger;
 
-   r->fHists.emplace_back(0, 0, 3, "TriggerBits25", "Trigger Bit 25", 32, -0.5, 31.5);
-   int hist2 =  r->fHists.size()-1;
-   r->fTabs.back().hists.push_back(hist2);
-   r->fTabs.back().hist_pads.push_back(2);
-   r->fHists.back().hist->SetFillColor(kGreen);
-   r->fHists.back().special_fill = kHist_Special_Fill_Trigger;
-   r->fHists.back().trigger_bits = 1<<25;
+//   r->fHists.emplace_back(0, 0, 3, "TriggerBits25", "Trigger Bit 25", 32, -0.5, 31.5);
+//   int hist2 =  r->fHists.size()-1;
+//   r->fTabs.back().hists.push_back(hist2);
+//   r->fTabs.back().hist_pads.push_back(2);
+//   r->fHists.back().hist->SetFillColor(kGreen);
+//   r->fHists.back().special_fill = kHist_Special_Fill_Trigger;
+//   r->fHists.back().trigger_bits = 1<<25;
 
    r->fHists.emplace_back(0, 0, 2, "TriggerBits31", "Trigger Bit 31", 32, -0.5, 31.5);
-   int hist3 = r->fHists.size()-1;
-   r->fTabs.back().hists.push_back(hist3);
-   r->fTabs.back().hist_pads.push_back(3);
+   int hist2 = r->fHists.size()-1;
+   r->fTabs.back().hists.push_back(hist2);
+   r->fTabs.back().hist_pads.push_back(1);
    r->fHists.back().hist->SetFillColor(kRed);
    r->fHists.back().special_fill = kHist_Special_Fill_Trigger;
    r->fHists.back().trigger_bits = 1<<31;
 
    r->fTabs.back().hists.push_back(hist2);
-   r->fTabs.back().hist_pads.push_back(1);
-
-   r->fTabs.back().hists.push_back(hist3);
-   r->fTabs.back().hist_pads.push_back(1);
+   r->fTabs.back().hist_pads.push_back(2);
 }
 
 void Default_Initialize_Histograms(RasterHists *r){
@@ -285,23 +326,10 @@ void Default_Initialize_Histograms(RasterHists *r){
    r->SetAutoClearRateOn();
 
    // Note: PAD numbering starts at 1, with 0 being the Canvas (i.e. only one object on the screen)
-   // TAB 0 == Histograms that are NOT raw.
    Default_Setup_Raster_Tab(r);
-
-   // TAB 1
+   Default_Setup_RasterBit32_Tab(r);
    Default_Setup_Raw_Raster_Tab(r);
-
-   // TAB 2
-   Default_Setup_Raw_Raster_Tab2(r);
-   // TAB 3
-   Default_Setup_Raw_Raster_Tab3(r);
-
-   // TAB 4 Scope
-   Default_Setup_3_Channel_Scope(r);
-
-   // Tab 5 Helicity
+   Default_Setup_1_Channel_Scope(r);
    Default_Setup_Helicity(r);
-
-   // Tab 6
    Default_Setup_Trigger(r);
 }
