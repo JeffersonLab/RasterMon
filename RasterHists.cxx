@@ -7,174 +7,6 @@ RasterHists::~RasterHists(){
 // Cleanup.
 }
 
-void Default_Initialize_Histograms(RasterHists *r, RasterEvioTool *e){
-   // This function is called at the start to initialize the histograms.
-   // This will setup the structures for the tabs and the channels for the scope and histograms with a default layout.
-   //
-   // Init with:  (bank_tag, slot, adc_chan, tab_number, pad_number, name, title, legend, color, width, show)
-   // Or with:    (adc_chan, tab_number, pad_number, name, title, legend, color, width)
-
-   // Some general styling of the app.
-   gStyle->SetPaperSize(TStyle::kUSLetter);   // Output for PDF is US-letter format.
-   e->UpdateBufferSize(50000);             // Set default Scope buffer to 50k.
-   // Note: PAD numbering starts at 1, with 0 being the Canvas (i.e. only one object on the screen)
-   // TAB 0 == Histograms that are NOT raw.
-   int tab = 0;
-
-   r->fTabs.emplace_back("Raster", 2, 2);
-
-   r->fHists.emplace_back(tab, 4, 59, 19, 1,
-                       "Raster_x", "Raster Pos x;x[mm]", 400, -10., 10.);
-   r->fTabs.back().hists.push_back(r->fHists.size()-1);
-   r->fHists.back().scale_x = 0.004;
-   r->fHists.back().offset_x = -8.0;
-   r->fHists.emplace_back(tab, 1, 59, 19, 3,
-                       "Raster_y", "Raster Pos y;y[mm]", 400, -10., 10.);
-   r->fTabs.back().hists.push_back( r->fHists.size()-1);
-   r->fHists.back().scale_x = 0.004;
-   r->fHists.back().offset_x = -8.0;
-   r->fHists.emplace_back(tab, 2, 59, 19, 1,  59, 19, 3,
-                       "Raster_xy", "Raster Pos y vs x;x[mm];y[xx]", 400, -10., 10.,  400, -10., 10.);
-   r->fTabs.back().hists.push_back( r->fHists.size()-1);
-   r->fHists.back().scale_x = 0.004;
-   r->fHists.back().offset_x = -8.0;
-   r->fHists.back().scale_y = 0.004;
-   r->fHists.back().offset_y = -8.0;
-   r->fHists.back().draw_opt = "colz";
-   r->fHists.back().hist->SetStats(false);
-
-   // TAB 1
-   tab++;
-   r->fTabs.emplace_back("Raw1", 2, 2);
-   r->fHists.emplace_back(tab, 4, 59, 19, 1,
-                       "RawIx", "Raw ADC 3, I_x;ADC(1) channel", 4096, -0.5, 4095.5);
-   r->fTabs.back().hists.push_back( r->fHists.size()-1);
-   r->fHists.emplace_back(tab, 1, 59, 19, 3,
-                       "RawIy", "Raw ADC 1, I_{y};ADC(3) channel", 4096, -0.5, 4095.5);
-   r->fTabs.back().hists.push_back( r->fHists.size()-1);
-   r->fHists.emplace_back(tab, 2, 59, 19, 1, 59, 19, 3,
-                       "RawIxy", "Raw ADC 3-2, I_{y} vs I_{x};ADC(1) channel;ADC(3) channel", 409, -0.5, 4095.5, 409, -0.5, 4095.5);
-   r->fTabs.back().hists.push_back( r->fHists.size()-1);
-   r->fHists.back().draw_opt = "colz";
-   r->fHists.back().hist->SetStats(false);
-   r->fHists.emplace_back(tab, 3, 59, 19, 5, 59, 19, 1,
-                       "RawIGx", "Raw ADC 3-2, G(x) vs I_{x};ADC(1) channel; ADC(5) channel", 409, -0.5, 4095.5, 409, -0.5, 4095.5);
-   r->fTabs.back().hists.push_back(r->fHists.size()-1);
-   r->fHists.back().draw_opt = "colz";
-   r->fHists.back().hist->SetStats(false);
-
-   // TAB 2
-   tab++;
-   r->fTabs.emplace_back("Raw2", 2, 2);
-   r->fHists.emplace_back(tab,4,59, 19, 5,
-                       "RawGx", "Raw ADC 5, G(x); ADC(5) channel", 4096, -0.5, 4095.5);
-   r->fTabs.back().hists.push_back( r->fHists.size()-1);
-   r->fHists.emplace_back(tab, 1, 59, 19, 7,
-                       "RawGy", "Raw ADC 7, G(y); ADC(7) channel", 4096, -0.5, 4095.5);
-   r->fTabs.back().hists.push_back( r->fHists.size()-1);
-   r->fHists.emplace_back(tab,2,59, 19, 5, 59, 19, 7,
-                       "RawGxy", "Raw ADC 7-5, G(y) vs G(x)", 409, -0.5, 4095.5, 409, -0.5, 4095.5);
-   r->fTabs.back().hists.push_back( r->fHists.size()-1);
-   r->fHists.back().draw_opt = "colz";
-   r->fHists.back().hist->SetStats(false);
-   r->fHists.emplace_back(tab,3,59, 19, 3, 59, 19, 7,
-                       "RawIGy", "Raw ADC 7-5, G(y) vs I_{y}", 409, -0.5, 4095.5, 409, -0.5, 4095.5);
-   r->fTabs.back().hists.push_back( r->fHists.size()-1);
-   r->fHists.back().draw_opt = "colz";
-   r->fHists.back().hist->SetStats(false);
-
-   // TAB 3
-   tab++;
-   r->fTabs.emplace_back("Raw3", 2, 2);
-   r->fHists.emplace_back(tab,4,59, 19, 9,
-                       "RawVx", "Raw ADC 9, G(x); ADC(5) channel", 4096, -0.5, 4095.5);
-   r->fTabs.back().hists.push_back( r->fHists.size()-1);
-   r->fHists.emplace_back(tab, 1, 59, 19, 11,
-                       "RawVy", "Raw ADC 11, G(y); ADC(7) channel", 4096, -0.5, 4095.5);
-   r->fTabs.back().hists.push_back( r->fHists.size()-1);
-   r->fHists.emplace_back(tab,2,59, 19, 9, 59, 19, 11,
-                       "RawVxy", "Raw ADC 11-9, G(y) vs G(x)", 409, -0.5, 4095.5, 409, -0.5, 4095.5);
-   r->fTabs.back().hists.push_back( r->fHists.size()-1);
-   r->fHists.back().draw_opt = "colz";
-   r->fHists.back().hist->SetStats(false);
-
-
-   // TAB 4 Scope
-   tab++;
-   r->fTabs.emplace_back("Scope", 1, 3, 0, 0);
-   r->fTabs.back().grid = {1, 1, 1};
-   r->fTabs.back().calc = {1, 1, 0}; // Calc 1 - modify the bottom margin.
-   r->fGraphs.emplace_back(tab, 1, 59, 19, 1, ""
-                                           "IX0", ";t (s)", "I_{x}", kRed+1, 2, true);
-   r->fTabs.back().graphs.push_back(r->fGraphs.size() - 1);
-   r->fGraphs.emplace_back(tab, 1, 59, 19, 3,
-                        "IY0", ";t(s)", "I_{y}", kGreen+1, 2, true);
-   r->fTabs.back().graphs.push_back(r->fGraphs.size() - 1);
-
-   r->fGraphs.emplace_back(tab, 2, 59, 19, 5,
-                        "GX1", ";t(s)", "G(x)", kBlue+1, 2, true);
-   r->fTabs.back().graphs.push_back(r->fGraphs.size() - 1);
-   r->fGraphs.emplace_back(tab, 2, 59, 19, 7,
-                        "GY1", ";t(s)", "G(y)", kMagenta+1, 2, true);
-   r->fTabs.back().graphs.push_back(r->fGraphs.size() - 1);
-
-   r->fGraphs.emplace_back(tab, 3, 59, 19, 9,
-                        "VX1", ";t(s)", "V_{x}", kAzure+1, 2, true);
-   r->fTabs.back().graphs.push_back(r->fGraphs.size() - 1);
-   r->fGraphs.emplace_back(tab, 3, 59, 19, 11,
-                        "VY1", ";t(s)", "V_{y}", kViolet+1, 2, true);
-   r->fTabs.back().graphs.push_back(r->fGraphs.size() - 1);
-
-   r->fTabs.back().pad_link = {2, 3, 1};
-
-   // Tab 5 Helicity
-   tab++;
-   r->fTabs.emplace_back("Helicity", 2, 2);
-   r->fTabs.back().logy = {true, false, true, true};
-
-   r->fHelicity_stack = new THStack("Helicity_stack","Helicity Histograms");
-   r->fHelicity_legend = new TLegend(0.9,0.8,1.0 ,1.0);
-
-   r->fHists.emplace_back(tab, 1, 19, 19, 0,
-                       "HelicityRaw", "Helicity raw", 256, -2, 4097.);
-   r->fTabs.back().hists.push_back( r->fHists.size()-1);
-
-   r->fHists.emplace_back(tab, 3, 19, 19, 2,
-                       "SyncRaw", "Sync raw", 256, -2, 4097.);
-   r->fTabs.back().hists.push_back( r->fHists.size()-1);
-
-   r->fHists.emplace_back(tab, 4, 19, 19, 4,
-                       "QuartedRaw", "Quarted raw", 256, -2, 4097.);
-   r->fTabs.back().hists.push_back(r->fHists.size()-1);
-
-   r->fHists.emplace_back(tab, 2, 19, 19, 0,              // Special - do not fill with raw info.
-                       "Helicity", "Helicity", 3, -1.5, 1.5);
-   r->fTabs.back().hists.push_back(r->fHists.size()-1);
-   r->fHists.back().hist->SetFillColor(kRed);
-   r->fHists.back().special_fill = 1;
-   r->fHists.back().special_draw = -1;
-   r->fHelicity_stack->Add(r->fHists.back().GetHist());
-   r->fHelicity_legend->AddEntry(r->fHists.back().GetHist(), "Helicity");
-
-   r->fHists.emplace_back(tab, 2, 19, 19, 2,              // Special - do not fill with raw info.
-                       "Sync", "Sync", 3, -1.5, 1.5);
-   r->fTabs.back().hists.push_back(r->fHists.size()-1);
-   r->fHists.back().hist->SetFillColor(kGreen);
-   r->fHists.back().special_fill = 1;
-   r->fHists.back().special_draw = -1;
-   r->fHelicity_stack->Add(r->fHists.back().GetHist());
-   r->fHelicity_legend->AddEntry(r->fHists.back().GetHist(), "Sync");
-
-   r->fHists.emplace_back(tab, 2, 19, 19, 4,              // Special - do not fill with raw info.
-                       "Quartet", "Quartet", 3, -1.5, 1.5);
-   r->fTabs.back().hists.push_back(r->fHists.size()-1);
-   r->fHists.back().hist->SetFillColor(kBlue);
-   r->fHists.back().special_fill = 1;
-   r->fHists.back().special_draw = 1;
-   r->fHelicity_stack->Add(r->fHists.back().GetHist());
-   r->fHelicity_legend->AddEntry(r->fHists.back().GetHist(), "Quartet");
-}
-
 TGTab * RasterHists::AddTabArea(TGWindow *frame, int w, int h) {
    // Add a Tab Area to the main window frame.
    fTabAreaTabs = new TGTab(frame, 1, 1);
@@ -221,7 +53,7 @@ void RasterHists::SetupCanvas(TabSpace_t &tab, TCanvas *canvas){
       pad->SetLogy(tab.logy[i]);
    }
 
-   for(int i=0; i< tab.grid.size(); ++i){    // Set the logy for pads that want this. Can be set/unset by clicking on pad.
+   for(int i=0; i< tab.grid.size(); ++i){    // Set the grid for pads that want this.
       auto pad = canv->cd(i+1);
       pad->SetGrid(tab.grid[i], tab.grid[i]);
    }
@@ -251,6 +83,7 @@ void RasterHists::SetupData() {
    // the default function.
 
    for(auto &h_t: fHists){
+      if( h_t.bank_tag == 0) continue;  // Not a real request for data, so a special fill.
       int his_index = fEvio->AddChannel(h_t.bank_tag, h_t.slot, h_t.adc_chan);
       if(his_index>=0) h_t.data_index = his_index;
       if(h_t.Is2D()){
@@ -261,6 +94,7 @@ void RasterHists::SetupData() {
 
    // Same for the graphs.
    for(auto &g_t: fGraphs){
+      if( g_t.bank_tag == 0) continue;  // Not a real request for data, so a special fill.
       int his_index = fEvio->AddChannel(g_t.bank_tag, g_t.slot, g_t.adc_chan);
       if(his_index>=0) g_t.data_index = his_index;
    }
@@ -356,22 +190,27 @@ void RasterHists::DrawCanvas(int tab_no, TCanvas *canvas, vector<Histogram_t> &h
    if( canvas == nullptr ) canv = tab.canvas->GetCanvas();
    else canv = canvas;
 
-   unsigned char max_pads=0;
-   for(int i_h: tab.hists) max_pads = std::max(max_pads, histograms.at(i_h).pad_number); // get the highest pad number.
+   unsigned short max_pads=0;
+   for(auto i_h: tab.hist_pads) max_pads = std::max(max_pads, i_h); // get the highest pad number.
    std::vector<int> pad_count(max_pads+1); // for counting pad occurrence. Initialized to zero.
 
-   for(int i_h: tab.hists) {
+   for(int i=0; i < tab.hists.size(); ++i) {
+      int i_h = tab.hists[i];
       auto &h_t = histograms.at(i_h);
-      auto pad = canv->cd(h_t.pad_number);
-      if(h_t.special_draw == 0){
+
+      unsigned short pad_number = tab.hist_pads[i];
+      pad_count[pad_number]++;
+      auto pad = canv->cd(pad_number);
+      if(h_t.special_draw == kHist_Special_Draw_Normal){
          string draw_opt = h_t.draw_opt;
+         if(pad_count[pad_number]>1) draw_opt += "same";
          fDrawLock.lock();
          gROOT->SetBatch(batch);
          h_t.hist->Draw(draw_opt.c_str());
          gROOT->SetBatch(false);
          fDrawLock.unlock();
          pad->Modified();
-      }else if(h_t.special_draw == 1){   // The helicity stack has a separate draw.
+      }else if(h_t.special_draw == kHist_Special_Draw_Stack){   // The helicity stack has a separate draw.
          fDrawLock.lock();
          gROOT->SetBatch(batch);
          fHelicity_stack->Draw("nostackb");
@@ -390,16 +229,18 @@ void RasterHists::DrawCanvas(int tab_no, TCanvas *canvas, vector<Histogram_t> &h
    // TODO: A problem occurs here when the data on linked pads is of different size. This is probably rare or not
    // TODO: occurring, so we can not worry about it for now.
    max_pads = 0;
-   for(int i_h: tab.graphs) max_pads = std::max(max_pads, fGraphs.at(i_h).pad_number); // get the highest pad number.
+   for(auto i_h: tab.graph_pads) max_pads = std::max(max_pads, i_h); // get the highest pad number.
    pad_count.resize(max_pads+1);
    pad_count.assign(max_pads+1, 0);
-   for(int i_h: tab.graphs){
+   for(int i=0; i < tab.graphs.size(); ++i){
+      auto i_h = tab.graphs[i];
+      unsigned short pad_number = tab.graph_pads[i];
       auto &g_t = graphs.at(i_h);
-      pad_count[g_t.pad_number]++;
-      auto pad = canv->cd(g_t.pad_number);
+      pad_count[pad_number]++;
+      auto pad = canv->cd(pad_number);
       auto graph = g_t.graph;
       string draw_option = g_t.draw_opt;
-      if(pad_count[g_t.pad_number]>1) draw_option += "same";
+      if(pad_count[pad_number]>1) draw_option += "same";
       fDrawLock.lock();
       gROOT->SetBatch(batch);
       graph->Draw(draw_option.c_str());
@@ -446,6 +287,7 @@ void RasterHists::FillGraphs(int tab_no, vector<Graph_t> &graphs) {
 
 void RasterHists::Stop(){
    fKeepWorking = false;
+   fHistClearTimer->TurnOff();
    for(auto &&worker : fWorkers) {
       if(fIsTryingToRead){
          // The worker is actively reading. If it is hung (no event from ET) then worker.join() will hang until
@@ -476,6 +318,7 @@ void RasterHists::Go(){
    for(int i=0; i< fNWorkers; ++i) {
       fWorkers.emplace_back(&RasterHists::HistFillWorker, this, i);
    }
+   if(fHistClearTimerIsOn) fHistClearTimer->TurnOn();
 }
 
 void RasterHists::DoDraw(int active_tab){
@@ -492,8 +335,8 @@ void RasterHists::DoDraw(int active_tab){
 
 void RasterHists::Clear(int active_tab){
    // Clear the histograms
-   if(active_tab<0){ // Clear everything
-      if(fDebug) std::cout << "RasterHists::clear() \n";
+   if(active_tab== -1){ // Clears EVERYTHING
+      if(fDebug) std::cout << "RasterHists::clear() everything \n";
       for(auto &h_t: fHists){
          auto &h = h_t.hist;
          h->Reset();
@@ -504,7 +347,13 @@ void RasterHists::Clear(int active_tab){
          for(auto &buf: fEvio->fTimeBuf) buf.clear();  // Empty the buffers too.
          for(auto &buf: fEvio->fAdcAverageBuf) buf.clear();
       }
-   }else{
+   }else if(active_tab== -2) { // Clears HISTOGRAMS only
+      if (fDebug) std::cout << "RasterHists::clear() histograms. \n";
+      for (auto &h_t: fHists) {
+         auto &h = h_t.hist;
+         h->Reset();
+      }
+   }else if(active_tab>=0 && active_tab < fTabs.size() ){
       if(fDebug) std::cout << "RasterHists::clear() tab " << active_tab << "\n";
       auto tab = fTabs.at(active_tab);
       for(int i_h: tab.hists){
@@ -520,6 +369,12 @@ void RasterHists::Clear(int active_tab){
 }
 
 void RasterHists::HistFillWorker(int thread_num){
+   // This is the main worker component of the program. It is currently setup to run in a single thread.
+   // If multiple threads are needed, more care needs to be taken to fill histograms efficiently since a simple
+   // histogram fill mutex lock will not scale well.
+   //
+   // This code mostly directly fills histograms from the EVIO data. Some histograms have special calculations or
+   // conditions as directed by Histogram_t.special_fill.
    TRandom3 rndm(thread_num);
 
    std::vector<double> local_data;
@@ -532,6 +387,8 @@ void RasterHists::HistFillWorker(int thread_num){
          fEvioReadLock.lock();
          fIsTryingToRead = true;
          int stat = fEvio->Next();
+         unsigned int trigger_bits = fEvio->GetTrigger();
+
          fIsTryingToRead = false;
          if(stat != EvioTool::EvioTool_Status_OK){
             fKeepWorking = false;
@@ -563,17 +420,18 @@ void RasterHists::HistFillWorker(int thread_num){
          // The part below would benefit from multiple threads *if* the Fill() ends up being too slow.
          //
          for(auto &h: fHists) {
-            if (h.special_fill == 0) {
+            if( trigger_bits && !(h.trigger_bits & trigger_bits) ) continue;    // Skip if bits do not agree with trigger bits set.
+            if (h.special_fill == kHist_Special_Fill_Normal) {
                int indx = h.data_index;
                double x = fEvio->GetData(h.data_index)*h.scale_x + h.offset_x;
                if (h.Is2D()) {
-                  double y = fEvio->GetData(h.data_index2) * h.scale_y + h.offset_y;
+                  double y = fEvio->GetData(h.data_index2)*h.scale_y + h.offset_y;
                   h.GetHist2D()->Fill(x, y);
                }
                else {
                   h.GetHist()->Fill(x);
                }
-            }else if(h.special_fill == 1){
+            }else if(h.special_fill == kHist_Special_Fill_Helicity){
                // The helicity histgrams are -1 or 1
                // TODO: determine hi and low level?
                int indx = h.data_index;
@@ -581,13 +439,25 @@ void RasterHists::HistFillWorker(int thread_num){
                   h.GetHist()->Fill(1);
                else
                   h.GetHist()->Fill(-1);
+            }else if(h.special_fill == kHist_Special_Fill_Radius){
+               // Compute the radius from x and y.
+               double x = fEvio->GetData(h.data_index )*h.scale_x + h.offset_x;
+               double y = fEvio->GetData(h.data_index2)*h.scale_y + h.offset_y;
+               double r = sqrt(x*x + y*y);
+               h.GetHist()->Fill(r);
+            }else if(h.special_fill == kHist_Special_Fill_Trigger){
+               unsigned int trig_bits = fEvio->GetTrigger();
+               for(int i=0; i<32; ++i){
+                  if( trig_bits & (1<<i)) h.GetHist()->Fill(i);
+               }
             }
          }
+         // std::this_thread::sleep_for(std::chrono::milliseconds(10));
          // Nothing to do for Scope, the buffer is filled in
          // fEvio->Next(); We just need to draw it.
 
       }else{
-         std::this_thread::sleep_for(std::chrono::milliseconds(1));
+         std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
    }
    if(fDebug>0) std::cout << "RasterHists::HistFillWorker - Exit thread "<< thread_num << "\n";
@@ -631,12 +501,14 @@ std::vector<std::string> RasterHists::SaveCanvasesToImageFiles(const string &fil
    // Make sure they are all updated.
    std::vector<std::string> out_filenames;
    for(int i =0; i < canvasses->size(); ++i) {
+      gSystem->ProcessEvents();
       auto canv = canvasses->at(i);
       string out = filename + to_string(i) + "." + ending;
       fDrawLock.lock();
       gROOT->SetBatch(true);
       canv->Draw();
       canv->Print(out.c_str());
+      gSystem->Sleep(250);
       gROOT->SetBatch(false);
       fDrawLock.unlock();
       out_filenames.push_back(out);

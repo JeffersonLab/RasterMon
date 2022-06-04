@@ -21,6 +21,7 @@
 #include <TGTab.h>
 #include <TGFileDialog.h>
 #include <TGStatusBar.h>
+#include <TGProgressBar.h>
 #include <TRootHelpDialog.h>
 
 #include <locale>
@@ -53,11 +54,13 @@ public:
    unsigned int fWindowHeight;
 
    TGTab *fTabAreaTabs = nullptr;
-   std::unique_ptr<TGMenuBar> fMenuBar = nullptr;
-   std::unique_ptr<TGStatusBar> fStatusBar = nullptr;
+   TGMenuBar *fMenuBar = nullptr;
+   TGStatusBar *fStatusBar = nullptr;
    TGTextButton *fPauseButton = nullptr;
    bool fPause = false;
-   std::unique_ptr<TTimer> fHistUpdateTimer = nullptr;
+   TGTextButton *fLogentry;
+   TTimer  *fHistUpdateTimer = nullptr;
+   TGHProgressBar *fClearProgress;
 
    RasterHists* fRHists = nullptr;
    RasterEvioTool *fEvio = nullptr;  // Not an object we own, just a handy pointer.
@@ -97,10 +100,7 @@ public:
       fConfig = nullptr;
    }
 
-
-
-   void SetUpdateRate(){
-      unsigned long rate=0;
+   void SetUpdateRate(unsigned long rate=0){
       if(fConfig){
          rate = fConfig->fNumberEntryRate->GetIntNumber();
          if(fDebug) std::cout << "Set update rate to: " << rate << std::endl;
@@ -133,6 +133,7 @@ public:
 
    void ClearAll(){
       fRHists->Clear(-1);
+      fRHists->fHistClearTimer->Reset();
    }
 
    void ClearTab(){
@@ -146,19 +147,24 @@ public:
    void Exit(){
       Stop();
       cout << "Exiting RasterMon. Bye now. \n";
+      CloseWindow();
       gApplication->Terminate();
    }
 
    void MakeLogEntry(){
       // Receives the signal from the Log Book button.
-      cout << "Make a log book entry!\n";
+      fLogentry->SetEnabled(false);
       fLogBook->MakeEntry();
    }
 
+   void DoneLogEntry(){
+      fLogentry->SetEnabled(true);
+   }
+
    Bool_t HandleTimer(TTimer *timer) override{
-      if(timer == fHistUpdateTimer.get()){
-         DoDraw();
+      if(timer == fHistUpdateTimer){
          StatusBarUpdate();
+         DoDraw();
       }
       return kTRUE;
    }

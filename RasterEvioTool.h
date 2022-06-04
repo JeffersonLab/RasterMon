@@ -138,8 +138,9 @@ public:
       if( fEvioHead->size()>2 ) return(fEvioHead->GetData(0));
       else return(0);
    }
-   unsigned int GetRunNumber() const {return(fRasterHead->GetRunNumber());}
-   unsigned int GetTimeStamp() const {return(fRasterHead->GetTimeStamp());}
+   unsigned int GetRunNumber() const {return fRasterHead->GetRunNumber();}
+   unsigned int GetTimeStamp() const {return fRasterHead->GetTimeStamp();}
+   unsigned int GetTrigger() const {return fRasterHead->GetTrigger1();}
    unsigned long GetTimeCrate(unsigned short i=0) const {
       if(fEvioBanks.size()>i){ // Assume first crate is raster
          return fEvioBanks[i].GetRefTime();
@@ -156,7 +157,7 @@ public:
    unsigned int GetDataSize(){ return fChannelAverage.size(); }
    double GetData(int i){ if(i >=0 && i<fChannelAverage.size()){ return fChannelAverage[i];} else return 0;}
 
-   size_t GetAdcBufferSize(){ return fAdcBufferSize;}
+   size_t GetAdcBufferSize() const{ return fAdcBufferSize;}
    void UpdateBufferSize(unsigned long bufsize){
       std::lock_guard<std::mutex> _lck(fBufferLock);
       for(int i=0; i< fTimeBuf.size(); ++i) fTimeBuf[i] = CircularBuffer<double>(bufsize);

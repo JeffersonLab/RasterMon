@@ -25,10 +25,17 @@
 //        Useful thread: https://root-forum.cern.ch/t/is-one-canvas-per-thread-possible/47014/27
 //
 
-#include "RasterMon.h"
-#include "TRint.h"
 
-extern void Initialize_Histograms(RasterHists *r, RasterEvioTool *e);
+#include <TROOT.h>
+#include <TApplication.h>
+#include <TGClient.h>
+#include <iostream>
+#include <thread>
+#include <vector>
+#include <sstream>
+#include "RasterMon.h"
+
+extern void Initialize_Histograms(RasterHists *r);
 
 int main(int argc, char **argv) {
    ROOT::EnableThreadSafety();
@@ -39,11 +46,17 @@ int main(int argc, char **argv) {
          " This is a GUI code that will monitor the raster for CLAS12, which is used by Run Group C. \n"
          " You should be able to just run the code and the defaults will work with the CLAS12 ET ring.\n"
          " You can also supply a file name, or a list of filenames, on the command line, or through the GUI \n"
-         " (File -> Open ) to have the code analyze the data in these EVIO files.\n\n"
-
-         " Version: 1.0.0, using ROOT version: ";
+         " (File -> Open ) to have the code analyze the data in these EVIO files.\n"
+         "You can specify a detailed config file with --config. This file is a ROOT macro that will be parsed.\n"
+         "Please look at the examples and the code for details, since this is fairly expert level. \n\n"
+         " Version: " RASTERMON_VERSION ", using ROOT version: ";
    help_string += gROOT->GetVersion();
-   help_string += "\n Compiled with " __VERSION__ "\n";
+   help_string += "\n Compiled with gcc " __VERSION__ " with ABI " + std::to_string(__GXX_ABI_VERSION) + " \n";
+#ifdef HAS_LOGBOOK
+   help_string += " Code submits directly to the logbook using the libelog c++ api.\n";
+#else
+   help_string += " Code submits to the logbook using the logentry cli program. \n\n";
+#endif
 
    cxxopts::Options options(argv[0], help_string);
    options
@@ -99,20 +112,20 @@ int main(int argc, char **argv) {
       RHists->SetDebug(debug);
 
       // Parse the Config file FIRST. Then have command line options potentially override some of them (i.e. for ET)
-//      if( args.count("config")){
-//         cout << "Config file: " << config_file << " specified on command line. Parsing it.\n";
-//         cout << "This file exists? " << std::filesystem::exists( std::filesystem::path(config_file)) << "\n";
-//         string process_line = ".x " + config_file; // + "++";
-//         gROOT->ProcessLine(".x tests/config.C");
-//       void *test_ptr;
-//      gROOT->LoadMacro("tests/config.C");
-//      }
+      if( args.count("config")){
+         cout << "Config file: " << config_file << " specified on command line. Parsing it.\n";
+         cout << "This file exists? " << std::filesystem::exists( std::filesystem::path(config_file)) << "\n";
+         std::ostringstream process_line;
+         process_line << ".x " << config_file << "(";
+         process_line << RHists;
+         process_line << ")";
+         cout << "Parsing config file with line: " << process_line.str() << std::endl;
+         gROOT->ProcessLine(process_line.str().c_str());
 
-
-
-      Default_Initialize_Histograms(RHists, evio);
+      }else {
+         Default_Initialize_Histograms(RHists);
+      }
       RHists->SetupData();
-
 
       // Add the commandline files to the RasterEvioTool
       if (args.count("inputfiles")) {
@@ -131,10 +144,15 @@ int main(int argc, char **argv) {
          if (debug)
             cout << "Using the ET system with host: " << host << ", port: " << port << " , et file: " << etname
                  << ". \n";
-         int stat = evio->OpenEt("RasterMon",etname, host, port);
-         if (stat != 0) {
-            cout << "ERROR -- could not attach to ET system. abort. \n";
-            return (3);
+         try {
+            int stat = evio->OpenEt("RasterMon", etname, host, port);
+            if (stat != 0) {
+               cout << "ERROR -- could not attach to ET system. abort. \n";
+               return (3);
+            }
+         }catch(exception e){
+            std::cout << "Error connecting to ET caused exception.\n";
+            std::cout << e.what() << std::endl;
          }
       }
 

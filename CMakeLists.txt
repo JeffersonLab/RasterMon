@@ -79,7 +79,8 @@ set(SOURCE_FILES
         RasterHists.cxx
         RasterEvioTool.cxx
         RasterMonEventInfo.cxx
-        RasterLogBookEntry.cxx)
+        RasterLogBookEntry.cxx
+        RasterMonDefaultConfig.cxx)
 
 add_library(RasterLib SHARED ${SOURCE_FILES} RasterLib_dict.cxx)
 
@@ -95,7 +96,7 @@ if(${ELOG_FOUND})
     target_compile_definitions(RasterLib PRIVATE "HAS_LOGBOOK=1")
     target_link_libraries(RasterLib ${ROOT_LIBRARIES} EvioTool evio et ELogBookShim elog)
 else()
-    message(STATUS "WARNING: Logbook entry into the elog entry will not be enabled. Code will still work.")
+    message(STATUS "WARNING: Direct logbook entry will not be enabled. Code will still work using cli logentry.")
     target_link_libraries(RasterLib ${ROOT_LIBRARIES} EvioTool evio et)
 endif()
 

@@ -39,29 +39,36 @@
 
 class RasterHists : public TQObject, public TObject{
 
+private:
+   bool fPause = true;
+
 public:
    RasterEvioTool *fEvio = nullptr;
    TGTab *fTabAreaTabs = nullptr;    // Pointer to the tab area
 
    bool fPadSizeIsUpdating = false;  // To lock for asynchronous resizing.
 
+   // For the tabs.
    std::vector<TabSpace_t> fTabs;
    // For the scope channels.
    std::vector<Graph_t> fGraphs;
-   size_t fBufferDepth = 10000;
    // For the histograms.
    std::vector<Histogram_t> fHists;
 
    THStack *fHelicity_stack= nullptr;
    TLegend *fHelicity_legend = nullptr;
 
+   TTimer *fHistClearTimer = nullptr;
+   double fHistClearTimerRate = 0.;
+   bool fHistClearTimerIsOn = false;
+
    // For the worker fill threads.
    int  fDebug = 0;
    bool fKeepWorking = false;    // Set to true in Go();
    bool fIsTryingToRead = false; // To detect if a read is hung.
-   bool fPause = true;
 
-   int fNWorkers = 1;
+   //// Settings for the Multi-Tasking of the data processing.
+   int fNWorkers = 1;           // More than 1 worker is currently not beneficial, and would need thorough testing.
    std::vector<std::thread> fWorkers;
    std::mutex fEvioReadLock;
    // The fDrawLock is for locking ROOT Draw type processes. The issue here is that ROOT cannot (as of yet v 6.27)
@@ -73,8 +80,12 @@ public:
    std::mutex fDrawLock;
 
 public:
-   RasterHists()= default;
-   explicit RasterHists(RasterEvioTool *evio): fEvio(evio) {};
+   RasterHists()= delete;
+   explicit RasterHists(RasterEvioTool *evio): fEvio(evio) {
+      fHistClearTimer = new TTimer(this, int(fHistClearTimerRate*1000));
+      fHistClearTimer->TurnOff();
+   };
+
    ~RasterHists() override;
 
    void InitTabs();
@@ -86,14 +97,14 @@ public:
    void FillGraphs(int tab_no, vector<Graph_t> &graphs);
    void HistFillWorker(int seed=0);
    RasterEvioTool *GetEvioPtr() const{return fEvio;}
-   void Pause(){ fPause = true;}
-   void UnPause(){ fPause = false;}
+   bool Pause(){ bool prevstate = fPause; fPause = true; return prevstate;}
+   bool UnPause(){ bool prevstate = fPause; fPause = false; return prevstate;}
+   bool IsPaused(){return fPause;}
    void Go();
    void Stop();
    void Clear(int active_tab=-1);
    void DoDraw(int active_tab=-1);
    bool IsWorking(){return(fKeepWorking);}
-   bool IsPaused(){return(fPause);}
 
    static TAxis * GetTopAxisFromPad(TPad *pad);
    void SubPadCopyRange(TPad *one, TPad *two);
@@ -117,13 +128,42 @@ public:
                                                      std::vector<TCanvas *> *canvasses = nullptr);
    void SaveRoot(const string &file, bool overwrite=true);
 
+   Bool_t HandleTimer(TTimer *timer) override{
+      if(timer == fHistClearTimer){
+         Clear(-2);  // Clears all histograms only.
+      }
+      return kTRUE;
+   }
+
+   void SetAutoClearRate(double new_rate){
+      fHistClearTimerRate = new_rate;
+      if( fHistClearTimerRate > 0.05){
+         fHistClearTimer->SetTime(fHistClearTimerRate*1000.);
+         fHistClearTimer->Reset();
+      }else{
+         fHistClearTimerIsOn = false;
+         SetAutoClearRateOff();
+      }
+   }
+
+   void SetAutoClearRateOn(){
+      fHistClearTimerIsOn = true;
+      fHistClearTimer->Reset();
+      fHistClearTimer->TurnOn();
+   }
+
+   void SetAutoClearRateOff(){
+      fHistClearTimerIsOn = false;
+      fHistClearTimer->TurnOff();
+      fHistClearTimer->Reset();
+   }
+
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Winconsistent-missing-override"
 ClassDef(RasterHists, 0)
 #pragma clang diagnostic pop
 
 };
-
-void Default_Initialize_Histograms(RasterHists *r, RasterEvioTool *e);
 
 #endif //RASTERMON_RASTERHISTS_H

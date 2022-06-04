@@ -171,7 +171,6 @@ public:
    }
 
    void OK(){
-      TGTransientFrame::CloseWindow();
       fIsOK = true;
       fEvio->fETStationName = fTextEntryStationName->GetText();
       fEvio->fETHost = HostNameToIP(fTextEntryHostName->GetText());
@@ -191,6 +190,7 @@ public:
          cout << "Could not properly connect to the ET ring. ReadFromEt = " << fEvio->fReadFromEt <<  " \n";
          fEvio->fReadFromEt = false;
       }
+      TGTransientFrame::CloseWindow();
    }
 
    void Cancel(){

@@ -11,5 +11,6 @@
 #include "RasterEvioTool.h"
 #include "RasterHists.h"
 #include "RasterMonEventInfo.h"
+#include "RasterMonDefaultConfig.h"
 
 #endif //RASTERMON_RASTERLIB_H
