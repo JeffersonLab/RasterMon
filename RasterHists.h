@@ -139,18 +139,23 @@ public:
       fHistClearTimerRate = new_rate;
       if( fHistClearTimerRate > 0.05){
          fHistClearTimer->SetTime(fHistClearTimerRate*1000.);
+         fHistClearTimer->Reset();
       }else{
          fHistClearTimerIsOn = false;
-         fHistClearTimer->TurnOff();
+         SetAutoClearRateOff();
       }
    }
 
    void SetAutoClearRateOn(){
       fHistClearTimerIsOn = true;
+      fHistClearTimer->Reset();
+      fHistClearTimer->TurnOn();
    }
 
    void SetAutoClearRateOff(){
       fHistClearTimerIsOn = false;
+      fHistClearTimer->TurnOff();
+      fHistClearTimer->Reset();
    }
 
 

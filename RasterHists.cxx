@@ -452,7 +452,7 @@ void RasterHists::HistFillWorker(int thread_num){
                }
             }
          }
-         // std::this_thread::sleep_for(std::chrono::milliseconds(10));
+         std::this_thread::sleep_for(std::chrono::milliseconds(10));
          // Nothing to do for Scope, the buffer is filled in
          // fEvio->Next(); We just need to draw it.
 

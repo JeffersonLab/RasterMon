@@ -187,8 +187,9 @@ void RasterMonGui::StatusBarUpdate(){
              1000.*fEvio->fNEventsProcessed/total_t.count() ,1000.*delta_evt/delta_t.count());
    }
 
+   double pos = fRHists->fHistClearTimerRate;
    fClearProgress->SetMax(fRHists->fHistClearTimerRate);
-   double pos = double(long(fRHists->fHistClearTimer->GetAbsTime() - gSystem->Now()))/1000.;
+   if(fRHists->fHistClearTimerIsOn) pos = double(long(fRHists->fHistClearTimer->GetAbsTime() - gSystem->Now())) / 1000.;
    fClearProgress->SetPosition(pos);
 }
 

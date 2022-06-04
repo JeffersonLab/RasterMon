@@ -337,8 +337,8 @@ public:
          fEvio->fDebug = bits;
       }else if(id == 5){  // Auto clear on/off
          fHists->fHistClearTimerIsOn = btn->GetState();
-         if(fHists->fHistClearTimerIsOn) fHists->fHistClearTimer->TurnOn();
-         else fHists->fHistClearTimer->TurnOff();
+         if(fHists->fHistClearTimerIsOn) fHists->SetAutoClearRateOn();
+         else fHists->SetAutoClearRateOff();
       }
    }
 
