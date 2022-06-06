@@ -7,6 +7,13 @@
 
 #include "RasterHists.h"
 
+#ifndef RASTER_CRATE
+#define RASTER_CRATE 66
+#endif
+#ifndef RASTER_SLOT
+#define RASTER_SLOT 19
+#endif
+
 void Default_Setup_Raster_Tab(RasterHists *r);
 void Default_Setup_Raw_Raster_Tab(RasterHists *r);
 void Default_Setup_Raw_Raster_Tab2(RasterHists *r);
