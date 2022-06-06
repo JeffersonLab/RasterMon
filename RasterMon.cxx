@@ -140,7 +140,7 @@ int main(int argc, char **argv) {
       if(args.count("port") || evio->fETPort == 0) evio->SetETPort(port);
       if(args.count("etname") || evio->fETName.empty()) evio->SetETName(etname);
 
-      if (args.count("et")) {
+      if (args.count("et") || args.count("inputfiles") == 0) {
          if (debug)
             cout << "Using the ET system with host: " << host << ", port: " << port << " , et file: " << etname
                  << ". \n";
@@ -148,7 +148,6 @@ int main(int argc, char **argv) {
             int stat = evio->OpenEt("RasterMon", etname, host, port);
             if (stat != 0) {
                cout << "ERROR -- could not attach to ET system. abort. \n";
-               return (3);
             }
          }catch(exception e){
             std::cout << "Error connecting to ET caused exception.\n";
