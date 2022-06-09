@@ -75,7 +75,7 @@ public:
    std::string fTitle;
    TGTextEntry* fTitleEntry;
    std::string fLogBooks{"HBLOG"};
-   std::vector<std::string> fLogBookChoices = {"HBLOG", "ELOG", "HBLOG,ELOG"};
+   std::vector<std::string> fLogBookChoices = {"HBLOG", "ELOG", "HBLOG,ELOG", "TLOG"};
    TGComboBox* fLogBookCBox;
    std::string fEntryMakers{""};
    TGTextEntry* fEntryMakersEntry;
