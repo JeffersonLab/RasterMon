@@ -13,16 +13,6 @@
 #include "CircularBuffer.h"
 #include <mutex>
 
-#ifndef ET_DEFAULT_PORT
-#define ET_DEFAULT_PORT 11111
-#endif
-#ifndef ET_DEFAULT_NAME
-#define ET_DEFAULT_NAME "/et/clasprod"
-#endif
-#ifndef ET_DEFAULT_HOST
-#define ET_DEFAULT_HOST "clondaq6"
-#endif
-
 #ifndef FADC_TIME_CONVERSION
 #define FADC_TIME_CONVERSION 4.0e-9   // The FADCs run at 250 MHz, so one tick is 4ns.
 #endif
@@ -98,11 +88,6 @@ public:
    std::vector<string> fInputFiles;
    int fiInputFile = -1;
 
-   string fETStationName = "RasterMon";
-   int    fETPort = ET_DEFAULT_PORT;
-   string fETHost = ET_DEFAULT_HOST;
-   string fETName = ET_DEFAULT_NAME;
-
    unsigned long fNEventsProcessed=0;
    //
    // Setup the data for the EVIO parsing.
@@ -164,14 +149,6 @@ public:
       for(int i=0; i< fAdcAverageBuf.size(); ++i) fAdcAverageBuf[i] = CircularBuffer<double>(bufsize);
       fAdcBufferSize = bufsize;
    }
-
-   void SetETHost(string host) { fETHost = host; }
-   string GetETHost() const { return fETHost;}
-   void SetETPort(int port){ fETPort = port;}
-   int GetETPort() const { return fETPort; }
-   void SetETName(string name){ fETName = name;}
-   string GetETName() const {return fETName;}
-
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Winconsistent-missing-override"

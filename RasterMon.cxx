@@ -66,6 +66,7 @@ int main(int argc, char **argv) {
    string host;
    unsigned int port = 11111;
    string etname;
+   string station;
    string config_file;
 
    options.add_options()
@@ -78,6 +79,8 @@ int main(int argc, char **argv) {
             cxxopts::value(port)->default_value(to_string(ET_DEFAULT_PORT)))
       ("etname", "filename for ET system direct reads, default: " ET_DEFAULT_NAME,
             cxxopts::value(etname)->default_value(ET_DEFAULT_NAME))
+      ("station", "The ET station name, default: " ET_STATION_NAME,
+         cxxopts::value(station)->default_value(ET_STATION_NAME))
       ("config", "Configuration root macro file. default (none)",
             cxxopts::value(config_file)->default_value(""))
       ("inputfiles","List of input evio files. The -i is optional. ",
@@ -139,15 +142,20 @@ int main(int argc, char **argv) {
       if(args.count("host") || evio->fETHost.empty() ) evio->SetETHost(host);
       if(args.count("port") || evio->fETPort == 0) evio->SetETPort(port);
       if(args.count("etname") || evio->fETName.empty()) evio->SetETName(etname);
+      if(args.count("station") || evio->fETStationName.empty()) evio->SetETStation(station);
+
+      evio->SetWaitMode(ET_ASYNC);
 
       if (args.count("et") || args.count("inputfiles") == 0) {
          if (debug)
             cout << "Using the ET system with host: " << host << ", port: " << port << " , et file: " << etname
                  << ". \n";
          try {
-            int stat = evio->OpenEt("RasterMon", etname, host, port);
+            int stat = evio->OpenEt(station, etname, host, port);
             if (stat != 0) {
                cout << "ERROR -- could not attach to ET system. abort. \n";
+            }else{
+               rastermon->StartEvioStatusCheckTimer();
             }
          }catch(exception e){
             std::cout << "Error connecting to ET caused exception.\n";

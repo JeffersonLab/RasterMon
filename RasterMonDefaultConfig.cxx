@@ -306,6 +306,7 @@ void Default_Setup_Trigger(RasterHists *r){
    r->fHists.back().hist->SetFillColor(kRed);
    r->fHists.back().special_fill = kHist_Special_Fill_Trigger;
    r->fHists.back().trigger_bits = 1<<31;
+   r->fHists.back().hist->SetStats(false);
 
    r->fTabs.back().hists.push_back(hist2);
    r->fTabs.back().hist_pads.push_back(2);

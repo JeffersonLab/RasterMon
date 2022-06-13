@@ -89,10 +89,12 @@ int RasterEvioTool::Next() {
    fFileLock.unlock();
 
    int stat = EvioTool::Next();
-   if( stat == EvioTool_Status_EOF){
+   if( stat == EvioTool_Status_EOF && !IsReadingFromEt()){
       if( IsOpen() ) Close();
       return(Next());  // Recursively call next, which wil open the next file and read the next event.
    }
+   if(stat == ET_ERROR_EMPTY) return(EvioTool_Status_No_Data);
+
    fNEventsProcessed++;
 
    // We loop through the EVIO Banks in fEvioBank. If they were in the data and had an FADC bank, then we will

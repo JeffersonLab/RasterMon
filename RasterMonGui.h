@@ -60,6 +60,8 @@ public:
    bool fPause = false;
    TGTextButton *fLogentry;
    TTimer  *fHistUpdateTimer = nullptr;
+   TTimer  *fEvioStatusCheckTimer = nullptr;
+   unsigned int fEvioStatusCheckRate=1000;  // How often to check if ET is okay.
    TGHProgressBar *fClearProgress;
 
    RasterHists* fRHists = nullptr;
@@ -161,10 +163,27 @@ public:
       fLogentry->SetEnabled(true);
    }
 
+   void StartEvioStatusCheckTimer(){
+      fEvioStatusCheckTimer->TurnOn();
+   }
+
+   void StopEvioStatusCheckTimer(){
+      fEvioStatusCheckTimer->TurnOff();
+   }
+
+
    Bool_t HandleTimer(TTimer *timer) override{
       if(timer == fHistUpdateTimer){
          StatusBarUpdate();
          DoDraw();
+      }else if(timer == fEvioStatusCheckTimer){
+         // std::cout << "RasterMon: ET status check.\n";
+         if(fEvio->IsReadingFromEt() && !fEvio->IsETAlive()){
+            // Reset the ET system
+            std::cout << "RasterMon: ET system dead. Trying to reconnect.\n";
+            fEvio->Close();
+            fEvio->ReOpenEt();
+         }
       }
       return kTRUE;
    }

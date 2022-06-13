@@ -28,6 +28,7 @@ void RasterMonGui::Init(){
    fSaveFileInfo.fFileTypes = gfFileSaveTypes;
    fSaveFileInfo.SetFilename("RasterMonHists");
    fHistUpdateTimer = new TTimer(this, fUpdateRate) ;
+   fEvioStatusCheckTimer = new TTimer(this, fEvioStatusCheckRate);
    fLogBook = std::make_unique<RasterLogBookEntry>(this, fRHists);
    fLogBook->Connect("CloseWindow()", "RasterMonGui", this, "DoneLogEntry()");
 
@@ -240,6 +241,11 @@ void RasterMonGui::HandleMenu(int choice) {
             }
 
          }
+         if(fEvio->IsReadingFromEt()){
+            StartEvioStatusCheckTimer();
+         }else{
+            StopEvioStatusCheckTimer();
+         }
          break;
 
       case M_HISTOGRAM_SAVE:
@@ -300,6 +306,11 @@ void RasterMonGui::HandleMenu(int choice) {
             fRHists->Stop();
          }
          et_dialog = new ETConnectionConfig(this, fEvio);
+         if(fEvio->IsReadingFromEt()){
+            StartEvioStatusCheckTimer();
+         }else{
+            StopEvioStatusCheckTimer();
+         }
          break;
 
       case M_CONFIGURE:

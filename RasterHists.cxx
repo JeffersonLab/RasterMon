@@ -289,21 +289,22 @@ void RasterHists::Stop(){
    fKeepWorking = false;
    fHistClearTimer->TurnOff();
    for(auto &&worker : fWorkers) {
-      if(fIsTryingToRead){
+      if(fIsTryingToRead && fEvio->fReadFromEt){
          // The worker is actively reading. If it is hung (no event from ET) then worker.join() will hang until
          // an event appears on the ET, which may take forever.
          std::this_thread::sleep_for(std::chrono::seconds(1)); // Sleep for a whole 1 second.
-         for(int i=10; i>=0 && fIsTryingToRead; --i ){
+         for(int i=10; i>=0 && fIsTryingToRead && fEvio->fReadFromEt; --i ){
             std::this_thread::sleep_for(std::chrono::milliseconds(500)); // Sleep for another 1/2 second.
             std::cout << "The worker thread is still waiting for an event from ET. \n";
             std::cout << "We cannot stop the thread until an event is received. Waiting for " << i << " more seconds.\n";
          }
       }
-      if(fIsTryingToRead) {
+      if(fIsTryingToRead && fEvio->fReadFromEt) {
          std::cout
                << "Reader thread has hung. We are aborting stop(). This condition will clear with the next event on the ET.\n";
          return;  // <-- We abandon the thread? :-(.
       }
+      if(fDebug>1) std::cout << "Joining the worker.\n";
       worker.join();
    }
    fWorkers.clear();
@@ -386,10 +387,22 @@ void RasterHists::HistFillWorker(int thread_num){
       if(!fPause) {
          fEvioReadLock.lock();
          fIsTryingToRead = true;
+
+         if(fEvio->IsReadingFromEt() && !fEvio->IsETAlive()){
+            // Dead ET system. Don't read, stop
+            // The RasterMonGui will detect the dead ET, destroy it and try to reconnect.
+            fKeepWorking = false;
+            fEvioReadLock.unlock();
+            break;
+         }
+
          int stat = fEvio->Next();
-         unsigned int trigger_bits = fEvio->GetTrigger();
 
          fIsTryingToRead = false;
+         if(stat == EvioTool::EvioTool_Status_No_Data){
+            fEvioReadLock.unlock();
+            continue;
+         }
          if(stat != EvioTool::EvioTool_Status_OK){
             fKeepWorking = false;
             fEvioReadLock.unlock();
@@ -399,6 +412,8 @@ void RasterHists::HistFillWorker(int thread_num){
             fEvioReadLock.unlock();
             continue;
          }
+
+         unsigned int trigger_bits = fEvio->GetTrigger();
          fEvio->fMostRecentEventNumber = fEvio->GetEventNumber(); // For GUI to always show a useful number.
 
          // *Copy* the data. Then is is safe to release the lock.

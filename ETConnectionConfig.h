@@ -190,6 +190,7 @@ public:
          cout << "Could not properly connect to the ET ring. ReadFromEt = " << fEvio->fReadFromEt <<  " \n";
          fEvio->fReadFromEt = false;
       }
+
       TGTransientFrame::CloseWindow();
    }
 

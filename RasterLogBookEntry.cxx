@@ -225,7 +225,7 @@ void RasterLogBookEntry::SubmitToLogBook() {
    if(!fTitle.empty()){
       cmd += " --title '" + fTitle + "' ";
    }else{
-      cmd += "--title 'RasterMon for run " + to_string(fRHists->fEvio->GetRunNumber()) + "' ";
+      cmd += "--title 'Run #" + to_string(fRHists->fEvio->GetRunNumber()) + ": RasterMon Histograms.' ";
    }
    if(!fTags.empty()) {
       stringstream ss(fTags);
