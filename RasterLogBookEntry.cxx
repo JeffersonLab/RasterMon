@@ -82,7 +82,7 @@ void RasterLogBookEntry::MakeEntry() {
       CancelButton->Connect("Clicked()", "RasterLogBookEntry", this, "Cancel()");
       Frame1->AddFrame(CancelButton, new TGLayoutHints(kLHintsTop | kLHintsRight, 2, 2, 2, 2));
 
-      fTitle = "RasterMon for run " + to_string(fRHists->fEvio->GetRunNumber());
+      fTitle = "Run #" + to_string(fRHists->fEvio->GetRunNumber()) + ": RasterMon Histograms.";
       fTitleEntry = AddTextLine("Title:", fTitle, "Update the title for the logbook entery, or leave as is.");
 //      fLogBooksEntry = AddTextLine("Logbook(s):", fLogBooks,
 //                                   "A list of logbooks (separate by a comma) where this entry should be logged.");
