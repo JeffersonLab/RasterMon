@@ -21,6 +21,7 @@
 
 #include "RasterEvioTool.h"
 #include "RasterHists.h"
+#include "RasterMonConfigInfo.h"
 
 class RasterMonGui;
 
@@ -30,25 +31,29 @@ public:
    // const TGWindow *fParentWindow;
    RasterEvioTool *fEvio = nullptr;
    RasterHists *fHists = nullptr;
-   // RasterMonGui *fRasGui = nullptr;
+   const RasterMonGui *fRasGui = nullptr;
 
    TGListBox *fDebugLevelChooser;
    TGNumberEntry *fNumberEntryRate;
    TGNumberEntry *fNumberEntryAutoClear;
    TGNumberEntry *fNumberEntryScopeBufDepth;
    TGCheckButton *fAutoClearOnOff;
+   TGCheckButton *fEvioDebugInfo1;
+   TGCheckButton *fEvioDebugInfo2;
+   TGCheckButton *fEvioDebug1;
+   TGCheckButton *fEvioDebug2;
+   TGNumberEntry *fScale_x;
+   TGNumberEntry *fOffset_x;
+   TGNumberEntry *fScale_y;
+   TGNumberEntry *fOffset_y;
 
-   unsigned int fScopeBufDepth = 10000;
 
-   double fScale_x = 0.004;
-   double fOffset_x = -8;
-   double fScale_y = 0.004;
-   double fOffset_y = -8;
+   RasterMonConfigInfo fInfo;
 
 public:
    RasterMonConfig(const RasterMonGui *parent, RasterEvioTool *evio, RasterHists *hists,
                    unsigned int update_rate):
-         fEvio(evio), fHists(hists),
+         fRasGui(parent), fEvio(evio), fHists(hists),
          TGTransientFrame(gClient->GetRoot(), (TGWindow *) parent, 400, 200) {
       // Handle the user input for configurable settings of the program.
       // Run the main bit of gui code.
@@ -60,29 +65,35 @@ public:
       int label_width = 190;
       int field_width = 200;
 
-      fScopeBufDepth = fEvio->GetAdcBufferSize();
+      SetInfoValues(update_rate);
 
       SetWindowName("RasterMon Configure Dialog");
       Connect("CloseWindow()", "RasterMonConfig", this, "CloseWindow()");
       DontCallClose(); // to avoid double deletions.
       // use hierarchical cleaning
       SetCleanup(kDeepCleanup);
-      // Bottom buttons:  Cancel, OK.
+      // Bottom buttons:  Load, Save, Close
       auto Frame1 = new TGHorizontalFrame(this, frame_width, 20, kFixedWidth);
 
       // ------------- Bottom button row -------------
-      auto OkButton = new TGTextButton(Frame1, "&Close", 1);
-      OkButton->Connect("Clicked()", "RasterMonGui", (TGWindow *) parent, "CloseConfigure()");
-//   auto CancelButton = new TGTextButton(Frame1, "&Cancel", 2);
-//   CancelButton->Connect("Clicked()", "RasterMonConfig", this, "Cancel()");
-      auto L1 = new TGLayoutHints(kLHintsTop | kLHintsRight, //| kLHintsExpandX,
-                                  2, 10, 2, 4);
-      auto L2 = new TGLayoutHints(kLHintsBottom | kLHintsRight, 2, 2, 5, 1);
-      Frame1->AddFrame(OkButton, L1);
-      //  Frame1->AddFrame(CancelButton, L1);
-      Frame1->Resize(400, OkButton->GetDefaultHeight());
 
-      AddFrame(Frame1, L2);
+      auto CloseButton = new TGTextButton(Frame1, "&Close", 3);
+      CloseButton->Connect("Clicked()", "RasterMonGui", (TGWindow *) fRasGui, "CloseConfigure()");
+      Frame1->AddFrame(CloseButton, new TGLayoutHints(kLHintsTop | kLHintsRight, 2, 10, 2, 4));
+
+      auto SaveButton = new TGTextButton(Frame1, "&Save", 2);
+      SaveButton->Connect("Clicked()", "RasterMonConfigInfo", &fInfo, "SaveToJSON()");
+      Frame1->AddFrame(SaveButton, new TGLayoutHints(kLHintsTop | kLHintsRight, 2, 10, 2, 4));
+
+      auto LoadButton = new TGTextButton(Frame1, "&Load", 1);
+      LoadButton->Connect("Clicked()", "RasterMonConfigInfo", &fInfo, "LoadFromJSON()");
+      LoadButton->Connect("Clicked()", "RasterMonConfig", this, "UpdateDisplay()");
+      Frame1->AddFrame(LoadButton, new TGLayoutHints(kLHintsTop | kLHintsRight, 2, 10, 2, 4));
+
+      //  Frame1->AddFrame(CancelButton, L1);
+      Frame1->Resize(400, CloseButton->GetDefaultHeight());
+
+      AddFrame(Frame1, new TGLayoutHints(kLHintsBottom | kLHintsRight, 2, 2, 5, 1));
 
       // -------------- Main Dialog Frame --------------
 
@@ -108,13 +119,12 @@ public:
       fDebugLevelChooser->AddEntry("Level 4 debug - 4", 4);
 
       fDebugLevelChooser->Resize(150, 50);
-      fDebugLevelChooser->Select(fHists->fDebug);
       h_frame_debug_level->AddFrame(fDebugLevelChooser,
                                     new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 5, 5,
                                                       5, 5));
 
       fDebugLevelChooser->Connect("Selected(Int_t)", "RasterMonConfig", this, "DebugSelection(int)");
-      fDebugLevelChooser->Connect("Selected(Int_t)", "RasterMonGui", (TGWindow *) parent, "SetDebug(int)");
+      fDebugLevelChooser->Connect("Selected(Int_t)", "RasterMonGui", (TGWindow *) fRasGui, "SetDebug(int)");
 
       // ********** Debug Level Set  EVIO ***********
 
@@ -123,22 +133,22 @@ public:
       //auto *h_frame_debug_level2 = new TGHorizontalFrame(Frame2);
       Frame2->AddFrame(h_frame_debug_level2, new TGLayoutHints(kLHintsExpandX, 10, 2, 5, 2));
 
-      auto info1 = new TGCheckButton(h_frame_debug_level2, "Info L1", 1);
-      h_frame_debug_level2->AddFrame(info1, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 1, 1, 5, 0));
+      fEvioDebugInfo1 = new TGCheckButton(h_frame_debug_level2, "Info L1", 1);
+      h_frame_debug_level2->AddFrame(fEvioDebugInfo1, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 1, 1, 5, 0));
 
-      auto info2 = new TGCheckButton(h_frame_debug_level2, "Info L2", 2);
-      h_frame_debug_level2->AddFrame(info2, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 1, 1, 5, 0));
+      fEvioDebugInfo2 = new TGCheckButton(h_frame_debug_level2, "Info L2", 2);
+      h_frame_debug_level2->AddFrame(fEvioDebugInfo2, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 1, 1, 5, 0));
 
-      auto debugl1 = new TGCheckButton(h_frame_debug_level2, "Debug L1", 3);
-      h_frame_debug_level2->AddFrame(debugl1, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 1, 1, 5, 0));
+      fEvioDebug1 = new TGCheckButton(h_frame_debug_level2, "Debug L1", 3);
+      h_frame_debug_level2->AddFrame(fEvioDebug1, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 1, 1, 5, 0));
 
-      auto debugl2 = new TGCheckButton(h_frame_debug_level2, "Debug L2", 4);
-      h_frame_debug_level2->AddFrame(debugl2, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 1, 1, 5, 0));
+      fEvioDebug2 = new TGCheckButton(h_frame_debug_level2, "Debug L2", 4);
+      h_frame_debug_level2->AddFrame(fEvioDebug2, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 1, 1, 5, 0));
 
-      info1->Connect("Clicked()", "RasterMonConfig", this, "HandleButtons()");
-      info2->Connect("Clicked()", "RasterMonConfig", this, "HandleButtons()");
-      debugl1->Connect("Clicked()", "RasterMonConfig", this, "HandleButtons()");
-      debugl2->Connect("Clicked()", "RasterMonConfig", this, "HandleButtons()");
+      fEvioDebugInfo1->Connect("Clicked()", "RasterMonConfig", this, "HandleButtons()");
+      fEvioDebugInfo2->Connect("Clicked()", "RasterMonConfig", this, "HandleButtons()");
+      fEvioDebug1->Connect("Clicked()", "RasterMonConfig", this, "HandleButtons()");
+      fEvioDebug2->Connect("Clicked()", "RasterMonConfig", this, "HandleButtons()");
 
       // ********** Refresh Rate Set Box **********
 
@@ -150,7 +160,7 @@ public:
       auto label1 = new TGLabel(h_frame1_1, "Window Refresh rate:     ");
       h_frame1_1->AddFrame(label1, new TGLayoutHints(kLHintsLeft | kLHintsCenterY | kFixedWidth, 10, 55, 5, 5));
 
-      fNumberEntryRate = new TGNumberEntry(h_frame1, update_rate, 10, 1, TGNumberFormat::kNESInteger,
+      fNumberEntryRate = new TGNumberEntry(h_frame1, fInfo.fUpdateRate, 10, 1, TGNumberFormat::kNESInteger,
                                            TGNumberFormat::kNEAPositive, TGNumberFormat::kNELLimitMin, 50, 10000);
       h_frame1->AddFrame(fNumberEntryRate, new TGLayoutHints(kLHintsLeft | kLHintsCenterY,
                                                              1, 1, 5, 5));
@@ -158,7 +168,8 @@ public:
       auto label1tail = new TGLabel(h_frame1, " ms/frame");
       h_frame1->AddFrame(label1tail, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 2, 1, 5, 5));
 
-      fNumberEntryRate->Connect("ValueSet(Long_t)", "RasterMonGui", (TGWindow *) parent, "SetUpdateRate()");
+      fNumberEntryRate->Connect("ValueSet(Long_t)", "RasterMonGui", (TGWindow *) fRasGui, "SetUpdateRate()");
+      fNumberEntryRate->Connect("ValueSet(Long_t)", "RasterMonConfig", this, "ValueSet()");
 
       // ********** Auto-Clear Set Box ************
 
@@ -172,7 +183,6 @@ public:
 
       fAutoClearOnOff = new TGCheckButton(h_frame3_1, "on/off", 5);
       h_frame3_1->AddFrame(fAutoClearOnOff, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 0, 0, 0, 0));
-      fAutoClearOnOff->SetState((EButtonState)fHists->fHistClearTimerIsOn);
 
       fNumberEntryAutoClear = new TGNumberEntry(h_frame3, fHists->fHistClearTimerRate, 10, 2, TGNumberFormat::kNESRealOne,
                                            TGNumberFormat::kNEANonNegative, TGNumberFormat::kNELNoLimits);
@@ -181,7 +191,7 @@ public:
 
       auto label3tail = new TGLabel(h_frame3, " s/clear");
       h_frame3->AddFrame(label3tail, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 2, 1, 5, 5));
-      fNumberEntryAutoClear->Connect("ValueSet(Long_t)", "RasterMonConfig", this, "SetAutoClearRate()");
+      fNumberEntryAutoClear->Connect("ValueSet(Long_t)", "RasterMonConfig", this, "ValueSet()");
       fAutoClearOnOff->Connect("Clicked()", "RasterMonConfig", this, "HandleButtons()");
 
       // ********** Buffer Depth Set Box **********
@@ -194,7 +204,7 @@ public:
       auto label2 = new TGLabel(h_frame2_1, "Scope event buffer depth:");
       h_frame2_1->AddFrame(label2, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 10, 20, 5, 5));
 
-      fNumberEntryScopeBufDepth = new TGNumberEntry(h_frame2, double(fScopeBufDepth) / 1000., 10, 2,
+      fNumberEntryScopeBufDepth = new TGNumberEntry(h_frame2, double(fInfo.fScopeBufDepth) / 1000., 10, 2,
                                                     TGNumberFormat::kNESRealOne, TGNumberFormat::kNEAPositive,
                                                     TGNumberFormat::kNELLimitMinMax, 0.2, 1000.0);
 
@@ -208,7 +218,6 @@ public:
 
 
       // ********************** Raster Conversion Numbers.
-      GetScaleOffset();
 
       auto *h_frame_raster_conv = new TGGroupFrame(Frame2, new TGString("Raster Conversion:"),
                                                    kVerticalFrame | kRaisedFrame);
@@ -219,37 +228,39 @@ public:
 
       auto label_x = new TGLabel(h_frame_raster_row, "f(x) = ");
       h_frame_raster_row->AddFrame(label_x, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 5, 2, 5, 5));
-      auto x_scale_enter = new TGNumberEntry(h_frame_raster_row, fScale_x, 12, 3,
-                                             TGNumberFormat::kNESReal, TGNumberFormat::kNEAAnyNumber,
-                                             TGNumberFormat::kNELNoLimits);
-      x_scale_enter->Connect("ValueSet(Long_t)", "RasterMonConfig", this, "ValueSet()");
-      h_frame_raster_row->AddFrame(x_scale_enter, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 5, 2, 5, 5));
+      fScale_x = new TGNumberEntry(h_frame_raster_row, fInfo.fScale_x, 12, 3,
+                                        TGNumberFormat::kNESReal, TGNumberFormat::kNEAAnyNumber,
+                                        TGNumberFormat::kNELNoLimits);
+      fScale_x->Connect("ValueSet(Long_t)", "RasterMonConfig", this, "ValueSet()");
+      h_frame_raster_row->AddFrame(fScale_x, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 5, 2, 5, 5));
       auto label_x2 = new TGLabel(h_frame_raster_row, "*x + ");
       h_frame_raster_row->AddFrame(label_x2, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 5, 2, 5, 5));
-      auto x_offset_enter = new TGNumberEntry(h_frame_raster_row, fOffset_x, 12, 4,
-                                              TGNumberFormat::kNESReal, TGNumberFormat::kNEAAnyNumber,
-                                              TGNumberFormat::kNELNoLimits);
-      x_offset_enter->Connect("ValueSet(Long_t)", "RasterMonConfig", this, "ValueSet()");
-      h_frame_raster_row->AddFrame(x_offset_enter, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 5, 2, 5, 5));
+
+      fOffset_x = new TGNumberEntry(h_frame_raster_row, fInfo.fOffset_x, 12, 4,
+                                         TGNumberFormat::kNESReal, TGNumberFormat::kNEAAnyNumber,
+                                         TGNumberFormat::kNELNoLimits);
+      fOffset_x->Connect("ValueSet(Long_t)", "RasterMonConfig", this, "ValueSet()");
+      h_frame_raster_row->AddFrame(fOffset_x, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 5, 2, 5, 5));
 
       h_frame_raster_row = new TGHorizontalFrame(h_frame_raster_conv);
       h_frame_raster_conv->AddFrame(h_frame_raster_row, new TGLayoutHints(kLHintsExpandX, 10, 2, 5, 2));
 
       auto label_y = new TGLabel(h_frame_raster_row, "f(y) = ");
       h_frame_raster_row->AddFrame(label_y, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 5, 2, 5, 5));
-      auto y_scale_enter = new TGNumberEntry(h_frame_raster_row, fScale_y, 12, 5,
-                                             TGNumberFormat::kNESReal, TGNumberFormat::kNEAAnyNumber,
-                                             TGNumberFormat::kNELNoLimits);
-      y_scale_enter->Connect("ValueSet(Long_t)", "RasterMonConfig", this, "ValueSet()");
-      h_frame_raster_row->AddFrame(y_scale_enter, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 5, 2, 5, 5));
+      fScale_y = new TGNumberEntry(h_frame_raster_row, fInfo.fScale_y, 12, 5,
+                                        TGNumberFormat::kNESReal, TGNumberFormat::kNEAAnyNumber,
+                                        TGNumberFormat::kNELNoLimits);
+      fScale_y->Connect("ValueSet(Long_t)", "RasterMonConfig", this, "ValueSet()");
+      h_frame_raster_row->AddFrame(fScale_y, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 5, 2, 5, 5));
       auto label_y2 = new TGLabel(h_frame_raster_row, "*y + ");
       h_frame_raster_row->AddFrame(label_y2, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 5, 2, 5, 5));
-      auto y_offset_enter = new TGNumberEntry(h_frame_raster_row, fOffset_y, 12, 6,
-                                              TGNumberFormat::kNESReal, TGNumberFormat::kNEAAnyNumber,
-                                              TGNumberFormat::kNELNoLimits);
-      y_offset_enter->Connect("ValueSet(Long_t)", "RasterMonConfig", this, "ValueSet()");
-      h_frame_raster_row->AddFrame(y_offset_enter, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 5, 2, 5, 5));
+      fOffset_y = new TGNumberEntry(h_frame_raster_row, fInfo.fOffset_y, 12, 6,
+                                         TGNumberFormat::kNESReal, TGNumberFormat::kNEAAnyNumber,
+                                         TGNumberFormat::kNELNoLimits);
+      fOffset_y->Connect("ValueSet(Long_t)", "RasterMonConfig", this, "ValueSet()");
+      h_frame_raster_row->AddFrame(fOffset_y, new TGLayoutHints(kLHintsLeft | kLHintsBottom, 5, 2, 5, 5));
 
+      UpdateDisplay();
 
       // ********************** Finish up the Dialog ******************************
 
@@ -265,12 +276,57 @@ public:
       MapWindow();
    };
 
+   void SetInfoValues(unsigned int update_rate){
+      // Load the Info structure with the values from other places in the code.
+      fInfo.fScopeBufDepth = fEvio->GetAdcBufferSize();
+      fInfo.fUpdateRate = update_rate;
+      fInfo.fAutoClearRate = fHists->fHistClearTimerRate;
+      fInfo.fAutoClearOn = fHists->fHistClearTimerIsOn;
+      fInfo.fDebugLevel = fHists->fDebug;
+      fInfo.fEvioDebugLevel = fEvio->fDebug;
+      GetScaleOffset();
+   }
+
+
+   void PutInfoValues(){
+      // Put the updated values in the correct place, which we do after a "Load".
+      fEvio->fDebug = fInfo.fEvioDebugLevel;
+      fHists->fDebug = fInfo.fDebugLevel;
+      fNumberEntryRate->Emit("ValueSet(Long_t)", fInfo.fUpdateRate);   // The only way we can tell the "parent".
+      UpdateADCBufDepth();
+      fHists->fHistClearTimerRate = fInfo.fAutoClearRate;
+      fHists->SetAutoClearRate(fInfo.fAutoClearRate);
+      fHists->fHistClearTimerIsOn = fInfo.fAutoClearOn;
+      SetScaleOffset();
+   }
+
+   void UpdateDisplay(){
+      // Update the information on the display from the items in memory.
+      // This is called when loading the data from a file, so also set the actual corresponding value.
+      // Because the "emit" does not emit what we think, and so actual values are not updated otherwise.
+      fDebugLevelChooser->Select(fInfo.fDebugLevel);
+      fEvioDebugInfo1->SetState((EButtonState)((fInfo.fEvioDebugLevel & 1) > 0));
+      fEvioDebugInfo2->SetState((EButtonState)((fInfo.fEvioDebugLevel & 2) > 0));
+      fEvioDebug1->SetState((EButtonState)((fInfo.fEvioDebugLevel & 4) > 0));
+      fEvioDebug2->SetState((EButtonState)((fInfo.fEvioDebugLevel & 8) > 0));
+      fNumberEntryRate->SetIntNumber(fInfo.fUpdateRate);
+      fAutoClearOnOff->SetState((EButtonState)fInfo.fAutoClearOn);
+      fNumberEntryAutoClear->SetNumber(fInfo.fAutoClearRate);
+      fNumberEntryScopeBufDepth->SetNumber(double(fInfo.fScopeBufDepth) / 1000.);
+      fScale_x->SetNumber(fInfo.fScale_x);
+      fOffset_x->SetNumber(fInfo.fOffset_x);
+      fScale_y->SetNumber(fInfo.fScale_y);
+      fOffset_y->SetNumber(fInfo.fOffset_y);
+      PutInfoValues();
+   }
+
    void OK() {
       CloseWindow();
    };
 
    void DebugSelection(int level) {
       std::cout << "Debug changed to level " << level << std::endl;
+      fInfo.fDebugLevel = level;
       fHists->fDebug = level;
    }
 
@@ -279,10 +335,10 @@ public:
       // Find histograms Raster_xy and get the constants from them. Raster_x, Raster_y should have same constants!
       for (auto &h_t: fHists->fHists) {
          if (strncmp(h_t.hist->GetName(), "Raster_xy", 8) == 0) {
-            fScale_x = h_t.scale_x;
-            fOffset_x = h_t.offset_x;
-            fScale_y = h_t.scale_y;
-            fOffset_y = h_t.offset_y;
+            fInfo.fScale_x = h_t.scale_x;
+            fInfo.fOffset_x = h_t.offset_x;
+            fInfo.fScale_y = h_t.scale_y;
+            fInfo.fOffset_y = h_t.offset_y;
          }
       }
    }
@@ -295,13 +351,13 @@ public:
          std::transform(name.begin(), name.end(), name.begin(), [](unsigned char c){ return std::tolower(c);});
          if (name.compare(0, 6 ,"raster") == 0 ) {         // It is a "raster" type histogram.
             if(name.compare(name.size()-2,2,"_y") == 0){   // For the _y histograms, the X axis scaling must change!
-               h_t.scale_x = fScale_y;     // Looks confusing, BUT, this is for the x-axis of this histogram!
-               h_t.offset_x = fOffset_y;
+               h_t.scale_x = fInfo.fScale_y;     // Looks confusing, BUT, this is for the x-axis of this histogram!
+               h_t.offset_x = fInfo.fOffset_y;
             } else {
-               h_t.scale_x = fScale_x;
-               h_t.offset_x = fOffset_x;
-               h_t.scale_y = fScale_y;
-               h_t.offset_y = fOffset_y;
+               h_t.scale_x = fInfo.fScale_x;
+               h_t.offset_x = fInfo.fOffset_x;
+               h_t.scale_y = fInfo.fScale_y;
+               h_t.offset_y = fInfo.fOffset_y;
             }
          }
       }
@@ -312,11 +368,21 @@ public:
       // Handle value changed in the Raster conversion section
       TGNumberEntry *nmbr = (TGNumberEntry *) gTQSender;
       int id = nmbr->WidgetId();
-      if (id == 3) fScale_x = nmbr->GetNumber();
-      if (id == 4) fOffset_x = nmbr->GetNumber();
-      if (id == 5) fScale_y = nmbr->GetNumber();
-      if (id == 6) fOffset_y = nmbr->GetNumber();
+      // std::cout << "Changing the value for " << id << " to " << nmbr->GetNumber() << std::endl;
+      if (id == 3) fInfo.fScale_x = nmbr->GetNumber();
+      if (id == 4) fInfo.fOffset_x = nmbr->GetNumber();
+      if (id == 5) fInfo.fScale_y = nmbr->GetNumber();
+      if (id == 6) fInfo.fOffset_y = nmbr->GetNumber();
       if (3 <= id && id <= 6) SetScaleOffset();
+      if (id == 1) {
+         fInfo.fUpdateRate = nmbr->GetNumber();
+      }
+      if (id == 2){
+         fInfo.fAutoClearRate = fNumberEntryAutoClear->GetNumber();
+         fHists->SetAutoClearRate(fInfo.fAutoClearRate);
+         fInfo.fAutoClearOn = fHists->fHistClearTimerIsOn;
+         fAutoClearOnOff->SetState((EButtonState)fHists->fHistClearTimerIsOn);
+      }
    }
 
    void HandleButtons() {
@@ -324,6 +390,7 @@ public:
 
       TGButton *btn = (TGButton *) gTQSender;
       int id = btn->WidgetId();
+      // std::cout << "Changing button " << id << " to " << btn->GetState() << std::endl;
       if (id > 0 && id < 5) {    // EVIO Debug buttons.
          int bits = fEvio->fDebug;
          if (btn->GetState()) {
@@ -335,17 +402,13 @@ public:
 //      printf("DoButton: id = %d IsSelected: %d -> ", id, btn->GetState());
 //      cout << b << endl;
          fEvio->fDebug = bits;
+         fInfo.fEvioDebugLevel = bits;
       }else if(id == 5){  // Auto clear on/off
-         fHists->fHistClearTimerIsOn = btn->GetState();
+         fInfo.fAutoClearOn = btn->GetState();
+         fHists->fHistClearTimerIsOn = fInfo.fAutoClearOn;
          if(fHists->fHistClearTimerIsOn) fHists->SetAutoClearRateOn();
          else fHists->SetAutoClearRateOff();
       }
-   }
-
-   void SetAutoClearRate(){
-      double new_rate = fHists->fHistClearTimerRate = fNumberEntryAutoClear->GetNumber();
-      fHists->SetAutoClearRate(new_rate);
-      fAutoClearOnOff->SetState((EButtonState)fHists->fHistClearTimerIsOn);
    }
 
    void UpdateADCBufDepth() {
