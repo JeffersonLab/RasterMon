@@ -35,7 +35,7 @@
 #endif
 
 #ifndef CLI_LOGENTRY_PROGRAM
-#define CLI_LOGENTRY_PROGRAM "/cs/certified/apps/logentrycli/PRO/bin/logentry"
+#define CLI_LOGENTRY_PROGRAM "/home/clasrun/RasterMon/logentry"
 #endif
 
 class RasterLogBookEntry {
