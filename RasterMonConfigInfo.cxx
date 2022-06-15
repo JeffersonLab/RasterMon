@@ -25,7 +25,7 @@ void RasterMonConfigInfo::LoadFromJSON(){
    try {
       std::ifstream in(fJSONFile);
       if(!in.is_open()){
-         std::cout << "RasterMonConfigInfo - Could open the configuration file:" << fJSONFile << "\n";
+         std::cout << "RasterMonConfigInfo - Could not open the configuration file:" << fJSONFile << "\n";
          return;
       }
       std::stringstream in_json;

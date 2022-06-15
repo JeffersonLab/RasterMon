@@ -222,7 +222,6 @@ void RasterMonGui::HandleMenu(int choice) {
    // Handle the menu choices.
    TRootHelpDialog *hd;
    ETConnectionConfig *et_dialog;
-   RasterMonConfig    *config_dialog;
 
    switch (choice) {
       case M_FILE_OPEN:
@@ -329,7 +328,7 @@ void RasterMonGui::HandleMenu(int choice) {
 void RasterMonGui::DoConfigure(){
    if(fConfig == nullptr){
       if(fDebug>1) std::cout << "Start Configure new configure dialog.\n";
-      fConfig = new RasterMonConfig(this, fEvio, fRHists, fUpdateRate);
+      fConfig = new RasterMonConfigPanel(this, fEvio, fRHists, fUpdateRate);
    }else{
       auto x = this->GetX();
       auto y = this->GetY();

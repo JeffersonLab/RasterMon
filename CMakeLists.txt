@@ -80,6 +80,7 @@ set(SOURCE_FILES
         RasterEvioTool.cxx
         RasterMonEventInfo.cxx
         RasterLogBookEntry.cxx
+        RasterMonConfigPanel.cxx
         RasterMonDefaultConfig.cxx
         RasterMonConfigInfo.cxx)
 

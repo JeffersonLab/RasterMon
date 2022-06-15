@@ -34,6 +34,7 @@
 #include <vector>
 #include <sstream>
 #include "RasterMon.h"
+#include "RasterMonConfigInfo.h"
 
 extern void Initialize_Histograms(RasterHists *r);
 
@@ -165,6 +166,9 @@ int main(int argc, char **argv) {
 
       rastermon->SetupGUI();
       rastermon->fDebug = debug;
+
+
+
       theApp.Run();
 
    }catch(const cxxopts::OptionException &e){

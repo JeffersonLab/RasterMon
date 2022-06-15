@@ -10,6 +10,7 @@
 
 // Initial values are from the start of the run.
 class RasterMonConfigInfo : public TObject {
+
 public:
    int fDebugLevel = 0;
    int fEvioDebugLevel = 0;
@@ -22,8 +23,10 @@ public:
    double fScale_y =  -0.0369;
    double fOffset_y = 79.6;
 
-   std::string fJSONFile = "RasterMonConfig.json";  //! Default name for the config file. Not stored.
+   std::string fJSONFile{"RasterMonConfig.json"};  //! Default name for the config file. Not stored.
 
+public:
+   RasterMonConfigInfo(){};
    void SaveToJSON();
    void LoadFromJSON();
    void CopyInfo(RasterMonConfigInfo *that);

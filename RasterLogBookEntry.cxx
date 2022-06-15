@@ -210,7 +210,7 @@ void RasterLogBookEntry::SubmitToLogBook() {
    ScrubString(fTitle);
    ScrubString(fEntryMakers);
    ScrubString(fEmailNotify);
-   string cmd = "echo '" + fBody + "' | " + CLI_LOGENTRY_PROGRAM + " '" + fTitle + "' ";
+   string cmd = "echo '" + fBody + "' | " + CLI_LOGENTRY_PROGRAM;
    if(!fLogBooks.empty()) {
       stringstream ss(fLogBooks);
       while(ss.good()) {
@@ -247,6 +247,9 @@ void RasterLogBookEntry::SubmitToLogBook() {
    for(int i=0; i< fAttachments.size(); ++i) {
       cmd += " --attach '" + fAttachments[i] + "' --caption '" + fAttachmentCaptions[i] + "' ";
    }
+
+   cmd += " -b - ";
+
    if(fRHists->fDebug){
       std::cout << "Logbook command: \n";
       std::cout << cmd << std::endl;

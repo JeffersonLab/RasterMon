@@ -34,7 +34,7 @@
 #include "RasterHists.h"
 #include "RasterEvioTool.h"
 #include "ETConnectionConfig.h"
-#include "RasterMonConfig.h"
+#include "RasterMonConfigPanel.h"
 #include "RasterLogBookEntry.h"
 
 class RasterMonGui : public TGMainFrame {
@@ -70,7 +70,7 @@ public:
    TGFileInfo fSaveFileInfo;         // Contains info for Histogram Save dialog.
    unsigned int fUpdateRate=1000;     // Update rate in ms.
 
-   RasterMonConfig *fConfig = nullptr;
+   RasterMonConfigPanel *fConfig = nullptr;
    bool fUpdateSelectedTabOnly = true;
    std::unique_ptr<RasterLogBookEntry> fLogBook = nullptr;
 
