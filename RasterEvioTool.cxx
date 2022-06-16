@@ -93,7 +93,14 @@ int RasterEvioTool::Next() {
       if( IsOpen() ) Close();
       return(Next());  // Recursively call next, which wil open the next file and read the next event.
    }
-   if(stat == ET_ERROR_EMPTY) return(EvioTool_Status_No_Data);
+   if(stat == ET_ERROR_EMPTY || stat == ET_ERROR_BUSY ) return(EvioTool_Status_No_Data);
+   if(stat == ET_ERROR_READ ) return(EvioTool_Status_No_Data);
+   if(stat != ET_OK) return(stat);
+
+   fLastRunNumber = GetRunNumber();      // These are only updated on actual good data.
+   fLastEventNumber = GetEventNumber();
+
+   if(fDebug & EvioTool_Debug_L2)  std::cout << "Run number: " << fLastRunNumber << "  Event: " << fLastEventNumber << " Stat:" << stat << std::endl;
 
    fNEventsProcessed++;
 

@@ -102,6 +102,8 @@ public:
    std::vector<double> fChannelAverage;
    std::vector< CircularBuffer<double> > fTimeBuf;
    std::vector< CircularBuffer<double> > fAdcAverageBuf;
+   unsigned int fLastEventNumber = 0;
+   unsigned int fLastRunNumber = 0;
 
    std::mutex fFileLock;    // Because the Next() has a next file build in.
    std::mutex fBufferLock;  // Guard against buffer size changes.
@@ -123,7 +125,9 @@ public:
       if( fEvioHead->size()>2 ) return(fEvioHead->GetData(0));
       else return(0);
    }
+   unsigned int GetLastEventNumber(){return fLastEventNumber;}
    unsigned int GetRunNumber() const {return fRasterHead->GetRunNumber();}
+   unsigned int GetLastRunNumber() const {return fLastRunNumber;}
    unsigned int GetTimeStamp() const {return fRasterHead->GetTimeStamp();}
    unsigned int GetTrigger() const {return fRasterHead->GetTrigger1();}
    unsigned long GetTimeCrate(unsigned short i=0) const {
