@@ -391,6 +391,7 @@ void RasterHists::HistFillWorker(int thread_num){
          if(fEvio->IsReadingFromEt() && !fEvio->IsETAlive()){
             // Dead ET system. Don't read, stop
             // The RasterMonGui will detect the dead ET, destroy it and try to reconnect.
+            std::cout << "ET system dead?  -- will try to reconnect.\n";
             fKeepWorking = false;
             fEvioReadLock.unlock();
             break;
@@ -403,15 +404,17 @@ void RasterHists::HistFillWorker(int thread_num){
             fEvioReadLock.unlock();
             continue;
          }
-        
+
          if(stat != EvioTool::EvioTool_Status_OK){
             fKeepWorking = false;
             fEvioReadLock.unlock();
             if(stat != EvioTool::EvioTool_Status_EOF) std::cout << "Evio Error -- stat = " << stat << std::endl;
+            else if(fDebug) std::cout << "Evio - End of file. Stop.\n";
             break;
          }
          if(fEvio->GetEventNumber() == 0){  // Event number = 0 does not have useful data for us.
             fEvioReadLock.unlock();
+            if(fDebug>2) std::cout << "Event without event number. Skip. \n";
             continue;
          }
 

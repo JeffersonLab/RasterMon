@@ -94,7 +94,7 @@ public:
    //
    // Note on mem: The memory will be managed by TObjArray. So no delete to be called. No unique_ptr etc.
    Leaf<unsigned int>  *fEvioHead = nullptr;  // EvioHead is tag=49152 and is always there.
-   unsigned long fMostRecentEventNumber;      // Number of last actual event that was read.
+   unsigned long fMostRecentEventNumber=0;      // Number of last actual event that was read.
    RasterMonEventInfo *fRasterHead = nullptr; // RasterHead is tag=
 
    size_t fAdcBufferSize = 5000;
@@ -110,7 +110,7 @@ public:
 
 public:
    explicit RasterEvioTool(string infile="");
-   virtual ~RasterEvioTool(){
+   ~RasterEvioTool() override{
       // Nothing to destroy.
    };
 
