@@ -4,8 +4,8 @@
 #include "RasterMon.h"
 #include "RasterMonGui.h"
 
-RasterMonGui::RasterMonGui(RasterHists *hist, const TGWindow *p, UInt_t w, UInt_t h)
-      : fWindowWidth(w), fWindowHeight(h), fRHists(hist), TGMainFrame(p,w,h) {
+RasterMonGui::RasterMonGui(RasterMonConfigInfo *info, RasterHists *hist, const TGWindow *p, UInt_t w, UInt_t h)
+      : fWindowWidth(w), fWindowHeight(h), fInfo(info), fRHists(hist), TGMainFrame(p,w,h) {
    Init();
 }
 
@@ -328,7 +328,7 @@ void RasterMonGui::HandleMenu(int choice) {
 void RasterMonGui::DoConfigure(){
    if(fConfig == nullptr){
       if(fDebug>1) std::cout << "Start Configure new configure dialog.\n";
-      fConfig = new RasterMonConfigPanel(this, fEvio, fRHists, fUpdateRate);
+      fConfig = new RasterMonConfigPanel(this, fInfo);
    }else{
       auto x = this->GetX();
       auto y = this->GetY();

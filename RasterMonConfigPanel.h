@@ -5,7 +5,6 @@
 #ifndef RASTERMON_RASTERMONCONFIG_H
 #define RASTERMON_RASTERMONCONFIG_H
 
-#include "RasterEvioTool.h"
 #include "TObject.h"
 #include "TGCanvas.h"
 #include "TGFrame.h"
@@ -19,8 +18,8 @@
 #include <string>
 #include <map>
 
-#include "RasterEvioTool.h"
-#include "RasterHists.h"
+//#include "RasterEvioTool.h"
+//#include "RasterHists.h"
 #include "RasterMonConfigInfo.h"
 
 class RasterMonGui;
@@ -29,12 +28,12 @@ class RasterMonConfigPanel : public TGTransientFrame {
 
 public:
    // const TGWindow *fParentWindow;
-   RasterEvioTool *fEvio = nullptr;
-   RasterHists *fHists = nullptr;
+//   RasterEvioTool *fEvio = nullptr;
+//   RasterHists *fHists = nullptr;
    const RasterMonGui *fRasGui = nullptr;
 
    TGListBox *fDebugLevelChooser;
-   TGNumberEntry *fNumberEntryRate;
+   TGNumberEntry *fEnterUpdateRate;
    TGNumberEntry *fNumberEntryAutoClear;
    TGNumberEntry *fNumberEntryScopeBufDepth;
    TGCheckButton *fAutoClearOnOff;
@@ -42,37 +41,23 @@ public:
    TGCheckButton *fEvioDebugInfo2;
    TGCheckButton *fEvioDebug1;
    TGCheckButton *fEvioDebug2;
-   TGNumberEntry *fScale_x;
-   TGNumberEntry *fOffset_x;
-   TGNumberEntry *fScale_y;
-   TGNumberEntry *fOffset_y;
+   TGNumberEntry *fEnterScale_x;
+   TGNumberEntry *fEnterOffset_x;
+   TGNumberEntry *fEnterScale_y;
+   TGNumberEntry *fEnterOffset_y;
 
    RasterMonConfigInfo *fInfo;
 
 public:
-   RasterMonConfigPanel(const RasterMonGui *parent, RasterEvioTool *evio, RasterHists *hists,
-                                    unsigned int update_rate);
-
-   void SetInfoValues(unsigned int update_rate);
-   void PutInfoValues();
+   RasterMonConfigPanel(const RasterMonGui *parent, RasterMonConfigInfo *info);
 
    void UpdateDisplay();
-
    void OK() {
       CloseWindow();
    };
 
-   void DebugSelection(int level) {
-      std::cout << "Debug changed to level " << level << std::endl;
-      fInfo->fDebugLevel = level;
-      fHists->fDebug = level;
-   }
-
-   void GetScaleOffset();
-   void SetScaleOffset();
    void ValueSet();
    void HandleButtons();
-   void UpdateADCBufDepth();
 
 };
 

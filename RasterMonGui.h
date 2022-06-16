@@ -71,6 +71,7 @@ public:
    unsigned int fUpdateRate=1000;     // Update rate in ms.
 
    RasterMonConfigPanel *fConfig = nullptr;
+   RasterMonConfigInfo *fInfo = nullptr;
    bool fUpdateSelectedTabOnly = true;
    std::unique_ptr<RasterLogBookEntry> fLogBook = nullptr;
 
@@ -78,7 +79,7 @@ public:
    int fDebug = 0;
 
 public:
-   RasterMonGui(RasterHists *hist, const TGWindow *p, UInt_t w, UInt_t h);
+   RasterMonGui(RasterMonConfigInfo *info, RasterHists *hist, const TGWindow *p, UInt_t w, UInt_t h);
 
    virtual ~RasterMonGui() {
       // Clean up used widgets: frames, buttons, layout hints
@@ -104,7 +105,7 @@ public:
 
    void SetUpdateRate(unsigned long rate=0){
       if(fConfig){
-         rate = fConfig->fNumberEntryRate->GetIntNumber();
+         rate = fConfig->fEnterUpdateRate->GetIntNumber();
          if(fDebug) std::cout << "Set update rate to: " << rate << std::endl;
          fUpdateRate = rate;
          fHistUpdateTimer->SetTime(rate);
@@ -116,8 +117,10 @@ public:
    unsigned int GetUpdateRate() const {return fUpdateRate;}
 
    void SetDebug(int level){
+      // Set the debug level for RasterMonGui and RasterHists
       cout << "RasterMonGui::SetDebug to level " << level << endl;
       fDebug = level;
+      fRHists->SetDebug(level);
    }
    void Go(){
       if(fDebug>1) std::cout << "Go \n";

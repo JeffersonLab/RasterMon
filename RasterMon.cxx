@@ -33,6 +33,8 @@
 #include <thread>
 #include <vector>
 #include <sstream>
+#include <filesystem>
+#include <cstdlib>
 #include "RasterMon.h"
 #include "RasterMonConfigInfo.h"
 
@@ -42,7 +44,7 @@ int main(int argc, char **argv) {
    ROOT::EnableThreadSafety();
 
    // This is a nicer way to do options in C++. See cxxopts.hpp file.
-   string help_string =
+   std::string help_string =
          " ===============  RasterMon ===============\n"
          " This is a GUI code that will monitor the raster for CLAS12, which is used by Run Group C. \n"
          " You should be able to just run the code and the defaults will work with the CLAS12 ET ring.\n"
@@ -64,27 +66,30 @@ int main(int argc, char **argv) {
          .positional_help(" infile1 infile2 ...")
          .show_positional_help();
 
-   string host;
+   std::string host;
    unsigned int port = 11111;
-   string etname;
-   string station;
-   string config_file;
+   std::string etname;
+   std::string station;
+   std::string config_file;
+   std::string json_config_file;
 
    options.add_options()
       ("d,debug", "Increase debug level")
       ("q,quiet", "Run extra quiet.")
       ("et", "Connect to ET instead of reading from file. ")
-      ("host", "Host computer for the ET system, default: " ET_DEFAULT_HOST,
+      ("h,host", "Host computer for the ET system, default: " ET_DEFAULT_HOST,
             cxxopts::value(host)->default_value(ET_DEFAULT_HOST))
-      ("port", "Port to use for the ET system, default: " + to_string(ET_DEFAULT_PORT),
+      ("p,port", "Port to use for the ET system, default: " + to_string(ET_DEFAULT_PORT),
             cxxopts::value(port)->default_value(to_string(ET_DEFAULT_PORT)))
-      ("etname", "filename for ET system direct reads, default: " ET_DEFAULT_NAME,
+      ("n,etname", "filename for ET system direct reads, default: " ET_DEFAULT_NAME,
             cxxopts::value(etname)->default_value(ET_DEFAULT_NAME))
-      ("station", "The ET station name, default: " ET_STATION_NAME,
-         cxxopts::value(station)->default_value(ET_STATION_NAME))
-      ("config", "Configuration root macro file. default (none)",
+      ("s,station", "The ET station name, default: " ET_DEFAULT_STATION,
+            cxxopts::value(station)->default_value(ET_DEFAULT_STATION))
+      ("C,config", "Configuration root macro (C) file. default (none)",
             cxxopts::value(config_file)->default_value(""))
-      ("inputfiles","List of input evio files. The -i is optional. ",
+      ("j,json", "JSON Configuration file to set Config panel initial values. (RasterMonConfig.json)",
+            cxxopts::value(json_config_file)->default_value(RASTERMON_DEFAULT_JSON_CONFIG))
+      ("i,inputfiles","List of input evio files. This option is optional. ",
             cxxopts::value<std::vector<std::string>>())
       ("help", "Print help")
       ;
@@ -104,9 +109,11 @@ int main(int argc, char **argv) {
       TApplication theApp("App", &argc, argv);
       // TRint theApp("App", &argc, argv);
 
+
       auto evio = new RasterEvioTool();
       auto RHists = new RasterHists(evio);
-      auto rastermon = new RasterMonGui(RHists, gClient->GetRoot(), 800, 600);
+      auto info = new RasterMonConfigInfo(RHists, evio);
+      auto rastermon = new RasterMonGui(info, RHists, gClient->GetRoot(), 800, 600);
 
       if (debug == 1) evio->fDebug = 0;
       if (debug > 1) evio->fDebug = EvioTool::EvioTool_Debug_Info;
@@ -117,19 +124,53 @@ int main(int argc, char **argv) {
 
       // Parse the Config file FIRST. Then have command line options potentially override some of them (i.e. for ET)
       if( args.count("config")){
-         cout << "Config file: " << config_file << " specified on command line. Parsing it.\n";
-         cout << "This file exists? " << std::filesystem::exists( std::filesystem::path(config_file)) << "\n";
-         std::ostringstream process_line;
-         process_line << ".x " << config_file << "(";
-         process_line << RHists;
-         process_line << ")";
-         cout << "Parsing config file with line: " << process_line.str() << std::endl;
-         gROOT->ProcessLine(process_line.str().c_str());
-
+         std::cout << "Config file: " << config_file << " specified on command line. Parsing it.\n";
+         if(std::filesystem::exists( std::filesystem::path(config_file))){
+            std::ostringstream process_line;
+            process_line << ".x " << config_file << "(";
+            process_line << RHists;
+            process_line << ")";
+            std::cout << "Parsing config file with line: " << process_line.str() << std::endl;
+            gROOT->ProcessLine(process_line.str().c_str());
+         }else{
+            std::cout << "\033[93m Configuration file " << config_file << " not found. Please check the name and path. Exit. \033[0m \n";
+            return 1;
+         }
       }else {
          Default_Initialize_Histograms(RHists);
       }
       RHists->SetupData();
+
+      if( args.count("json")) {
+         std::cout << "\033[92m Initializing config values from JSON file: " << json_config_file << "\033[0m \n";
+      }
+
+      auto path_json_config_file = std::filesystem::path(json_config_file);
+      if(!std::filesystem::exists(path_json_config_file)){     // File not found.
+         string home_dir{std::getenv("HOME")};
+         auto home_path = std::filesystem::path(home_dir);
+         auto filename = path_json_config_file.filename();
+         auto check_path = home_path / filename;
+         if(std::filesystem::exists(check_path)){
+            json_config_file = check_path.string();     // The file was found in the home dir.
+            std::cout << "\033[94m Initializing config values from JSON file: " << json_config_file << "\033[0m \n";
+         }
+      }
+
+
+      if(std::filesystem::exists( std::filesystem::path(json_config_file))){
+         if(debug) std::cout << "\033[92m Initializing config values from JSON file: " << json_config_file << "\033[0m \n";
+         info->fJSONFile = json_config_file;
+         info->LoadFromJSON();
+         info->PutValues();
+      }else {
+         if (args.count("json")) {
+            std::cout << "\033[93m Specified JSON configuration file not found. Exit. \033[0m \n";
+            return 1;
+         } else {
+            std::cout << "\033[94m Default JSON configuration file not found. Continue with hard coded values.\033[0m \n";
+         }
+      }
 
       // Add the commandline files to the RasterEvioTool
       if (args.count("inputfiles")) {

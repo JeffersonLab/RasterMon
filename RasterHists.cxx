@@ -277,7 +277,7 @@ void RasterHists::FillGraphs(int tab_no, vector<Graph_t> &graphs) {
                graph->SetPoint(1, 1., 0.);
             }
          } else {
-            for (int i = 0; i < fEvio->fTimeBuf[data_idx].size(); ++i) {
+            for (int i = 0; i < fEvio->fTimeBuf[data_idx].size() && i < fEvio->fAdcAverageBuf[data_idx].size(); ++i) {
                graph->SetPoint(i, fEvio->fTimeBuf[data_idx].at(i), fEvio->fAdcAverageBuf[data_idx].at(i));
             }
          }

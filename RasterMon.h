@@ -1,6 +1,18 @@
 #ifndef RasterMon_h
 #define RasterMon_h
 
+#define RASTERMON_VERSION "1.2"
+#define ET_DEFAULT_STATION "RasterMon"
+
+#ifndef RASTERMON_DEFAULT_JSON_CONFIG
+#define RASTERMON_DEFAULT_JSON_CONFIG "RasterMonConfig.json"
+#endif
+
+#ifndef RASTERMON_DEFAULT_JSON_CONFIG_PATH
+#define RASTERMON_DEFAULT_JSON_CONFIG_PATH "/home/clasrun"
+#endif
+
+
 #include <TROOT.h>
 #include <TSystem.h>
 #include <TApplication.h>
@@ -19,13 +31,11 @@
 #include <vector>
 #include <chrono>
 
+#include "RasterMonConfigInfo.h"
 #include "RasterMonGui.h"
 #include "RasterEvioTool.h"
 #include "RasterMonEventInfo.h"
 #include "RasterMonDefaultConfig.h"
 #include "cxxopts.hpp"
-
-#define RASTERMON_VERSION "1.1"
-#define ET_STATION_NAME "RasterMon"
 
 #endif

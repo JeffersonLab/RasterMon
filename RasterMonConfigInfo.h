@@ -5,8 +5,15 @@
 #ifndef RASTERMON_RASTERMONCONFIGINFO_H
 #define RASTERMON_RASTERMONCONFIGINFO_H
 
-#include "TObject.h"
 #include <string>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+
+#include "TObject.h"
+#include "TBufferJSON.h"
+#include "RasterHists.h"
+#include "RasterEvioTool.h"
 
 // Initial values are from the start of the run.
 class RasterMonConfigInfo : public TObject {
@@ -24,12 +31,23 @@ public:
    double fOffset_y = 79.6;
 
    std::string fJSONFile{"RasterMonConfig.json"};  //! Default name for the config file. Not stored.
+   RasterHists *fHists=nullptr;                            //! Pointer to RasterHists. Not stored.
+   RasterEvioTool *fEvio=nullptr;                          //! Pointer to RasterEvioTool. Not stored.
 
 public:
    RasterMonConfigInfo(){};
+   RasterMonConfigInfo(RasterHists *hists, RasterEvioTool *evio): fHists(hists), fEvio(evio){};
    void SaveToJSON();
    void LoadFromJSON();
    void CopyInfo(RasterMonConfigInfo *that);
+
+   void GetValues();
+   void PutValues();
+   void GetScaleOffset();
+   void SetScaleOffset();
+   void UpdateADCBufDepth();
+   void UpdateHistClearRate();
+   void SetDebug(int i);
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Winconsistent-missing-override"
