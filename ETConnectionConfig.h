@@ -67,10 +67,8 @@ public:
       auto Frame1 = new TGHorizontalFrame(this, 400, 20, kFixedWidth);
       auto OkButton = new TGTextButton(Frame1, "&Ok", 991);
       OkButton->Connect("Clicked()", "ETConnectionConfig", this, "OK()");
-      OkButton->Connect("Clicked()", "RasterMonGui", (TGWindow *)parent_window, "CloseETConfigure()");
       auto CancelButton = new TGTextButton(Frame1, "&Cancel", 992);
       CancelButton->Connect("Clicked()", "ETConnectionConfig", this, "Cancel()");
-      CancelButton->Connect("Clicked()", "RasterMonGui", (TGWindow *)parent_window, "CloseETConfigure()");
       auto ReconnectButton = new TGTextButton(Frame1, "&Reconnect", 993);
       ReconnectButton->Connect("Clicked()", "ETConnectionConfig", this, "Reconnect()");
       auto L1 = new TGLayoutHints(kLHintsTop | kLHintsRight , //| kLHintsExpandX,
@@ -162,12 +160,19 @@ public:
    };
    virtual ~ETConnectionConfig(){};
 
-   void Run();
+//   void Run();
 
    void Reconnect(){
-      std::cout << "ETDialog Reconnect\n";
+      std::cout << "ETDialog:: Trying to reconnect to ET...\n";
       fEvio->Close();
-      OK();
+      int stat = fEvio->ReOpenEt();
+      if(stat == ET_OK){
+         std::cout << "ET Reconnected.\n";
+         TGTransientFrame::CloseWindow();
+      }else{
+         std::cout << "ET Reconnection failed.\n";
+      }
+
    }
 
    void OK(){
@@ -190,11 +195,12 @@ public:
          cout << "Could not properly connect to the ET ring. ReadFromEt = " << fEvio->fReadFromEt <<  " \n";
          fEvio->fReadFromEt = false;
       }
+
       TGTransientFrame::CloseWindow();
    }
 
    void Cancel(){
-      if(fEvio->fDebug) std::cout << "ETDialog Cancel\n";
+      if(fEvio->fDebug) std::cout << "ETDialog Cancel -- Disconnect from ET.\n";
       fEvio->Close();
       TGTransientFrame::CloseWindow();
    }
@@ -239,8 +245,8 @@ public:
    }
 };
 
-inline void ETConnectionConfig::Run(){
-}
+//inline void ETConnectionConfig::Run(){
+//}
 
 
 

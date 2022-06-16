@@ -13,16 +13,6 @@
 #include "CircularBuffer.h"
 #include <mutex>
 
-#ifndef ET_DEFAULT_PORT
-#define ET_DEFAULT_PORT 11111
-#endif
-#ifndef ET_DEFAULT_NAME
-#define ET_DEFAULT_NAME "/et/clasprod"
-#endif
-#ifndef ET_DEFAULT_HOST
-#define ET_DEFAULT_HOST "clondaq6"
-#endif
-
 #ifndef FADC_TIME_CONVERSION
 #define FADC_TIME_CONVERSION 4.0e-9   // The FADCs run at 250 MHz, so one tick is 4ns.
 #endif
@@ -98,18 +88,13 @@ public:
    std::vector<string> fInputFiles;
    int fiInputFile = -1;
 
-   string fETStationName = "RasterMon";
-   int    fETPort = ET_DEFAULT_PORT;
-   string fETHost = ET_DEFAULT_HOST;
-   string fETName = ET_DEFAULT_NAME;
-
    unsigned long fNEventsProcessed=0;
    //
    // Setup the data for the EVIO parsing.
    //
    // Note on mem: The memory will be managed by TObjArray. So no delete to be called. No unique_ptr etc.
    Leaf<unsigned int>  *fEvioHead = nullptr;  // EvioHead is tag=49152 and is always there.
-   unsigned long fMostRecentEventNumber;      // Number of last actual event that was read.
+   unsigned long fMostRecentEventNumber=0;      // Number of last actual event that was read.
    RasterMonEventInfo *fRasterHead = nullptr; // RasterHead is tag=
 
    size_t fAdcBufferSize = 5000;
@@ -117,13 +102,15 @@ public:
    std::vector<double> fChannelAverage;
    std::vector< CircularBuffer<double> > fTimeBuf;
    std::vector< CircularBuffer<double> > fAdcAverageBuf;
+   unsigned int fLastEventNumber = 0;
+   unsigned int fLastRunNumber = 0;
 
    std::mutex fFileLock;    // Because the Next() has a next file build in.
    std::mutex fBufferLock;  // Guard against buffer size changes.
 
 public:
    explicit RasterEvioTool(string infile="");
-   virtual ~RasterEvioTool(){
+   ~RasterEvioTool() override{
       // Nothing to destroy.
    };
 
@@ -138,7 +125,9 @@ public:
       if( fEvioHead->size()>2 ) return(fEvioHead->GetData(0));
       else return(0);
    }
+   unsigned int GetLastEventNumber(){return fLastEventNumber;}
    unsigned int GetRunNumber() const {return fRasterHead->GetRunNumber();}
+   unsigned int GetLastRunNumber() const {return fLastRunNumber;}
    unsigned int GetTimeStamp() const {return fRasterHead->GetTimeStamp();}
    unsigned int GetTrigger() const {return fRasterHead->GetTrigger1();}
    unsigned long GetTimeCrate(unsigned short i=0) const {
@@ -164,14 +153,6 @@ public:
       for(int i=0; i< fAdcAverageBuf.size(); ++i) fAdcAverageBuf[i] = CircularBuffer<double>(bufsize);
       fAdcBufferSize = bufsize;
    }
-
-   void SetETHost(string host) { fETHost = host; }
-   string GetETHost() const { return fETHost;}
-   void SetETPort(int port){ fETPort = port;}
-   int GetETPort() const { return fETPort; }
-   void SetETName(string name){ fETName = name;}
-   string GetETName() const {return fETName;}
-
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Winconsistent-missing-override"

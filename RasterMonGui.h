@@ -34,7 +34,7 @@
 #include "RasterHists.h"
 #include "RasterEvioTool.h"
 #include "ETConnectionConfig.h"
-#include "RasterMonConfig.h"
+#include "RasterMonConfigPanel.h"
 #include "RasterLogBookEntry.h"
 
 class RasterMonGui : public TGMainFrame {
@@ -60,6 +60,8 @@ public:
    bool fPause = false;
    TGTextButton *fLogentry;
    TTimer  *fHistUpdateTimer = nullptr;
+   TTimer  *fEvioStatusCheckTimer = nullptr;
+   unsigned int fEvioStatusCheckRate=1000;  // How often to check if ET is okay.
    TGHProgressBar *fClearProgress;
 
    RasterHists* fRHists = nullptr;
@@ -68,7 +70,8 @@ public:
    TGFileInfo fSaveFileInfo;         // Contains info for Histogram Save dialog.
    unsigned int fUpdateRate=1000;     // Update rate in ms.
 
-   RasterMonConfig *fConfig = nullptr;
+   RasterMonConfigPanel *fConfig = nullptr;
+   RasterMonConfigInfo *fInfo = nullptr;
    bool fUpdateSelectedTabOnly = true;
    std::unique_ptr<RasterLogBookEntry> fLogBook = nullptr;
 
@@ -76,7 +79,7 @@ public:
    int fDebug = 0;
 
 public:
-   RasterMonGui(RasterHists *hist, const TGWindow *p, UInt_t w, UInt_t h);
+   RasterMonGui(RasterMonConfigInfo *info, RasterHists *hist, const TGWindow *p, UInt_t w, UInt_t h);
 
    virtual ~RasterMonGui() {
       // Clean up used widgets: frames, buttons, layout hints
@@ -100,9 +103,23 @@ public:
       fConfig = nullptr;
    }
 
+   void CancelConfigure(){
+      fConfig->OK();
+      fConfig = nullptr;
+   }
+
+   void CloseETConfigure(){
+
+   }
+
+   void CancelETConfigure(){
+      StopEvioStatusCheckTimer();
+      fEvio->Close();
+   }
+
    void SetUpdateRate(unsigned long rate=0){
       if(fConfig){
-         rate = fConfig->fNumberEntryRate->GetIntNumber();
+         rate = fConfig->fEnterUpdateRate->GetIntNumber();
          if(fDebug) std::cout << "Set update rate to: " << rate << std::endl;
          fUpdateRate = rate;
          fHistUpdateTimer->SetTime(rate);
@@ -114,8 +131,10 @@ public:
    unsigned int GetUpdateRate() const {return fUpdateRate;}
 
    void SetDebug(int level){
+      // Set the debug level for RasterMonGui and RasterHists
       cout << "RasterMonGui::SetDebug to level " << level << endl;
       fDebug = level;
+      fRHists->SetDebug(level);
    }
    void Go(){
       if(fDebug>1) std::cout << "Go \n";
@@ -161,10 +180,27 @@ public:
       fLogentry->SetEnabled(true);
    }
 
+   void StartEvioStatusCheckTimer(){
+      fEvioStatusCheckTimer->TurnOn();
+   }
+
+   void StopEvioStatusCheckTimer(){
+      fEvioStatusCheckTimer->TurnOff();
+   }
+
+
    Bool_t HandleTimer(TTimer *timer) override{
       if(timer == fHistUpdateTimer){
          StatusBarUpdate();
          DoDraw();
+      }else if(timer == fEvioStatusCheckTimer){
+         if(fDebug>1) std::cout << "RasterMon: ET status check.\n";
+         if(!fEvio->IsETAlive()){
+            // Reset the ET system
+            std::cout << "RasterMon: ET system dead. Trying to reconnect.\n";
+            fEvio->Close();
+            fEvio->ReOpenEt();
+         }
       }
       return kTRUE;
    }

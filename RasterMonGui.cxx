@@ -4,8 +4,8 @@
 #include "RasterMon.h"
 #include "RasterMonGui.h"
 
-RasterMonGui::RasterMonGui(RasterHists *hist, const TGWindow *p, UInt_t w, UInt_t h)
-      : fWindowWidth(w), fWindowHeight(h), fRHists(hist), TGMainFrame(p,w,h) {
+RasterMonGui::RasterMonGui(RasterMonConfigInfo *info, RasterHists *hist, const TGWindow *p, UInt_t w, UInt_t h)
+      : fWindowWidth(w), fWindowHeight(h), fInfo(info), fRHists(hist), TGMainFrame(p,w,h) {
    Init();
 }
 
@@ -28,6 +28,7 @@ void RasterMonGui::Init(){
    fSaveFileInfo.fFileTypes = gfFileSaveTypes;
    fSaveFileInfo.SetFilename("RasterMonHists");
    fHistUpdateTimer = new TTimer(this, fUpdateRate) ;
+   fEvioStatusCheckTimer = new TTimer(this, fEvioStatusCheckRate);
    fLogBook = std::make_unique<RasterLogBookEntry>(this, fRHists);
    fLogBook->Connect("CloseWindow()", "RasterMonGui", this, "DoneLogEntry()");
 
@@ -180,7 +181,7 @@ void RasterMonGui::StatusBarUpdate(){
    fStatusBar->SetText( text1, 3);
 
    time1 = time2;
-   if(fDebug>1){
+   if(fDebug==1){
       printf("Events processed:   %'10ld    delta: %5ld     Update #%5d\n", fEvio->fNEventsProcessed, delta_evt, n_updates);
       printf("Time elapsed total: %'10ld   delta t: %5ld\n", (long)total_t.count(), (long)delta_t.count());
       printf("Average rate:       %8.3f kHz  Current rate: %8.3f kHz\n",
@@ -221,7 +222,6 @@ void RasterMonGui::HandleMenu(int choice) {
    // Handle the menu choices.
    TRootHelpDialog *hd;
    ETConnectionConfig *et_dialog;
-   RasterMonConfig    *config_dialog;
 
    switch (choice) {
       case M_FILE_OPEN:
@@ -239,6 +239,11 @@ void RasterMonGui::HandleMenu(int choice) {
                fEvio->AddFile(ff->GetName());
             }
 
+         }
+         if(fEvio->IsReadingFromEt()){
+            StartEvioStatusCheckTimer();
+         }else{
+            StopEvioStatusCheckTimer();
          }
          break;
 
@@ -300,6 +305,11 @@ void RasterMonGui::HandleMenu(int choice) {
             fRHists->Stop();
          }
          et_dialog = new ETConnectionConfig(this, fEvio);
+         if(fEvio->IsReadingFromEt()){
+            StartEvioStatusCheckTimer();
+         }else{
+            StopEvioStatusCheckTimer();
+         }
          break;
 
       case M_CONFIGURE:
@@ -318,7 +328,7 @@ void RasterMonGui::HandleMenu(int choice) {
 void RasterMonGui::DoConfigure(){
    if(fConfig == nullptr){
       if(fDebug>1) std::cout << "Start Configure new configure dialog.\n";
-      fConfig = new RasterMonConfig(this, fEvio, fRHists, fUpdateRate);
+      fConfig = new RasterMonConfigPanel(this, fInfo);
    }else{
       auto x = this->GetX();
       auto y = this->GetY();

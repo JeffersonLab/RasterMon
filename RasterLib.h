@@ -12,5 +12,7 @@
 #include "RasterHists.h"
 #include "RasterMonEventInfo.h"
 #include "RasterMonDefaultConfig.h"
+// #include "RasterMonConfig.h"
+#include "RasterMonConfigInfo.h"
 
 #endif //RASTERMON_RASTERLIB_H

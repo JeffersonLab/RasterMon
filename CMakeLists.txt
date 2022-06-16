@@ -80,7 +80,9 @@ set(SOURCE_FILES
         RasterEvioTool.cxx
         RasterMonEventInfo.cxx
         RasterLogBookEntry.cxx
-        RasterMonDefaultConfig.cxx)
+        RasterMonConfigPanel.cxx
+        RasterMonDefaultConfig.cxx
+        RasterMonConfigInfo.cxx)
 
 add_library(RasterLib SHARED ${SOURCE_FILES} RasterLib_dict.cxx)
 

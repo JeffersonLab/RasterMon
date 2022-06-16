@@ -82,7 +82,7 @@ void RasterLogBookEntry::MakeEntry() {
       CancelButton->Connect("Clicked()", "RasterLogBookEntry", this, "Cancel()");
       Frame1->AddFrame(CancelButton, new TGLayoutHints(kLHintsTop | kLHintsRight, 2, 2, 2, 2));
 
-      fTitle = "RasterMon for run " + to_string(fRHists->fEvio->GetRunNumber());
+      fTitle = "Run #" + to_string(fRHists->fEvio->GetLastRunNumber()) + ": RasterMon Histograms.";
       fTitleEntry = AddTextLine("Title:", fTitle, "Update the title for the logbook entery, or leave as is.");
 //      fLogBooksEntry = AddTextLine("Logbook(s):", fLogBooks,
 //                                   "A list of logbooks (separate by a comma) where this entry should be logged.");
@@ -129,7 +129,9 @@ void RasterLogBookEntry::MakeEntry() {
       fBodyEdit = new TGTextEdit(fMain, 0, 500);
       fMain->AddFrame(fBodyEdit, new TGLayoutHints(kLHintsExpandX, 10, 10, 10, 10));
 
-      fBodyEdit->AddLine("RasterMon auto generated logbook entry.");
+      string body{"RasterMon auto generated logbook entry for run "};
+      body += to_string(fRHists->fEvio->GetLastRunNumber()) + " around event number " + to_string(fRHists->fEvio->GetLastEventNumber());
+      fBodyEdit->AddLine(body.c_str());
       fBodyEdit->AddLine("Please edit this entry with details.");
    }else{
       auto OkButton = new TGTextButton(Frame1, "&Ok", 991);
@@ -210,7 +212,7 @@ void RasterLogBookEntry::SubmitToLogBook() {
    ScrubString(fTitle);
    ScrubString(fEntryMakers);
    ScrubString(fEmailNotify);
-   string cmd = "echo '" + fBody + "' | " + CLI_LOGENTRY_PROGRAM + " '" + fTitle + "' ";
+   string cmd = "echo '" + fBody + "' | " + CLI_LOGENTRY_PROGRAM;
    if(!fLogBooks.empty()) {
       stringstream ss(fLogBooks);
       while(ss.good()) {
@@ -225,7 +227,7 @@ void RasterLogBookEntry::SubmitToLogBook() {
    if(!fTitle.empty()){
       cmd += " --title '" + fTitle + "' ";
    }else{
-      cmd += "--title 'RasterMon for run " + to_string(fRHists->fEvio->GetRunNumber()) + "' ";
+      cmd += "--title 'Run #" + to_string(fRHists->fEvio->GetLastRunNumber()) + ": RasterMon Histograms.' ";
    }
    if(!fTags.empty()) {
       stringstream ss(fTags);
@@ -247,6 +249,9 @@ void RasterLogBookEntry::SubmitToLogBook() {
    for(int i=0; i< fAttachments.size(); ++i) {
       cmd += " --attach '" + fAttachments[i] + "' --caption '" + fAttachmentCaptions[i] + "' ";
    }
+
+   cmd += " -b - ";
+
    if(fRHists->fDebug){
       std::cout << "Logbook command: \n";
       std::cout << cmd << std::endl;

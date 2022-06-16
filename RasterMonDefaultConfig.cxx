@@ -11,22 +11,22 @@ void Default_Setup_Raster_Tab(RasterHists *r){
                           "Raster_x", "Raster Pos x;x[mm]", 400, -10., 10.);
    r->fTabs.back().hists.push_back(r->fHists.size()-1);
    r->fTabs.back().hist_pads.push_back(4); // Show on pad 4.
-   r->fHists.back().scale_x = 0.004;
-   r->fHists.back().offset_x = -8.0;
+   r->fHists.back().scale_x = 0.0205;
+   r->fHists.back().offset_x = -43.8;
    r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 3,
                           "Raster_y", "Raster Pos y;y[mm]", 400, -10., 10.);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
    r->fTabs.back().hist_pads.push_back(1); // Show on pad 1.
-   r->fHists.back().scale_x = 0.004;
-   r->fHists.back().offset_x = -8.0;
+   r->fHists.back().scale_x = -0.0369;
+   r->fHists.back().offset_x = 79.6;
    r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 1,  RASTER_CRATE, RASTER_SLOT, 3,
                           "Raster_xy", "Raster Pos y vs x;x[mm];y[xx]", 400, -10., 10.,  400, -10., 10.);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
    r->fTabs.back().hist_pads.push_back(2); // Show on pad 2.
-   r->fHists.back().scale_x = 0.004;
-   r->fHists.back().offset_x = -8.0;
-   r->fHists.back().scale_y = 0.004;
-   r->fHists.back().offset_y = -8.0;
+   r->fHists.back().scale_x = 0.0205;
+   r->fHists.back().offset_x = -43.8;
+   r->fHists.back().scale_y = -0.0369;
+   r->fHists.back().offset_y = 79.6;
    r->fHists.back().draw_opt = "colz";
    r->fHists.back().hist->SetStats(false);
 
@@ -38,10 +38,10 @@ void Default_Setup_Raster_Tab(RasterHists *r){
    r->fHists.back().bank_tag2 = RASTER_CRATE;
    r->fHists.back().slot2 = RASTER_SLOT;
    r->fHists.back().adc_chan2 = 3;
-   r->fHists.back().scale_x = 0.004;
-   r->fHists.back().offset_x = -8.0;
-   r->fHists.back().scale_y = 0.004;
-   r->fHists.back().offset_y = -8.0;
+   r->fHists.back().scale_x = 0.0205;
+   r->fHists.back().offset_x = -43.8;
+   r->fHists.back().scale_y = -0.0369;
+   r->fHists.back().offset_y = 79.6;
    r->fHists.back().hist->SetLineColor(kRed);
 }
 
@@ -306,6 +306,7 @@ void Default_Setup_Trigger(RasterHists *r){
    r->fHists.back().hist->SetFillColor(kRed);
    r->fHists.back().special_fill = kHist_Special_Fill_Trigger;
    r->fHists.back().trigger_bits = 1<<31;
+   r->fHists.back().hist->SetStats(false);
 
    r->fTabs.back().hists.push_back(hist2);
    r->fTabs.back().hist_pads.push_back(2);
@@ -323,7 +324,7 @@ void Default_Initialize_Histograms(RasterHists *r){
 
    if(r->fEvio != nullptr) r->fEvio->UpdateBufferSize(10000);   // Set default Scope buffer.
    r->SetAutoClearRate(30.);
-   r->SetAutoClearRateOn();
+   r->SetAutoClearRateOff();
 
    // Note: PAD numbering starts at 1, with 0 being the Canvas (i.e. only one object on the screen)
    Default_Setup_Raster_Tab(r);

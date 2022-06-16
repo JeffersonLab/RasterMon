@@ -4,7 +4,6 @@
 
 #include "RasterEvioTool.h"
 #include <thread>
-#include <chrono>
 
 RasterEvioTool::RasterEvioTool(string infile) : EvioTool(infile){
    // Basic setup of the EvioTool Class
@@ -16,6 +15,8 @@ RasterEvioTool::RasterEvioTool(string infile) : EvioTool(infile){
    // EVIO Data structure unpack:
    fEvioHead = AddLeaf<unsigned int>("fEvioHead", 49152, 0, "Evio Event Header Info");
    fRasterHead =  new RasterMonEventInfo(this);  // Calls AddBank internally.
+   fETWaitMode = ET_SLEEP;
+   fEtReadChunkSize = 10;
 }
 
 int RasterEvioTool::AddChannel(unsigned short bank_tag, unsigned short slot, unsigned short channel){
@@ -89,10 +90,34 @@ int RasterEvioTool::Next() {
    fFileLock.unlock();
 
    int stat = EvioTool::Next();
-   if( stat == EvioTool_Status_EOF){
+   if( stat == EvioTool_Status_EOF && !IsReadingFromEt()){
       if( IsOpen() ) Close();
       return(Next());  // Recursively call next, which wil open the next file and read the next event.
    }
+   if(stat == ET_ERROR_EMPTY || stat == ET_ERROR_BUSY ){
+      //if(fDebug & EvioTool_Debug_L1) std::cout << "ET Error Empty or busy stat = " << stat << endl;
+      return(EvioTool_Status_No_Data);
+   }
+   if(stat == ET_ERROR_READ ){
+      std::cout << "ET Error READ. \n";
+      return(EvioTool_Status_No_Data);
+   }
+   if(stat != ET_OK) return(stat);
+
+   if(fDebug & EvioTool_Debug_L1) {
+      if( (long(GetEventNumber()) - long(fLastEventNumber)) > 1) {
+         std::cout << "Event skip: Run number: " << GetRunNumber() << " last: " << fLastEventNumber << "  this:" <<
+                   GetEventNumber() << " skip: " << (long(GetEventNumber()) - long(fLastEventNumber)) << std::endl;
+      }
+      if( (long(GetEventNumber()) - long(fLastEventNumber)) <= 0) {
+         std::cout << "OOSequence: Run number: " << GetRunNumber() << " last: " << fLastEventNumber << "  this:" <<
+                   GetEventNumber() << " skip: " << (long(GetEventNumber()) - long(fLastEventNumber)) << std::endl;
+      }
+   }
+
+   fLastRunNumber = GetRunNumber();      // These are only updated on actual good data.
+   fLastEventNumber = GetEventNumber();
+
    fNEventsProcessed++;
 
    // We loop through the EVIO Banks in fEvioBank. If they were in the data and had an FADC bank, then we will
@@ -106,15 +131,15 @@ int RasterEvioTool::Next() {
       for(int i_fadc=0; i_fadc< b.FADC->size(); ++i_fadc){
          for(auto &slot: b.slots){
             if( b.FADC->GetData(i_fadc).GetSlot() == slot.slot ) {
-               for (int k = 0; k < slot.channels.size(); ++k) {
-                  if (b.FADC->GetData(i_fadc).GetChan() == slot.channels[k]) {
+               for (int j = 0; j < slot.channels.size(); ++j) {
+                  if (b.FADC->GetData(i_fadc).GetChan() == slot.channels[j]) {
                      double sum = 0.;
                      int n_samples = b.FADC->GetData(i_fadc).GetSampleSize();
                      for (int k = 0; k < n_samples; ++k) {
                         sum += (double) b.FADC->GetData(i_fadc).GetSample(k);
                      }
                      sum = sum / (double) n_samples;
-                     int buf_index = slot.data_index[k];
+                     int buf_index = slot.data_index[j];
                      fChannelAverage[buf_index] = sum;
                      double time = FADC_TIME_CONVERSION*(double)b.FADC->GetData(i_fadc).GetRefTime(); // Convert to second
                      if(time>0) { // If time == 0, then this is not data so skip it.
