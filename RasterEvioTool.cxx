@@ -109,7 +109,7 @@ int RasterEvioTool::Next() {
          std::cout << "Event skip: Run number: " << GetRunNumber() << " last: " << fLastEventNumber << "  this:" <<
                    GetEventNumber() << " skip: " << (GetEventNumber() - fLastEventNumber) << std::endl;
       }
-      if( fLastEventNumber - GetEventNumber() > 0) {
+      if( (long(fLastEventNumber) - long(GetEventNumber())) > 0) {
          std::cout << "Event out of sequence: Run number: " << GetRunNumber() << " last: " << fLastEventNumber << "  this:" <<
                    GetEventNumber() << " skip: " << (long(GetEventNumber()) - long(fLastEventNumber)) << std::endl;
       }

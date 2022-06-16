@@ -103,6 +103,20 @@ public:
       fConfig = nullptr;
    }
 
+   void CancelConfigure(){
+      fConfig->OK();
+      fConfig = nullptr;
+   }
+
+   void CloseETConfigure(){
+
+   }
+
+   void CancelETConfigure(){
+      StopEvioStatusCheckTimer();
+      fEvio->Close();
+   }
+
    void SetUpdateRate(unsigned long rate=0){
       if(fConfig){
          rate = fConfig->fEnterUpdateRate->GetIntNumber();
@@ -180,8 +194,8 @@ public:
          StatusBarUpdate();
          DoDraw();
       }else if(timer == fEvioStatusCheckTimer){
-         // std::cout << "RasterMon: ET status check.\n";
-         if(fEvio->IsReadingFromEt() && !fEvio->IsETAlive()){
+         if(fDebug>1) std::cout << "RasterMon: ET status check.\n";
+         if(!fEvio->IsETAlive()){
             // Reset the ET system
             std::cout << "RasterMon: ET system dead. Trying to reconnect.\n";
             fEvio->Close();
