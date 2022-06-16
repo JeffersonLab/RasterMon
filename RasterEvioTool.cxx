@@ -105,12 +105,12 @@ int RasterEvioTool::Next() {
    if(stat != ET_OK) return(stat);
 
    if(fDebug & EvioTool_Debug_L1) {
-      if( GetEventNumber() - fLastEventNumber > 1) {
+      if( (long(GetEventNumber()) - long(fLastEventNumber)) > 1) {
          std::cout << "Event skip: Run number: " << GetRunNumber() << " last: " << fLastEventNumber << "  this:" <<
-                   GetEventNumber() << " skip: " << (GetEventNumber() - fLastEventNumber) << std::endl;
+                   GetEventNumber() << " skip: " << (long(GetEventNumber()) - long(fLastEventNumber)) << std::endl;
       }
-      if( (long(fLastEventNumber) - long(GetEventNumber())) > 0) {
-         std::cout << "Event out of sequence: Run number: " << GetRunNumber() << " last: " << fLastEventNumber << "  this:" <<
+      if( (long(GetEventNumber()) - long(fLastEventNumber)) <= 0) {
+         std::cout << "OOSequence: Run number: " << GetRunNumber() << " last: " << fLastEventNumber << "  this:" <<
                    GetEventNumber() << " skip: " << (long(GetEventNumber()) - long(fLastEventNumber)) << std::endl;
       }
    }
