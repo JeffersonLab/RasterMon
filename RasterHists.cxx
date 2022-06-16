@@ -403,10 +403,11 @@ void RasterHists::HistFillWorker(int thread_num){
             fEvioReadLock.unlock();
             continue;
          }
+        
          if(stat != EvioTool::EvioTool_Status_OK){
             fKeepWorking = false;
             fEvioReadLock.unlock();
-            std::cout << "Evio Error -- stat = " << stat << std::endl;
+            if(stat != EvioTool::EvioTool_Status_EOF) std::cout << "Evio Error -- stat = " << stat << std::endl;
             break;
          }
          if(fEvio->GetEventNumber() == 0){  // Event number = 0 does not have useful data for us.
