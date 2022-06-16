@@ -181,7 +181,7 @@ void RasterMonGui::StatusBarUpdate(){
    fStatusBar->SetText( text1, 3);
 
    time1 = time2;
-   if(fDebug>1){
+   if(fDebug==1){
       printf("Events processed:   %'10ld    delta: %5ld     Update #%5d\n", fEvio->fNEventsProcessed, delta_evt, n_updates);
       printf("Time elapsed total: %'10ld   delta t: %5ld\n", (long)total_t.count(), (long)delta_t.count());
       printf("Average rate:       %8.3f kHz  Current rate: %8.3f kHz\n",
