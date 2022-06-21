@@ -57,7 +57,7 @@ public:
   unsigned int GetTrigger1() const {
      // Return the main 32 bits of the trigger.
      if(RHead1 && RHead1->size() >= 7) {
-        return RHead1->GetData(6);
+        return RHead1->GetData(4);
      }else return 0;
   }
 

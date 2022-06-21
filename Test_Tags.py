@@ -1,7 +1,7 @@
 #!/bin/env python
 import ROOT
 ROOT.gSystem.Load("/data/CLAS12/RasterMon/cmake-build-debug/libRasterLib.dylib")
-ras = ROOT.RasterEvioTool("/data/CLAS12/data/evio/clas_015562.evio.00000")
+ras = ROOT.RasterEvioTool("/data/CLAS12/data/evio/clas_pin_016048.evio.00001")
 found_tags = []
 found_tags_with_event_number = []
 tag_counts = {}
