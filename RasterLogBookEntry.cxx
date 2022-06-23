@@ -14,30 +14,39 @@
 
 RasterLogBookEntry::RasterLogBookEntry(const TGWindow *parent_window, RasterHists *rhists): fRHists(rhists) {
    fParentWindow = parent_window;
-//   try {
-//      std::error_code ec;
-//      if (std::filesystem::exists(std::filesystem::path(CLI_LOGENTRY_PROGRAM))) {
-//         fLogEntryOK = true;
-//      }
-//      if(ec) {
-//         std::cout << "Error checking logentry.\n";
-//         std::cout << ec.message() << '\n';
-//         fLogEntryOK = false;
-//      }
-//   }catch(std::filesystem::filesystem_error const& ex) {
-//      std::cout
-//            << "what():  " << ex.what() << '\n'
-//            << "path1(): " << ex.path1() << '\n'
-//            << "path2(): " << ex.path2() << '\n'
-//            << "code().value():    " << ex.code().value() << '\n'
-//            << "code().message():  " << ex.code().message() << '\n'
-//            << "code().category(): " << ex.code().category().name() << '\n';
-//
-//      fLogEntryOK = false;
-//   }
-   // else{ fLogEntryOK = true;}
 
-   fLogEntryOK = true;
+   // Check if the logentry program can be found on disk.
+   // Not that exists throws an exception if (part of) the *path* exists but cannot be read, so catch that.
+   try {
+      if (std::filesystem::exists(std::filesystem::path(CLI_LOGENTRY_PROGRAM))) {
+         fLogEntryOK = true;
+      }else {
+         fLogEntryOK = false;
+      }
+   }catch(std::filesystem::filesystem_error const& ex) {
+      std::cout
+            << "what():  " << ex.what() << '\n'
+            << "path1(): " << ex.path1() << '\n'
+            << "path2(): " << ex.path2() << '\n'
+            << "code().value():    " << ex.code().value() << '\n'
+            << "code().message():  " << ex.code().message() << '\n'
+            << "code().category(): " << ex.code().category().name() << '\n';
+      
+      fLogEntryOK = false;
+   }
+
+   // Check if the logentry program is actually functioning.
+   try {
+      auto sys_stat = std::system("logentry --help");
+      if(sys_stat != 0) {
+         std::cout << "The logentry command does not function properly. Logentry will not be automatic.\n";
+         fLogEntryOK = false;
+      }
+   }catch(exception const& ex) {
+      std::cout << "Exception: " << ex.what() << "\n";
+      std::cout << "The logentry command does not function properly and throws an error. Logentry will not be automatic.\n";
+      fLogEntryOK = false;
+   }
 
    fMain = new TGTransientFrame(gClient->GetRoot(), fParentWindow, 400, 400);
    fMain->SetWindowName("Logbook Entry Dialog");
@@ -92,7 +101,7 @@ void RasterLogBookEntry::MakeEntry() {
 
    auto Frame1 = new TGHorizontalFrame(fMain, 800, 50, kFixedWidth | kFitHeight);
 
-   if(fLogEntryOK || true) {
+   if(fLogEntryOK) {
 
       auto OkButton = new TGTextButton(Frame1, "&Ok", 991);
       OkButton->Connect("Clicked()", "RasterLogBookEntry", this, "OK()");

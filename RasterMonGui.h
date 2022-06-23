@@ -194,7 +194,7 @@ public:
          StatusBarUpdate();
          DoDraw();
       }else if(timer == fEvioStatusCheckTimer){
-         if(fDebug>1) std::cout << "RasterMon: ET status check.\n";
+         if(fDebug>2) std::cout << "RasterMon: ET status check: Is alive: " << fEvio->IsETAlive() << "\n";
          if(!fEvio->IsETAlive()){
             // Reset the ET system
             std::cout << "RasterMon: ET system dead. Trying to reconnect.\n";
