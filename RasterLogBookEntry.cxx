@@ -18,7 +18,15 @@ RasterLogBookEntry::RasterLogBookEntry(const TGWindow *parent_window, RasterHist
       if (std::filesystem::exists(std::filesystem::path(CLI_LOGENTRY_PROGRAM))) {
          fLogEntryOK = true;
       }
-   }catch(...){
+   }catch(std::filesystem::filesystem_error const& ex) {
+      std::cout
+            << "what():  " << ex.what() << '\n'
+            << "path1(): " << ex.path1() << '\n'
+            << "path2(): " << ex.path2() << '\n'
+            << "code().value():    " << ex.code().value() << '\n'
+            << "code().message():  " << ex.code().message() << '\n'
+            << "code().category(): " << ex.code().category().name() << '\n';
+      
       fLogEntryOK = false;
    }
    // else{ fLogEntryOK = true;}
