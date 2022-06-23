@@ -14,28 +14,30 @@
 
 RasterLogBookEntry::RasterLogBookEntry(const TGWindow *parent_window, RasterHists *rhists): fRHists(rhists) {
    fParentWindow = parent_window;
-   try {
-      std::error_code ec;
-      if (std::filesystem::exists(std::filesystem::path(CLI_LOGENTRY_PROGRAM))) {
-         fLogEntryOK = true;
-      }
-      if(ec) {
-         std::cout << "Error checking logentry.\n";
-         std::cout << ec.message() << '\n';
-         fLogEntryOK = false;
-      }
-   }catch(std::filesystem::filesystem_error const& ex) {
-      std::cout
-            << "what():  " << ex.what() << '\n'
-            << "path1(): " << ex.path1() << '\n'
-            << "path2(): " << ex.path2() << '\n'
-            << "code().value():    " << ex.code().value() << '\n'
-            << "code().message():  " << ex.code().message() << '\n'
-            << "code().category(): " << ex.code().category().name() << '\n';
-
-      fLogEntryOK = false;
-   }
+//   try {
+//      std::error_code ec;
+//      if (std::filesystem::exists(std::filesystem::path(CLI_LOGENTRY_PROGRAM))) {
+//         fLogEntryOK = true;
+//      }
+//      if(ec) {
+//         std::cout << "Error checking logentry.\n";
+//         std::cout << ec.message() << '\n';
+//         fLogEntryOK = false;
+//      }
+//   }catch(std::filesystem::filesystem_error const& ex) {
+//      std::cout
+//            << "what():  " << ex.what() << '\n'
+//            << "path1(): " << ex.path1() << '\n'
+//            << "path2(): " << ex.path2() << '\n'
+//            << "code().value():    " << ex.code().value() << '\n'
+//            << "code().message():  " << ex.code().message() << '\n'
+//            << "code().category(): " << ex.code().category().name() << '\n';
+//
+//      fLogEntryOK = false;
+//   }
    // else{ fLogEntryOK = true;}
+
+   fLogEntryOK = true;
 
    fMain = new TGTransientFrame(gClient->GetRoot(), fParentWindow, 400, 400);
    fMain->SetWindowName("Logbook Entry Dialog");
