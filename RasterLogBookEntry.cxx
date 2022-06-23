@@ -14,8 +14,12 @@
 
 RasterLogBookEntry::RasterLogBookEntry(const TGWindow *parent_window, RasterHists *rhists): fRHists(rhists) {
    fParentWindow = parent_window;
-   if(std::filesystem::exists( std::filesystem::path(CLI_LOGENTRY_PROGRAM))) {
-      fLogEntryOK = true;
+   try {
+      if (std::filesystem::exists(std::filesystem::path(CLI_LOGENTRY_PROGRAM))) {
+         fLogEntryOK = true;
+      }
+   }catch(...){
+      fLogEntryOK = false;
    }
    // else{ fLogEntryOK = true;}
 
