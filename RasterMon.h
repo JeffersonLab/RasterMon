@@ -1,7 +1,8 @@
 #ifndef RasterMon_h
 #define RasterMon_h
 
-#define RASTERMON_VERSION "1.2"
+#define RASTERMON_VERSION "1.3"
+#undef ET_DEFAULT_STATION
 #define ET_DEFAULT_STATION "RasterMon"
 
 #ifndef RASTERMON_DEFAULT_JSON_CONFIG
@@ -37,5 +38,14 @@
 #include "RasterMonEventInfo.h"
 #include "RasterMonDefaultConfig.h"
 #include "cxxopts.hpp"
+
+#define RED "\033[91m"
+#define BLUE "\033[94m"
+#define CYAN  "\033[96m"
+#define GREEN  "\033[92m"
+#define YELLOW "\033[93m"
+#define RED "\033[91m"
+#define ENDC "\033[0m"
+
 
 #endif

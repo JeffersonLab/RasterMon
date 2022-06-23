@@ -14,10 +14,63 @@
 
 RasterLogBookEntry::RasterLogBookEntry(const TGWindow *parent_window, RasterHists *rhists): fRHists(rhists) {
    fParentWindow = parent_window;
-   if(std::filesystem::exists( std::filesystem::path(CLI_LOGENTRY_PROGRAM))) {
-      fLogEntryOK = true;
+
+   // Check if the logentry program can be found on disk.
+   // Not that exists throws an exception if (part of) the *path* exists but cannot be read, so catch that.
+   try {
+      if (std::filesystem::exists(std::filesystem::path(CLI_LOGENTRY_PROGRAM))) {
+         fLogEntryOK = true;
+      }else {
+         fLogEntryOK = false;
+      }
+   }catch(std::filesystem::filesystem_error const& ex) {
+      std::cout << "\033[0mError - Exception looking for " CLI_LOGENTRY_PROGRAM ":\n"
+            << "what():  " << ex.what() << '\n'
+            << "path1(): " << ex.path1() << '\n'
+            << "path2(): " << ex.path2() << '\n'
+            << "code().value():    " << ex.code().value() << '\n'
+            << "code().message():  " << ex.code().message() << '\n'
+            << "code().category(): " << ex.code().category().name() << "\033[0m\n";
+      
+      fLogEntryOK = false;
    }
-   // else{ fLogEntryOK = true;}
+
+   // Check if the logentry program is actually functioning.
+   try {
+      auto sys_stat = std::system("logentry --help");
+      if(sys_stat != 0) {
+         std::cout << RED "The logentry command does not function properly. Logentry will not be automatic.\n" ENDC;
+         fLogEntryOK = false;
+      }
+   }catch(exception const& ex) {
+      std::cout << RED "Exception: " << ex.what() << "\n";
+      std::cout << "The logentry command does not function properly and throws an error. Logentry will not be automatic.\n" ENDC;
+      fLogEntryOK = false;
+   }
+
+   // Check the directory for storing the image files.
+   try {
+      if (!std::filesystem::exists(fHistogramPath)) {
+         // The path for storing histograms does not exist.
+         string home_dir{std::getenv("HOME")};
+         auto home_path = std::filesystem::path(home_dir);
+         fHistogramPath = home_path / "rastermon";
+         if (!std::filesystem::exists(fHistogramPath)) {
+            filesystem::create_directory(fHistogramPath);
+            std::cout << GREEN "Created a directory: " << fHistogramPath << " for image output with Log Entry button.\n" ENDC;
+         }
+
+      }
+   }catch(std::filesystem::filesystem_error const& ex) {
+      std::cout << RED "Error - Exception looking for " << fHistogramPath << ":\n"
+            << "what():  " << ex.what() << '\n'
+            << "path1(): " << ex.path1() << '\n'
+            << "path2(): " << ex.path2() << '\n'
+            << "code().value():    " << ex.code().value() << '\n'
+            << "code().message():  " << ex.code().message() << '\n'
+            << "code().category(): " << ex.code().category().name() << '\n';
+      std::cout << "The error prevents histogram images from being created. \n" ENDC;
+   }
 
    fMain = new TGTransientFrame(gClient->GetRoot(), fParentWindow, 400, 400);
    fMain->SetWindowName("Logbook Entry Dialog");
@@ -55,7 +108,7 @@ void RasterLogBookEntry::MakeEntry() {
       //fEntryThread = std::thread(&RasterLogBookEntry::SaveCanvassesToFile, this);
       SaveCanvassesToFile();
    }else{
-      std::cout << "Ignore click, already entering a log message.\n";
+      std::cout << YELLOW "Ignore click, already entering a log message.\n" ENDC;
       return;  // Ignore this click.
    }
 
@@ -72,7 +125,7 @@ void RasterLogBookEntry::MakeEntry() {
 
    auto Frame1 = new TGHorizontalFrame(fMain, 800, 50, kFixedWidth | kFitHeight);
 
-   if(fLogEntryOK || true) {
+   if(fLogEntryOK) {
 
       auto OkButton = new TGTextButton(Frame1, "&Ok", 991);
       OkButton->Connect("Clicked()", "RasterLogBookEntry", this, "OK()");
@@ -299,8 +352,7 @@ void RasterLogBookEntry::SaveCanvassesToFile(){
    time_t t_now = time(NULL);
    strftime(buf, 50, "rastermon_%Y_%m_%d_%H_%M_%S_", localtime(&t_now));
    string filename(buf);
-   string directory(DEFAULT_HISTOGRAM_PATH"/");
-   fAttachments = fRHists->SaveCanvasesToImageFiles(directory+filename,"png", &canvs);
+   fAttachments = fRHists->SaveCanvasesToImageFiles(fHistogramPath / filename,"png", &canvs);
    //fRHists->SaveCanvasesToPDF(directory+filename, &canvs);
    canvs.clear();
    fAlreadyWritingImages = false;

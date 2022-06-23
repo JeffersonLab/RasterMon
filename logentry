@@ -2,7 +2,6 @@
 # An executable shell script wrapper around a Java Command Line Utility
 # for making log entries 
 
-
 #Edit the path below to indicate the location where the
 #LogentryCLI.jar file resides.
 if [ -r /cs/certified/apps/logentrycli/PRO/logentrycli.jar ] ; then
@@ -11,6 +10,7 @@ elif [ -r /apps/acctools/certified/apps/logentrycli/PRO/logentrycli.jar ] ; then
     JAR=/apps/acctools/certified/apps/logentrycli/PRO/logentrycli.jar
 else
     echo "logentry cli is not properly installed."
+    exit 1
 fi
 
 # Test if user has java in path

@@ -38,6 +38,14 @@
 #define CLI_LOGENTRY_PROGRAM "/home/clasrun/RasterMon/logentry"
 #endif
 
+#define RED "\033[91m"
+#define BLUE "\033[94m"
+#define CYAN  "\033[96m"
+#define GREEN  "\033[92m"
+#define YELLOW "\033[93m"
+#define RED "\033[91m"
+#define ENDC "\033[0m"
+
 class RasterLogBookEntry {
 
    RQ_OBJECT("RasterLogBookEntry")
@@ -66,6 +74,7 @@ public:
 public:
 
    bool fLogEntryOK = false;
+   std::filesystem::path fHistogramPath{DEFAULT_HISTOGRAM_PATH};
    const TGWindow *fParentWindow;
    TGTransientFrame *fMain;
    RasterHists *fRHists;  // Pointer to the histograms and graphs.
