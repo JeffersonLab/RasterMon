@@ -352,7 +352,7 @@ void RasterLogBookEntry::SaveCanvassesToFile(){
    time_t t_now = time(NULL);
    strftime(buf, 50, "rastermon_%Y_%m_%d_%H_%M_%S_", localtime(&t_now));
    string filename(buf);
-   fAttachments = fRHists->SaveCanvasesToImageFiles(fHistogramPath / filename,"png", &canvs);
+   fAttachments = fRHists->SaveCanvasesToImageFiles(fHistogramPath + "/" + filename,"png", &canvs);
    //fRHists->SaveCanvasesToPDF(directory+filename, &canvs);
    canvs.clear();
    fAlreadyWritingImages = false;
