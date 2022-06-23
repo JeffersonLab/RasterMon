@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
 
    // This is a nicer way to do options in C++. See cxxopts.hpp file.
    std::string help_string =
-         " ===============  RasterMon ===============\n"
+         GREEN " ===============  RasterMon ===============\n" ENDC
          " This is a GUI code that will monitor the raster for CLAS12, which is used by Run Group C. \n"
          " You should be able to just run the code and the defaults will work with the CLAS12 ET ring.\n"
          " You can also supply a file name, or a list of filenames, on the command line, or through the GUI \n"
@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
 #ifdef HAS_LOGBOOK
    help_string += " Code submits directly to the logbook using the libelog c++ api.\n";
 #else
-   help_string += " Code submits to the logbook using the logentry cli program. \n\n";
+   help_string += "Code submits to the logbook using the logentry cli program. \n\n";
 #endif
 
    cxxopts::Options options(argv[0], help_string);
@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
             std::cout << "Parsing config file with line: " << process_line.str() << std::endl;
             gROOT->ProcessLine(process_line.str().c_str());
          }else{
-            std::cout << "\033[93m Configuration file " << config_file << " not found. Please check the name and path. Exit. \033[0m \n";
+            std::cout << YELLOW "Configuration file " << config_file << " not found. Please check the name and path. Exit. \n" ENDC;
             return 1;
          }
       }else {
@@ -142,34 +142,57 @@ int main(int argc, char **argv) {
       RHists->SetupData();
 
       if( args.count("json")) {
-         std::cout << "\033[92m Initializing config values from JSON file: " << json_config_file << "\033[0m \n";
+         std::cout << GREEN "Initializing config values from JSON file: " << json_config_file << "\n" ENDC;
       }
 
       auto path_json_config_file = std::filesystem::path(json_config_file);
-      if(!std::filesystem::exists(path_json_config_file)){     // File not found.
-         string home_dir{std::getenv("HOME")};
-         auto home_path = std::filesystem::path(home_dir);
-         auto filename = path_json_config_file.filename();
-         auto check_path = home_path / filename;
-         if(std::filesystem::exists(check_path)){
-            json_config_file = check_path.string();     // The file was found in the home dir.
-            std::cout << "\033[94m Initializing config values from JSON file: " << json_config_file << "\033[0m \n";
+      try {
+         if (!std::filesystem::exists(path_json_config_file)) {     // File not found.
+            string home_dir{std::getenv("HOME")};
+            auto home_path = std::filesystem::path(home_dir);
+            auto filename = path_json_config_file.filename();
+            auto check_path = home_path / filename;
+            if (std::filesystem::exists(check_path)) {
+               json_config_file = check_path.string();     // The file was found in the home dir.
+               std::cout << BLUE "Initializing config values from JSON file: " << json_config_file << "\n" ENDC;
+            }
          }
+      }catch(std::filesystem::filesystem_error const& ex) {
+            std::cout << RED "Filesystem exception \n"
+                  << "what():  " << ex.what() << '\n'
+                  << "path1(): " << ex.path1() << '\n'
+                  << "path2(): " << ex.path2() << '\n'
+                  << "code().value():    " << ex.code().value() << '\n'
+                  << "code().message():  " << ex.code().message() << '\n'
+                  << "code().category(): " << ex.code().category().name() << "\n" ENDC;
       }
 
-
-      if(std::filesystem::exists( std::filesystem::path(json_config_file))){
-         if(debug) std::cout << "\033[92m Initializing config values from JSON file: " << json_config_file << "\033[0m \n";
-         info->fJSONFile = json_config_file;
-         info->LoadFromJSON();
-         info->PutValues();
-      }else {
-         if (args.count("json")) {
-            std::cout << "\033[93m Specified JSON configuration file not found. Exit. \033[0m \n";
-            return 1;
+      try {
+         if (std::filesystem::exists(std::filesystem::path(json_config_file))) {
+            if (debug)
+               std::cout << GREEN "Initializing config values from JSON file: " << json_config_file << "\n" ENDC;
+            info->fJSONFile = json_config_file;
+            info->LoadFromJSON();
+            info->PutValues();
          } else {
-            std::cout << "\033[94m Default JSON configuration file not found. Continue with hard coded values.\033[0m \n";
+            if (args.count("json")) {
+               std::cout << RED "Specified JSON configuration file not found. Exit. \n" ENDC;
+               return 1;
+            } else {
+               std::cout
+                     << BLUE "Default JSON configuration file not found. Continue with hard coded values.\n" ENDC;
+            }
          }
+      }catch(std::filesystem::filesystem_error const& ex) {
+         std::cout << RED << "Filesystem Exception\n"
+               << "what():  " << ex.what() << '\n'
+               << "path1(): " << ex.path1() << '\n'
+               << "path2(): " << ex.path2() << '\n'
+               << "code().value():    " << ex.code().value() << '\n'
+               << "code().message():  " << ex.code().message() << '\n'
+               << "code().category(): " << ex.code().category().name() << '\n';
+         std::cout << "The error prevented a JSON configuration to be loaded. \n" ENDC;
+         return 1;
       }
 
       // Add the commandline files to the RasterEvioTool
@@ -195,13 +218,13 @@ int main(int argc, char **argv) {
          try {
             int stat = evio->OpenEt(station, etname, host, port);
             if (stat != 0) {
-               cout << "ERROR -- could not attach to ET system. abort. \n";
+               cout << RED "ERROR -- could not attach to ET system. abort. \n" ENDC;
             }else{
                rastermon->StartEvioStatusCheckTimer();
             }
          }catch(exception e){
-            std::cout << "Error connecting to ET caused exception.\n";
-            std::cout << e.what() << std::endl;
+            std::cout << RED "Error connecting to ET caused exception.\n";
+            std::cout << e.what() << "\n" ENDC;
          }
       }
 
