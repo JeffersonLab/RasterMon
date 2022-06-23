@@ -49,27 +49,43 @@ RasterLogBookEntry::RasterLogBookEntry(const TGWindow *parent_window, RasterHist
    }
 
    // Check the directory for storing the image files.
+   bool image_path_ok = false;
    try {
-      if (!std::filesystem::exists(fHistogramPath)) {
+      if (std::filesystem::exists(fHistogramPath)) {
+         image_path_ok = true;
+      }
+   }catch(std::filesystem::filesystem_error const& ex) {
+      std::cout << RED "Error - Exception looking for " << fHistogramPath << ":\n"
+                << "what():  " << ex.what() << '\n'
+                << "path1(): " << ex.path1() << '\n'
+                << "path2(): " << ex.path2() << '\n'
+                << "code().value():    " << ex.code().value() << '\n'
+                << "code().message():  " << ex.code().message() << '\n'
+                << "code().category(): " << ex.code().category().name() << '\n';
+      std::cout << "The error prevents histogram images from being created. \n" ENDC;
+   }
+
+   if(!image_path_ok) {
+      try {
          // The path for storing histograms does not exist.
          string home_dir{std::getenv("HOME")};
          auto home_path = std::filesystem::path(home_dir);
          fHistogramPath = home_path / "rastermon";
          if (!std::filesystem::exists(fHistogramPath)) {
             filesystem::create_directory(fHistogramPath);
-            std::cout << GREEN "Created a directory: " << fHistogramPath << " for image output with Log Entry button.\n" ENDC;
+            std::cout << GREEN "Created a directory: " << fHistogramPath
+                      << " for image output with Log Entry button.\n" ENDC;
          }
-
+      }catch(std::filesystem::filesystem_error const& ex) {
+         std::cout << RED "Error - Exception constructing image path:\n"
+                   << "what():  " << ex.what() << '\n'
+                   << "path1(): " << ex.path1() << '\n'
+                   << "path2(): " << ex.path2() << '\n'
+                   << "code().value():    " << ex.code().value() << '\n'
+                   << "code().message():  " << ex.code().message() << '\n'
+                   << "code().category(): " << ex.code().category().name() << '\n';
+         std::cout << "The error prevents histogram images from being created. \n" ENDC;
       }
-   }catch(std::filesystem::filesystem_error const& ex) {
-      std::cout << RED "Error - Exception looking for " << fHistogramPath << ":\n"
-            << "what():  " << ex.what() << '\n'
-            << "path1(): " << ex.path1() << '\n'
-            << "path2(): " << ex.path2() << '\n'
-            << "code().value():    " << ex.code().value() << '\n'
-            << "code().message():  " << ex.code().message() << '\n'
-            << "code().category(): " << ex.code().category().name() << '\n';
-      std::cout << "The error prevents histogram images from being created. \n" ENDC;
    }
 
    fMain = new TGTransientFrame(gClient->GetRoot(), fParentWindow, 400, 400);
