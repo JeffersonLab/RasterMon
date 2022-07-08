@@ -37,7 +37,7 @@ RasterLogBookEntry::RasterLogBookEntry(const TGWindow *parent_window, RasterHist
 
    // Check if the logentry program is actually functioning.
    try {
-      std::string cmd = CLI_LOGENTRY_PROGRAM  " --help ";
+      std::string cmd = CLI_LOGENTRY_PROGRAM  " --help > /dev/null";
       auto sys_stat = std::system(cmd.c_str());
       if(sys_stat != 0) {
          std::cout << RED "The logentry command does not function properly. Logentry will not be automatic.\n" ENDC;
