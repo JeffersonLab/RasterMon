@@ -42,7 +42,9 @@ struct Histogram_t {  // Object to hold the information for each histogram chann
    unsigned int trigger_bits = 0xFFFFFFFF;   // Test for trigger bits. If bit is one then fill histogram.
    std::string draw_opt;  // Drawing option.
    std::string legend;      // Legend entry. -- Usually blank, so no legend.
-   TH1 *hist = nullptr;  // Histogram. -- Note: Must be either a unique_ptr, OR we need to be really careful with copy and move constructors.
+   TH1 *hist = nullptr;  // Histogram. -- Note: Must be really careful with copy and move constructors so we have a delete.
+   TH1D *x_ref_hist = nullptr; // A reference histogram pointer for x. This is used for radius calculation.
+   TH1D *y_ref_hist = nullptr; // A reference histogram pointer for y. This is used for radius calculation.
    Histogram_t(unsigned int bank_tag, unsigned char slot, unsigned char adc_chan,
                const std::string &name, const std::string &title, int nx, double x_min, double x_max) :
          bank_tag(bank_tag), slot(slot), adc_chan(adc_chan) {
@@ -76,6 +78,8 @@ struct Histogram_t {  // Object to hold the information for each histogram chann
    {
       if(strncmp(that.hist->ClassName(),"TH1D",4) == 0) hist = new TH1D( *(TH1D *)that.hist);
       if(strncmp(that.hist->ClassName(),"TH2D",4) == 0) hist = new TH2D( *(TH2D *)that.hist);
+      x_ref_hist = that.x_ref_hist;
+      y_ref_hist = that.y_ref_hist;
    }
    Histogram_t(Histogram_t&& that)  noexcept {    // move constructor -- used for emplace_back. Needs to be explicit because of the pointer.
       bank_tag = that.bank_tag;
@@ -97,6 +101,9 @@ struct Histogram_t {  // Object to hold the information for each histogram chann
       draw_opt = std::move(that.draw_opt);
       legend= std::move(that.legend);
       hist = std::exchange(that.hist, nullptr);
+      x_ref_hist = that.x_ref_hist;
+      y_ref_hist = that.y_ref_hist;
+
    }
    Histogram_t& operator=(Histogram_t&& that){
       bank_tag = that.bank_tag;
@@ -118,6 +125,9 @@ struct Histogram_t {  // Object to hold the information for each histogram chann
       draw_opt = std::move(that.draw_opt);
       legend= std::move(that.legend);
       hist = std::exchange(that.hist, nullptr);
+      x_ref_hist = that.x_ref_hist;
+      y_ref_hist = that.y_ref_hist;
+
       return *this;
    }
    Histogram_t& operator=(const Histogram_t& that){  // copy assignment needs to make a proper copy of the histogram.
@@ -144,6 +154,9 @@ struct Histogram_t {  // Object to hold the information for each histogram chann
       legend= that.legend;
       if(strncmp(that.hist->ClassName(),"TH1D",4) == 0) hist = new TH1D( *(TH1D *) that.hist);
       if(strncmp(that.hist->ClassName(),"TH2D",4) == 0) hist = new TH2D( *(TH2D *) that.hist);
+      x_ref_hist = that.x_ref_hist;
+      y_ref_hist = that.y_ref_hist;
+
       return *this;
    };
    //   ~Histogram_t();                              // destructor

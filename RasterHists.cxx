@@ -381,6 +381,14 @@ void RasterHists::HistFillWorker(int thread_num){
    std::vector<double> local_data;
    local_data.reserve(fHists.size() + fGraphs.size());   // Probably more than needed, but okay.
 
+   static double x_sum=0;   // To compute an average
+   static double y_sum=0;
+   static unsigned long sum_count;
+   static double x_max;
+   static double x_min;
+   static double y_max;
+   static double y_min;
+
    if(fDebug>0) std::cout << "RasterHists::HistFillWorker - Start thread "<< thread_num << "\n";
 
    while(fKeepWorking){
@@ -460,10 +468,21 @@ void RasterHists::HistFillWorker(int thread_num){
                else
                   h.GetHist()->Fill(-1);
             }else if(h.special_fill == kHist_Special_Fill_Radius){
-               // Compute the radius from x and y.
+               // Compute the radius from x and y, relative to the pattern center.
+               // Pattern center can come from <x> and <y> or from (x_max - x_min)/2 and (y_max - y_min)/2
+
                double x = fEvio->GetData(h.data_index )*h.scale_x + h.offset_x;
                double y = fEvio->GetData(h.data_index2)*h.scale_y + h.offset_y;
-               double r = sqrt(x*x + y*y);
+               double x_mean = 0;
+               double y_mean = 0;
+               if( h.x_ref_hist != nullptr ){
+                  x_mean = h.x_ref_hist->GetMean();
+               }
+               if( h.y_ref_hist != nullptr ){
+                  y_mean = h.y_ref_hist->GetMean();
+               }
+               // if( h.x_ref_hist != nullptr ) printf("<x> = %8.5f  <y> = %8.5f \n",x_mean, y_mean);
+               double r = sqrt((x-x_mean)*(x-x_mean) + (y-y_mean)*(y-y_mean));
                h.GetHist()->Fill(r);
             }else if(h.special_fill == kHist_Special_Fill_Trigger){
                unsigned int trig_bits = fEvio->GetTrigger();
