@@ -33,7 +33,8 @@ void RMConfig(long r_h_pointer_long) {  // Function name *must* be the same as t
 
    // Note: PAD numbering starts at 1, with 0 being the Canvas (i.e. only one object on the screen)
    Default_Setup_Raster_Tab(r);
-   Default_Setup_RasterBit32_Tab(r);
+   Default_Setup_Raster_Tab(r, "RasterElectron", 0x00000001);
+   Default_Setup_Raster_Tab(r, "RasterPulserX", 1<<31);
    Default_Setup_Raw_Raster_Tab(r);
    Default_Setup_Raw_Raster_Tab2(r);
    Default_Setup_Raw_Raster_Tab3(r);

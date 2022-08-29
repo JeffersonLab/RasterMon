@@ -9,36 +9,39 @@ double gX_Offset = -0.011;
 double gY_Scale = -0.011;
 double gY_Offset = 23.9;
 
-void Default_Setup_Raster_Tab(RasterHists *r){
-   r->fTabs.emplace_back("Raster", 2, 2);
+void Default_Setup_Raster_Tab(RasterHists *r, string Name, unsigned int bits){
+   r->fTabs.emplace_back(Name, 2, 2);
 
 
    r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 1,
-                          "Raster_x", "Raster Pos x;x[mm]", 400, -10., 10.);
+                          Name+"_x", Name+" Pos x;x[mm]", 400, -10., 10.);
    r->fTabs.back().hists.push_back(r->fHists.size()-1);
    r->fTabs.back().hist_pads.push_back(4); // Show on pad 4.
    r->fHists.back().scale_x = gX_Scale;
    r->fHists.back().offset_x = gX_Offset;
+   r->fHists.back().trigger_bits = bits;
    TH1D *x_ref = r->fHists.back().GetHist();
    r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 3,
-                          "Raster_y", "Raster Pos y;y[mm]", 400, -10., 10.);
+                          Name+"_y", Name+" Pos y;y[mm]", 400, -10., 10.);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
    r->fTabs.back().hist_pads.push_back(1); // Show on pad 1.
    r->fHists.back().scale_x = gY_Scale;    // Note this is the Y scale and offset.
    r->fHists.back().offset_x = gY_Offset;
+   r->fHists.back().trigger_bits = bits;
    TH1D *y_ref = r->fHists.back().GetHist();
    r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 1,  RASTER_CRATE, RASTER_SLOT, 3,
-                          "Raster_xy", "Raster Pos y vs x;x[mm];y[xx]", 400, -10., 10.,  400, -10., 10.);
+                          Name+"_xy", Name+" Pos y vs x;x[mm];y[xx]", 400, -10., 10.,  400, -10., 10.);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
    r->fTabs.back().hist_pads.push_back(2); // Show on pad 2.
    r->fHists.back().scale_x = gX_Scale;
    r->fHists.back().offset_x = gY_Offset;
    r->fHists.back().scale_y = gY_Scale;
    r->fHists.back().offset_y = gY_Offset;
+   r->fHists.back().trigger_bits = bits;
    r->fHists.back().draw_opt = "colz";
    r->fHists.back().hist->SetStats(false);
 
-   r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 1, "Raster_r", "Raster Radius;r[mm]", 400, 0., 15.);
+   r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 1, Name+"_r", Name+" Radius;r[mm]", 400, 0., 15.);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
    r->fTabs.back().hist_pads.push_back(3); // Show on pad 3.
    // Special case - 2 inputs but a 1-D histogram
@@ -53,55 +56,7 @@ void Default_Setup_Raster_Tab(RasterHists *r){
    r->fHists.back().x_ref_hist = x_ref;
    r->fHists.back().y_ref_hist = y_ref;
    r->fHists.back().hist->SetLineColor(kRed);
-}
-
-void Default_Setup_RasterBit32_Tab(RasterHists *r){
-   r->fTabs.emplace_back("RasterPulser", 2, 2);
-
-   r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 1,
-                          "RasterPulser_x", "Raster Pos x, Pulser only;x[mm]", 400, -10., 10.);
-   r->fTabs.back().hists.push_back(r->fHists.size()-1);
-   r->fTabs.back().hist_pads.push_back(4); // Show on pad 4.
-   r->fHists.back().scale_x = gX_Scale;
-   r->fHists.back().offset_x = gX_Offset;
-   TH1D *x_ref = r->fHists.back().GetHist();
-   r->fHists.back().trigger_bits = 1<<31;
-   r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 3,
-                          "RasterPulser_y", "Raster Pos y, Pulser only;y[mm]", 400, -10., 10.);
-   r->fTabs.back().hists.push_back( r->fHists.size()-1);
-   r->fTabs.back().hist_pads.push_back(1); // Show on pad 1.
-   r->fHists.back().scale_x = gY_Scale;    // Note this is the Y scale and offset.
-   r->fHists.back().offset_x = gY_Offset;
-   TH1D *y_ref = r->fHists.back().GetHist();
-   r->fHists.back().trigger_bits = 1<<31;
-   r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 1,  RASTER_CRATE, RASTER_SLOT, 3,
-                          "RasterPulser_xy", "Raster Pos y vs x, Pulser only;x[mm];y[xx]", 400, -10., 10.,  400, -10., 10.);
-   r->fTabs.back().hists.push_back( r->fHists.size()-1);
-   r->fTabs.back().hist_pads.push_back(2); // Show on pad 2.
-   r->fHists.back().scale_x = gX_Scale;
-   r->fHists.back().offset_x = gY_Offset;
-   r->fHists.back().scale_y = gY_Scale;
-   r->fHists.back().offset_y = gY_Offset;
-   r->fHists.back().draw_opt = "colz";
-   r->fHists.back().trigger_bits = 1<<31;
-   r->fHists.back().hist->SetStats(false);
-
-   r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 1, "RasterPulser_r", "Raster Radius, Pulser only;r[mm]", 400, 0., 15.);
-   r->fTabs.back().hists.push_back( r->fHists.size()-1);
-   r->fTabs.back().hist_pads.push_back(3); // Show on pad 3.
-   // Special case - 2 inputs but a 1-D histogram
-   r->fHists.back().special_fill = kHist_Special_Fill_Radius;
-   r->fHists.back().bank_tag2 = RASTER_CRATE;
-   r->fHists.back().slot2 = RASTER_SLOT;
-   r->fHists.back().adc_chan2 = 3;
-   r->fHists.back().scale_x = gX_Scale;
-   r->fHists.back().offset_x = gY_Offset;
-   r->fHists.back().scale_y = gY_Scale;
-   r->fHists.back().offset_y = gY_Offset;
-   r->fHists.back().hist->SetLineColor(kRed);
-   r->fHists.back().x_ref_hist = x_ref;
-   r->fHists.back().y_ref_hist = y_ref;
-   r->fHists.back().trigger_bits = 1<<31;
+   r->fHists.back().trigger_bits = bits;
 }
 
 void Default_Setup_Raw_Raster_Tab(RasterHists *r){
@@ -342,7 +297,8 @@ void Default_Initialize_Histograms(RasterHists *r){
 
    // Note: PAD numbering starts at 1, with 0 being the Canvas (i.e. only one object on the screen)
    Default_Setup_Raster_Tab(r);
-   Default_Setup_RasterBit32_Tab(r);
+   Default_Setup_Raster_Tab(r, "RasterElectron", 0x00000001);
+   Default_Setup_Raster_Tab(r, "RasterPulserX", 1<<31);
    Default_Setup_Raw_Raster_Tab(r);
    Default_Setup_1_Channel_Scope(r);
    Default_Setup_Helicity(r);
