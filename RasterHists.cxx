@@ -448,7 +448,7 @@ void RasterHists::HistFillWorker(int thread_num){
          // The part below would benefit from multiple threads *if* the Fill() ends up being too slow.
          //
          for(auto &h: fHists) {
-            if( trigger_bits && !(h.trigger_bits & trigger_bits) ) continue;    // Skip if bits do not agree with trigger bits set.
+            if( !(h.trigger_bits & trigger_bits) ) continue;    // Skip if bits do not agree with trigger bits set.
             if (h.special_fill == kHist_Special_Fill_Normal) {
                int indx = h.data_index;
                double x = fEvio->GetData(h.data_index)*h.scale_x + h.offset_x;
