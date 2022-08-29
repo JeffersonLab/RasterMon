@@ -14,7 +14,7 @@ void Default_Setup_Raster_Tab(RasterHists *r, string Name, unsigned int bits){
 
 
    r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 1,
-                          Name+"_x", Name+" Pos x;x[mm]", 400, -10., 10.);
+                          Name+"_x", Name+" Pos x;x[mm]", 400, -12., 12.);
    r->fTabs.back().hists.push_back(r->fHists.size()-1);
    r->fTabs.back().hist_pads.push_back(4); // Show on pad 4.
    r->fHists.back().scale_x = gX_Scale;
@@ -22,7 +22,7 @@ void Default_Setup_Raster_Tab(RasterHists *r, string Name, unsigned int bits){
    r->fHists.back().trigger_bits = bits;
    TH1D *x_ref = r->fHists.back().GetHist();
    r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 3,
-                          Name+"_y", Name+" Pos y;y[mm]", 400, -10., 10.);
+                          Name+"_y", Name+" Pos y;y[mm]", 400, -12., 12.);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
    r->fTabs.back().hist_pads.push_back(1); // Show on pad 1.
    r->fHists.back().scale_x = gY_Scale;    // Note this is the Y scale and offset.
@@ -30,7 +30,7 @@ void Default_Setup_Raster_Tab(RasterHists *r, string Name, unsigned int bits){
    r->fHists.back().trigger_bits = bits;
    TH1D *y_ref = r->fHists.back().GetHist();
    r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 1,  RASTER_CRATE, RASTER_SLOT, 3,
-                          Name+"_xy", Name+" Pos y vs x;x[mm];y[xx]", 400, -10., 10.,  400, -10., 10.);
+                          Name+"_xy", Name+" Pos y vs x;x[mm];y[xx]", 400, -12., 12.,  400, -12., 12.);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
    r->fTabs.back().hist_pads.push_back(2); // Show on pad 2.
    r->fHists.back().scale_x = gX_Scale;
