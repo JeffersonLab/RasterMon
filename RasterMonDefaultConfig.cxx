@@ -298,8 +298,7 @@ void Default_Initialize_Histograms(RasterHists *r){
    // Note: PAD numbering starts at 1, with 0 being the Canvas (i.e. only one object on the screen)
    Default_Setup_Raster_Tab(r);
    Default_Setup_Raster_Tab(r, "RasterElectron", 1);
-   Default_Setup_Raster_Tab(r, "RasterPulser", 1<<31);
-   Default_Setup_Raster_Tab(r, "RasterFCup", 0x0000108000000000);
+   Default_Setup_Raster_Tab(r, "RasterRandom", 0x0000108080000000);
    Default_Setup_Raw_Raster_Tab(r);
    Default_Setup_1_Channel_Scope(r);
    Default_Setup_Helicity(r);
