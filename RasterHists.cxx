@@ -426,8 +426,8 @@ void RasterHists::HistFillWorker(int thread_num){
             continue;
          }
 
-         unsigned int trigger_bits = fEvio->GetTrigger();
-         unsigned int trigger_bits2 = fEvio->GetTrigger2(); // is 0 or 0x00000080 or 0x00001000
+         unsigned long trigger_bits = fEvio->GetTrigger() | ((long)fEvio->GetTrigger2() << 32);
+         // Trigger2 is 0 or 0x00000080 or 0x00001000
 
          fEvio->fMostRecentEventNumber = fEvio->GetEventNumber(); // For GUI to always show a useful number.
 
@@ -450,8 +450,8 @@ void RasterHists::HistFillWorker(int thread_num){
          // The part below would benefit from multiple threads *if* the Fill() ends up being too slow.
          //
          for(auto &h: fHists) {
-            if( !(h.trigger_bits & trigger_bits)  &&  // Skip if bits do not agree with trigger bits set.
-                 !( (h.trigger_bits & 1<<31 ) && trigger_bits2 )) continue; // Add the FCUP trigger to pulser trigger.
+            if( !(h.trigger_bits & trigger_bits) ) continue;  // Skip if bits do not agree with trigger bits set.
+
             if (h.special_fill == kHist_Special_Fill_Normal) {
                int indx = h.data_index;
                double x = fEvio->GetData(h.data_index)*h.scale_x + h.offset_x;
@@ -488,9 +488,9 @@ void RasterHists::HistFillWorker(int thread_num){
                double r = sqrt((x-x_mean)*(x-x_mean) + (y-y_mean)*(y-y_mean));
                h.GetHist()->Fill(r);
             }else if(h.special_fill == kHist_Special_Fill_Trigger){
-               unsigned int trig_bits = fEvio->GetTrigger();
-               for(int i=0; i<32; ++i){
-                  if( trig_bits & (1<<i)) h.GetHist()->Fill(i);
+               // unsigned long trig_bits = fEvio->GetTrigger() | ((long)fEvio->GetTrigger2() << 32);
+               for(int i=0; i<64; ++i){
+                  if( trigger_bits & (1L << i)) h.GetHist()->Fill(i);
                }
             }
          }

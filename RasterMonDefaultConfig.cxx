@@ -9,7 +9,7 @@ double gX_Offset = -0.011;
 double gY_Scale = -0.011;
 double gY_Offset = 23.9;
 
-void Default_Setup_Raster_Tab(RasterHists *r, string Name, unsigned int bits){
+void Default_Setup_Raster_Tab(RasterHists *r, string Name, unsigned long bits){
    r->fTabs.emplace_back(Name, 2, 2);
 
 
@@ -253,7 +253,7 @@ void Default_Setup_Trigger(RasterHists *r){
    r->fTabs.back().logy = {true, true};
    r->fTabs.back().calc = {0, 0}; // Calc 1 - modify the bottom margin.
 
-   r->fHists.emplace_back(0, 0, 1, "TriggerBits", "Trigger Bits", 32, -0.5, 31.5);
+   r->fHists.emplace_back(0, 0, 1, "TriggerBits", "Trigger Bits", 64, -0.5, 63.5);
    int hist1 =  r->fHists.size()-1;
    r->fTabs.back().hists.push_back(hist1);
    r->fTabs.back().hist_pads.push_back(1); // Show on pad 1.
@@ -268,13 +268,13 @@ void Default_Setup_Trigger(RasterHists *r){
 //   r->fHists.back().special_fill = kHist_Special_Fill_Trigger;
 //   r->fHists.back().trigger_bits = 1<<25;
 
-   r->fHists.emplace_back(0, 0, 2, "TriggerBits31", "Trigger Bit 31", 32, -0.5, 31.5);
+   r->fHists.emplace_back(0, 0, 2, "TriggerBits31", "Trigger Bit 31", 64, -0.5, 63.5);
    int hist2 = r->fHists.size()-1;
    r->fTabs.back().hists.push_back(hist2);
    r->fTabs.back().hist_pads.push_back(1);
    r->fHists.back().hist->SetFillColor(kRed);
    r->fHists.back().special_fill = kHist_Special_Fill_Trigger;
-   r->fHists.back().trigger_bits = 1<<31;
+   r->fHists.back().trigger_bits = 0x0000108080000000;
    r->fHists.back().hist->SetStats(false);
 
    r->fTabs.back().hists.push_back(hist2);
@@ -299,6 +299,7 @@ void Default_Initialize_Histograms(RasterHists *r){
    Default_Setup_Raster_Tab(r);
    Default_Setup_Raster_Tab(r, "RasterElectron", 1);
    Default_Setup_Raster_Tab(r, "RasterPulser", 1<<31);
+   Default_Setup_Raster_Tab(r, "RasterFCup", 0x0000108000000000);
    Default_Setup_Raw_Raster_Tab(r);
    Default_Setup_1_Channel_Scope(r);
    Default_Setup_Helicity(r);

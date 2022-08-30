@@ -39,7 +39,7 @@ struct Histogram_t {  // Object to hold the information for each histogram chann
    double offset_y = 0.;
    kHist_Special_Fill special_fill = kHist_Special_Fill_Normal;  // Special calculation for filling this histogram, i.e. exceptions. -1 = no fill.
    kHist_Special_Draw special_draw = kHist_Special_Draw_Normal;  // Special way of drawing this histogram.
-   unsigned int trigger_bits = 0xFFFFFFFF;   // Test for trigger bits. If bit is one then fill histogram.
+   unsigned long trigger_bits = 0xFFFFFFFFFFFFFFFF;   // Test for trigger bits. If bit is one then fill histogram.
    std::string draw_opt;  // Drawing option.
    std::string legend;      // Legend entry. -- Usually blank, so no legend.
    TH1 *hist = nullptr;  // Histogram. -- Note: Must be really careful with copy and move constructors so we have a delete.
