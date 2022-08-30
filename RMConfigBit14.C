@@ -23,7 +23,7 @@ R__LOAD_LIBRARY(libRasterLib)
 
 #include "RasterMonDefaultConfig.h"
 
-void RMConfig(long r_h_pointer_long) {  // Function name *must* be the same as the filename. Argument must be long.
+void RMConfigBit14(long r_h_pointer_long) {  // Function name *must* be the same as the filename. Argument must be long.
    RasterHists *r = (RasterHists *)r_h_pointer_long;  // This is like, super dangerous and makes me really unhappy.
 
    if(r->fDebug) printf("We are configuring RasterHists from pointer 0x%lx \n",r_h_pointer_long);
