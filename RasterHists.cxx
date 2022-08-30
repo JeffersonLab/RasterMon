@@ -427,6 +427,8 @@ void RasterHists::HistFillWorker(int thread_num){
          }
 
          unsigned int trigger_bits = fEvio->GetTrigger();
+         unsigned int trigger_bits2 = fEvio->GetTrigger2(); // is 0 or 0x00000080 or 0x00001000
+
          fEvio->fMostRecentEventNumber = fEvio->GetEventNumber(); // For GUI to always show a useful number.
 
          // *Copy* the data. Then is is safe to release the lock.
@@ -448,7 +450,8 @@ void RasterHists::HistFillWorker(int thread_num){
          // The part below would benefit from multiple threads *if* the Fill() ends up being too slow.
          //
          for(auto &h: fHists) {
-            if( !(h.trigger_bits & trigger_bits) ) continue;    // Skip if bits do not agree with trigger bits set.
+            if( !(h.trigger_bits & trigger_bits)  &&  // Skip if bits do not agree with trigger bits set.
+                 !( (h.trigger_bits & 1<<31 ) && trigger_bits2 )) continue; // Add the FCUP trigger to pulser trigger.
             if (h.special_fill == kHist_Special_Fill_Normal) {
                int indx = h.data_index;
                double x = fEvio->GetData(h.data_index)*h.scale_x + h.offset_x;
