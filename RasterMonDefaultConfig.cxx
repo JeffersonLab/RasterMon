@@ -4,17 +4,17 @@
 
 #include "RasterMonDefaultConfig.h"
 // Calibrations:
-double gX_Scale = 0.0104;
-double gX_Offset = -0.011;
-double gY_Scale = -0.011;
-double gY_Offset = 23.9;
+double gX_Scale =  0.00104;
+double gX_Offset = -2.214;
+double gY_Scale = -0.0011;
+double gY_Offset = 2.39;
 
 void Default_Setup_Raster_Tab(RasterHists *r, string Name, unsigned long bits){
    r->fTabs.emplace_back(Name, 2, 2);
 
 
    r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 1,
-                          Name+"_x", Name+" Pos x;x[mm]", 400, -12., 12.);
+                          Name+"_x", Name+" Pos x;x[cm]", 400, -12., 12.);
    r->fTabs.back().hists.push_back(r->fHists.size()-1);
    r->fTabs.back().hist_pads.push_back(4); // Show on pad 4.
    r->fHists.back().scale_x = gX_Scale;
@@ -22,7 +22,7 @@ void Default_Setup_Raster_Tab(RasterHists *r, string Name, unsigned long bits){
    r->fHists.back().trigger_bits = bits;
    TH1D *x_ref = r->fHists.back().GetHist();
    r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 3,
-                          Name+"_y", Name+" Pos y;y[mm]", 400, -12., 12.);
+                          Name+"_y", Name+" Pos y;y[cm]", 400, -12., 12.);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
    r->fTabs.back().hist_pads.push_back(1); // Show on pad 1.
    r->fHists.back().scale_x = gY_Scale;    // Note this is the Y scale and offset.
@@ -30,7 +30,7 @@ void Default_Setup_Raster_Tab(RasterHists *r, string Name, unsigned long bits){
    r->fHists.back().trigger_bits = bits;
    TH1D *y_ref = r->fHists.back().GetHist();
    r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 1,  RASTER_CRATE, RASTER_SLOT, 3,
-                          Name+"_xy", Name+" Pos y vs x;x[mm];y[xx]", 400, -12., 12.,  400, -12., 12.);
+                          Name+"_xy", Name+" Pos y vs x;x[cm];y[cm]", 400, -12., 12.,  400, -12., 12.);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
    r->fTabs.back().hist_pads.push_back(2); // Show on pad 2.
    r->fHists.back().scale_x = gX_Scale;
@@ -41,7 +41,7 @@ void Default_Setup_Raster_Tab(RasterHists *r, string Name, unsigned long bits){
    r->fHists.back().draw_opt = "colz";
    r->fHists.back().hist->SetStats(false);
 
-   r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 1, Name+"_r", Name+" Radius;r[mm]", 400, 0., 15.);
+   r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 1, Name+"_r", Name+" Radius;r[cm]", 400, 0., 15.);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
    r->fTabs.back().hist_pads.push_back(3); // Show on pad 3.
    // Special case - 2 inputs but a 1-D histogram
@@ -59,28 +59,25 @@ void Default_Setup_Raster_Tab(RasterHists *r, string Name, unsigned long bits){
    r->fHists.back().trigger_bits = bits;
 }
 
-void Default_Setup_Raw_Raster_Tab(RasterHists *r){
-   r->fTabs.emplace_back("Raw1", 2, 2);
+void Default_Setup_Raw_Raster_Tab(RasterHists *r, string Name, unsigned long bits){
+   r->fTabs.emplace_back(Name, 2, 2);
    r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 1,
-                          "RawIx", "Raw ADC 3, I_x;ADC(1) channel", 4096, -0.5, 4095.5);
+                          Name+"Ix", Name+" ADC 3, I_x;ADC(1) channel", 4096, -0.5, 4095.5);
+   r->fHists.back().trigger_bits = bits;
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
    r->fTabs.back().hist_pads.push_back(4); // Show on pad 4.
    r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 3,
-                          "RawIy", "Raw ADC 1, I_{y};ADC(3) channel", 4096, -0.5, 4095.5);
+                          Name+"Iy", Name+" ADC 1, I_{y};ADC(3) channel", 4096, -0.5, 4095.5);
+   r->fHists.back().trigger_bits = bits;
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
    r->fTabs.back().hist_pads.push_back(1); // Show on pad 1.
    r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 1, RASTER_CRATE, RASTER_SLOT, 3,
-                          "RawIxy", "Raw ADC 3-2, I_{y} vs I_{x};ADC(1) channel;ADC(3) channel", 409, -0.5, 4095.5, 409, -0.5, 4095.5);
-   r->fTabs.back().hists.push_back( r->fHists.size()-1);
-   r->fTabs.back().hist_pads.push_back(2); // Show on pad 4.
+                          Name+"Ixy", Name+" ADC 3-2, I_{y} vs I_{x};ADC(1) channel;ADC(3) channel", 409, -0.5, 4095.5, 409, -0.5, 4095.5);
+   r->fHists.back().trigger_bits = bits;
    r->fHists.back().draw_opt = "colz";
    r->fHists.back().hist->SetStats(false);
-//   r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 5, RASTER_CRATE, RASTER_SLOT, 1,
-//                          "RawIGx", "Raw ADC 3-2, G(x) vs I_{x};ADC(1) channel; ADC(5) channel", 409, -0.5, 4095.5, 409, -0.5, 4095.5);
-//   r->fTabs.back().hists.push_back(r->fHists.size()-1);
-//   r->fTabs.back().hist_pads.push_back(3); // Show on pad 3.
-//   r->fHists.back().draw_opt = "colz";
-//   r->fHists.back().hist->SetStats(false);
+   r->fTabs.back().hists.push_back( r->fHists.size()-1);
+   r->fTabs.back().hist_pads.push_back(2); // Show on pad 4.
 }
 
 void Default_Setup_Raw_Raster_Tab2(RasterHists *r){

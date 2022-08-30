@@ -36,6 +36,7 @@ void RMConfigBit14(long r_h_pointer_long) {  // Function name *must* be the same
    Default_Setup_Raster_Tab(r, "RasterElectron", 0x00000001);
    Default_Setup_Raster_Tab(r, "RasterRandom", 0x0000108080000000);
    Default_Setup_Raster_Tab(r, "RasterBit14", 1<<14);
+   Default_Setup_Raw_Raster_Tab(r);
    Default_Setup_Trigger(r);
 
    // Overrides
