@@ -74,7 +74,8 @@ public:
 public:
 
    bool fLogEntryOK = false;
-   std::filesystem::path fHistogramPath{DEFAULT_HISTOGRAM_PATH};
+   // std::filesystem::path fHistogramPath{DEFAULT_HISTOGRAM_PATH}; //! CLING doesn't know what to do with this.
+   std::string fHistogramPath{DEFAULT_HISTOGRAM_PATH};
    const TGWindow *fParentWindow;
    TGTransientFrame *fMain;
    RasterHists *fRHists;  // Pointer to the histograms and graphs.

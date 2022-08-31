@@ -23,24 +23,20 @@ R__LOAD_LIBRARY(libRasterLib)
 
 #include "RasterMonDefaultConfig.h"
 
-void RMConfig(long r_h_pointer_long) {  // Function name *must* be the same as the filename. Argument must be long.
+void RMConfigBit14(long r_h_pointer_long) {  // Function name *must* be the same as the filename. Argument must be long.
    RasterHists *r = (RasterHists *)r_h_pointer_long;  // This is like, super dangerous and makes me really unhappy.
 
    if(r->fDebug) printf("We are configuring RasterHists from pointer 0x%lx \n",r_h_pointer_long);
 
-   r->SetAutoClearRate(30.);
+   r->SetAutoClearRate(3600.);
    r->SetAutoClearRateOff();
 
    // Note: PAD numbering starts at 1, with 0 being the Canvas (i.e. only one object on the screen)
    Default_Setup_Raster_Tab(r);
    Default_Setup_Raster_Tab(r, "RasterElectron", 0x00000001);
-   Default_Setup_Raster_Tab(r, "RasterPulserX", 1<<31);
+   Default_Setup_Raster_Tab(r, "RasterRandom", 0x0000108080000000);
+   Default_Setup_Raster_Tab(r, "RasterBit14", 1<<14);
    Default_Setup_Raw_Raster_Tab(r);
-   Default_Setup_Raw_Raster_Tab2(r);
-   Default_Setup_Raw_Raster_Tab3(r);
-   Default_Setup_1_Channel_Scope(r);
-   Default_Setup_3_Channel_Scope(r);
-   Default_Setup_Helicity(r);
    Default_Setup_Trigger(r);
 
    // Overrides

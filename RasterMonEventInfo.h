@@ -54,14 +54,21 @@ public:
      } else return 0;
   };
 
-  unsigned int GetTrigger1() const {
+   unsigned long GetTrigger() const {
+      // Return the 64 bits of the trigger.
+      if(RHead1 && RHead1->size() >= 7) {
+         return RHead1->GetData(4) | (((long) RHead1->GetData(5))<<32);
+      }else return 0;
+   }
+
+  unsigned int GetTrigger_low() const {
      // Return the main 32 bits of the trigger.
      if(RHead1 && RHead1->size() >= 7) {
         return RHead1->GetData(4);
      }else return 0;
   }
 
-   unsigned int GetTrigger2() const {
+   unsigned int GetTrigger_high() const {
       // Return the upper 32 bits of the trigger.
       if(RHead1 && RHead1->size() >= 7) {
          return RHead1->GetData(5);

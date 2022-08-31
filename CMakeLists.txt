@@ -61,6 +61,10 @@ if (NOT DEFINED DEFAULT_HISTOGRAM_PATH)
     set(DEFAULT_HISTOGRAM_PATH "/home/clasrun/raster")
 endif()
 message(STATUS "DEFAULT_HISTOGRAM_PATH set to ${DEFAULT_HISTOGRAM_PATH}")
+if (NOT DEFINED CLI_LOGENTRY_PROGRAM)
+    set(CLI_LOGENTRY_PROGRAM "/home/clasrun/RasterMon/logentry")
+endif()
+message(STATUS "CLI_LOGENTRY_PROGRAM set to ${CLI_LOGENTRY_PROGRAM}")
 
 #---Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
@@ -87,6 +91,8 @@ set(SOURCE_FILES
 add_library(RasterLib SHARED ${SOURCE_FILES} RasterLib_dict.cxx)
 
 target_compile_definitions(RasterLib PRIVATE "DEFAULT_HISTOGRAM_PATH=\"${DEFAULT_HISTOGRAM_PATH}\"")
+target_compile_definitions(RasterLib PRIVATE "CLI_LOGENTRY_PROGRAM=\"${CLI_LOGENTRY_PROGRAM}\"")
+
 if(${ELOG_FOUND})
     message(STATUS "Setting HAS_LOGBOOK=1")
 

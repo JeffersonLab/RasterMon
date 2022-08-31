@@ -14,9 +14,8 @@
 #define RASTER_SLOT 19
 #endif
 
-void Default_Setup_Raster_Tab(RasterHists *r);
-void Default_Setup_RasterBit32_Tab(RasterHists *r);
-void Default_Setup_Raw_Raster_Tab(RasterHists *r);
+void Default_Setup_Raster_Tab(RasterHists *r, const string &Name="Raster", unsigned long bits = 0xFFFFFFFFFFFFFFFF);
+void Default_Setup_Raw_Raster_Tab(RasterHists *r, const string &Name="Raw", unsigned long bits = 0xFFFFFFFFFFFFFFFF);
 void Default_Setup_Raw_Raster_Tab2(RasterHists *r);
 void Default_Setup_Raw_Raster_Tab3(RasterHists *r);
 void Default_Setup_1_Channel_Scope(RasterHists *r);

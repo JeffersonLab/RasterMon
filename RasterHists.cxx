@@ -381,6 +381,14 @@ void RasterHists::HistFillWorker(int thread_num){
    std::vector<double> local_data;
    local_data.reserve(fHists.size() + fGraphs.size());   // Probably more than needed, but okay.
 
+   static double x_sum=0;   // To compute an average
+   static double y_sum=0;
+   static unsigned long sum_count;
+   static double x_max;
+   static double x_min;
+   static double y_max;
+   static double y_min;
+
    if(fDebug>0) std::cout << "RasterHists::HistFillWorker - Start thread "<< thread_num << "\n";
 
    while(fKeepWorking){
@@ -418,7 +426,9 @@ void RasterHists::HistFillWorker(int thread_num){
             continue;
          }
 
-         unsigned int trigger_bits = fEvio->GetTrigger();
+         unsigned long trigger_bits = fEvio->GetTrigger();
+         // Trigger2 is 0 or 0x00000080 or 0x00001000
+
          fEvio->fMostRecentEventNumber = fEvio->GetEventNumber(); // For GUI to always show a useful number.
 
          // *Copy* the data. Then is is safe to release the lock.
@@ -440,7 +450,8 @@ void RasterHists::HistFillWorker(int thread_num){
          // The part below would benefit from multiple threads *if* the Fill() ends up being too slow.
          //
          for(auto &h: fHists) {
-            if( trigger_bits && !(h.trigger_bits & trigger_bits) ) continue;    // Skip if bits do not agree with trigger bits set.
+            if( !(h.trigger_bits & trigger_bits) ) continue;  // Skip if bits do not agree with trigger bits set.
+
             if (h.special_fill == kHist_Special_Fill_Normal) {
                int indx = h.data_index;
                double x = fEvio->GetData(h.data_index)*h.scale_x + h.offset_x;
@@ -460,15 +471,26 @@ void RasterHists::HistFillWorker(int thread_num){
                else
                   h.GetHist()->Fill(-1);
             }else if(h.special_fill == kHist_Special_Fill_Radius){
-               // Compute the radius from x and y.
+               // Compute the radius from x and y, relative to the pattern center.
+               // Pattern center can come from <x> and <y> or from (x_max - x_min)/2 and (y_max - y_min)/2
+
                double x = fEvio->GetData(h.data_index )*h.scale_x + h.offset_x;
                double y = fEvio->GetData(h.data_index2)*h.scale_y + h.offset_y;
-               double r = sqrt(x*x + y*y);
+               double x_mean = 0;
+               double y_mean = 0;
+               if( h.x_ref_hist != nullptr ){
+                  x_mean = h.x_ref_hist->GetMean();
+               }
+               if( h.y_ref_hist != nullptr ){
+                  y_mean = h.y_ref_hist->GetMean();
+               }
+               // if( h.x_ref_hist != nullptr ) printf("<x> = %8.5f  <y> = %8.5f \n",x_mean, y_mean);
+               double r = sqrt((x-x_mean)*(x-x_mean) + (y-y_mean)*(y-y_mean));
                h.GetHist()->Fill(r);
             }else if(h.special_fill == kHist_Special_Fill_Trigger){
-               unsigned int trig_bits = fEvio->GetTrigger();
-               for(int i=0; i<32; ++i){
-                  if( trig_bits & (1<<i)) h.GetHist()->Fill(i);
+               // unsigned long trig_bits = fEvio->GetTrigger() | ((long)fEvio->GetTrigger2() << 32);
+               for(int i=0; i<64; ++i){
+                  if( trigger_bits & (1L << i)) h.GetHist()->Fill(i);
                }
             }
          }
