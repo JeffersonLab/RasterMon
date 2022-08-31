@@ -129,8 +129,9 @@ public:
    unsigned int GetRunNumber() const {return fRasterHead->GetRunNumber();}
    unsigned int GetLastRunNumber() const {return fLastRunNumber;}
    unsigned int GetTimeStamp() const {return fRasterHead->GetTimeStamp();}
-   unsigned int GetTrigger() const {return fRasterHead->GetTrigger1();}
-   unsigned int GetTrigger2() const {return fRasterHead->GetTrigger2();}
+   unsigned long GetTrigger() const {return fRasterHead->GetTrigger();}
+   unsigned long GetTrigger_low() const {return fRasterHead->GetTrigger_low();}
+   unsigned long GetTrigger_high() const {return fRasterHead->GetTrigger_high();}
    unsigned long GetTimeCrate(unsigned short i=0) const {
       if(fEvioBanks.size()>i){ // Assume first crate is raster
          return fEvioBanks[i].GetRefTime();

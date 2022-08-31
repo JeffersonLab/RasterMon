@@ -426,7 +426,7 @@ void RasterHists::HistFillWorker(int thread_num){
             continue;
          }
 
-         unsigned long trigger_bits = fEvio->GetTrigger() | ((long)fEvio->GetTrigger2() << 32);
+         unsigned long trigger_bits = fEvio->GetTrigger();
          // Trigger2 is 0 or 0x00000080 or 0x00001000
 
          fEvio->fMostRecentEventNumber = fEvio->GetEventNumber(); // For GUI to always show a useful number.

@@ -9,7 +9,7 @@ double gX_Offset = -2.214;
 double gY_Scale = -0.0011;
 double gY_Offset = 2.39;
 
-void Default_Setup_Raster_Tab(RasterHists *r, string Name, unsigned long bits){
+void Default_Setup_Raster_Tab(RasterHists *r, const string &Name, unsigned long bits){
    r->fTabs.emplace_back(Name, 2, 2);
 
 
@@ -59,7 +59,7 @@ void Default_Setup_Raster_Tab(RasterHists *r, string Name, unsigned long bits){
    r->fHists.back().trigger_bits = bits;
 }
 
-void Default_Setup_Raw_Raster_Tab(RasterHists *r, string Name, unsigned long bits){
+void Default_Setup_Raw_Raster_Tab(RasterHists *r, const string &Name, unsigned long bits){
    r->fTabs.emplace_back(Name, 2, 2);
    r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 1,
                           Name+"Ix", Name+" ADC 3, I_x;ADC(1) channel", 4096, -0.5, 4095.5);
@@ -104,6 +104,7 @@ void Default_Setup_Raw_Raster_Tab2(RasterHists *r){
 //   r->fHists.back().hist->SetStats(false);
 
 }
+
 void Default_Setup_Raw_Raster_Tab3(RasterHists *r){
    r->fTabs.emplace_back("Raw3", 2, 2);
    r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 9,
@@ -162,8 +163,7 @@ void Default_Setup_3_Channel_Scope(RasterHists *r){
    r->fTabs.emplace_back("Scope", 1, 3, 0, 0);
    r->fTabs.back().grid = {1, 1, 1};
    r->fTabs.back().calc = {1, 1, 0}; // Calc 1 - modify the bottom margin.
-   r->fGraphs.emplace_back(RASTER_CRATE, RASTER_SLOT, 1, ""
-                                      "IX0", ";t (s)", "I_{x}", kRed+1, 2, true);
+   r->fGraphs.emplace_back(RASTER_CRATE, RASTER_SLOT, 1, "IX0", ";t (s)", "I_{x}", kRed+1, 2, true);
    r->fTabs.back().graphs.push_back(r->fGraphs.size() - 1);
    r->fTabs.back().graph_pads.push_back(1); // Show on pad 1.
    r->fGraphs.emplace_back(RASTER_CRATE, RASTER_SLOT, 3,
@@ -200,23 +200,28 @@ void Default_Setup_Helicity(RasterHists *r){
 
    r->fHists.emplace_back(19, 19, 0,
                           "HelicityRaw", "Helicity raw", 256, -2, 4097.);
+   r->fHists.back().hist->SetFillColor(kRed);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
    r->fTabs.back().hist_pads.push_back(1); // Show on pad 1.
 
    r->fHists.emplace_back(19, 19, 2,
                           "SyncRaw", "Sync raw", 256, -2, 4097.);
+   r->fHists.back().hist->SetFillColor(kGreen);
+   r->fHists.back().hist->SetStats(false);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
-   r->fTabs.back().hist_pads.push_back(2); // Show on pad 2.
+   r->fTabs.back().hist_pads.push_back(1); // Show on pad 2.
 
    r->fHists.emplace_back(19, 19, 4,
                           "QuartedRaw", "Quarted raw", 256, -2, 4097.);
+   r->fHists.back().hist->SetStats(false);
    r->fTabs.back().hists.push_back(r->fHists.size()-1);
-   r->fTabs.back().hist_pads.push_back(3); // Show on pad 3.
+   r->fTabs.back().hist_pads.push_back(1); // Show on pad 3.
 
    r->fHists.emplace_back(19, 19, 0,              // Special - do not fill with raw info.
                           "Helicity", "Helicity", 3, -1.5, 1.5);
+   r->fHists.back().hist->SetFillColor(kBlue);
    r->fTabs.back().hists.push_back(r->fHists.size()-1);
-   r->fTabs.back().hist_pads.push_back(4); // Show on pad 4.
+   r->fTabs.back().hist_pads.push_back(2); // Show on pad 2.
    r->fHists.back().hist->SetFillColor(kRed);
    r->fHists.back().special_fill = kHist_Special_Fill_Helicity;
    r->fHists.back().special_draw = kHist_Special_Draw_NoDraw;
@@ -226,7 +231,7 @@ void Default_Setup_Helicity(RasterHists *r){
    r->fHists.emplace_back(19, 19, 2,              // Special - do not fill with raw info.
                           "Sync", "Sync", 3, -1.5, 1.5);
    r->fTabs.back().hists.push_back(r->fHists.size()-1);
-   r->fTabs.back().hist_pads.push_back(4); // Show on pad 4.
+   r->fTabs.back().hist_pads.push_back(2); // Show on pad 2.
    r->fHists.back().hist->SetFillColor(kGreen);
    r->fHists.back().special_fill = kHist_Special_Fill_Helicity;
    r->fHists.back().special_draw = kHist_Special_Draw_NoDraw;
@@ -236,12 +241,17 @@ void Default_Setup_Helicity(RasterHists *r){
    r->fHists.emplace_back(19, 19, 4,              // Special - do not fill with raw info.
                           "Quartet", "Quartet", 3, -1.5, 1.5);
    r->fTabs.back().hists.push_back(r->fHists.size()-1);
-   r->fTabs.back().hist_pads.push_back(4); // Show on pad 4.
+   r->fTabs.back().hist_pads.push_back(2); // Show on pad 2.
    r->fHists.back().hist->SetFillColor(kBlue);
    r->fHists.back().special_fill = kHist_Special_Fill_Helicity;
    r->fHists.back().special_draw = kHist_Special_Draw_Stack;
    r->fHelicity_stack->Add(r->fHists.back().GetHist());
    r->fHelicity_legend->AddEntry(r->fHists.back().GetHist(), "Quartet");
+
+   r->fGraphs.emplace_back(19, 19, 0, "Helicity Assymmetry", "Helicity;t (s)", "H", kRed+1, 2, true);
+   r->fTabs.back().graphs.push_back(r->fGraphs.size() - 1);
+   r->fTabs.back().graph_pads.push_back(3); // Show on pad 3.
+
 }
 
 void Default_Setup_Trigger(RasterHists *r){
@@ -257,15 +267,7 @@ void Default_Setup_Trigger(RasterHists *r){
    r->fHists.back().hist->SetFillColor(kBlue);
    r->fHists.back().special_fill = kHist_Special_Fill_Trigger;
 
-//   r->fHists.emplace_back(0, 0, 3, "TriggerBits25", "Trigger Bit 25", 32, -0.5, 31.5);
-//   int hist2 =  r->fHists.size()-1;
-//   r->fTabs.back().hists.push_back(hist2);
-//   r->fTabs.back().hist_pads.push_back(2);
-//   r->fHists.back().hist->SetFillColor(kGreen);
-//   r->fHists.back().special_fill = kHist_Special_Fill_Trigger;
-//   r->fHists.back().trigger_bits = 1<<25;
-
-   r->fHists.emplace_back(0, 0, 2, "TriggerBits31", "Trigger Bit 31", 64, -0.5, 63.5);
+   r->fHists.emplace_back(0, 0, 2, "TriggerBitsRand", "Random Trigger Bits", 64, -0.5, 63.5);
    int hist2 = r->fHists.size()-1;
    r->fTabs.back().hists.push_back(hist2);
    r->fTabs.back().hist_pads.push_back(1);
