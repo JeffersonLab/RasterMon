@@ -14,5 +14,6 @@
 #include "RasterMonDefaultConfig.h"
 // #include "RasterMonConfig.h"
 #include "RasterMonConfigInfo.h"
+#include "RasterScalerBank.h"
 
 #endif //RASTERMON_RASTERLIB_H

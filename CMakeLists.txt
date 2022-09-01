@@ -72,11 +72,21 @@ include(${ROOT_USE_FILE})
 # For dictionary compile step to find include files.
 # The target properties for include directories need to be explicitly added to the include_directories.
 include_directories(${PROJECT_SOURCE_DIR})
+
 if(${ELOG_FOUND})
     include_directories(${ELOG_INCLUDE_DIR})
 endif()
-ROOT_GENERATE_DICTIONARY(RasterLib_dict RasterLib.h DEPENDENCIES EvioTool evio et LINKDEF RasterLibLinkDef.h)
+
+#
+# "Proper" ROOT location for the ROOT_GENERATE_DICTIONARY is *after* the add_library(...) statement.
+# For some very odd reason (um, bug?) this does not allow root_cling to parse the define of the
+# DEFAULT_HISTOGRAM_PATH, stripping the quotes of the path.
+#
+ROOT_GENERATE_DICTIONARY(RasterLib_dict RasterLib.h DEPENDENCIES EvioTool evio et LINKDEF RasterLibLinkDef.h MODULE RasterLib)
 list(APPEND ADDITIONAL_CLEAN_FILES RasterLib_dict.cxx)
+
+
+## TODO: Install the header files.
 
 set(SOURCE_FILES
         RasterMonGui.cxx
@@ -86,7 +96,8 @@ set(SOURCE_FILES
         RasterLogBookEntry.cxx
         RasterMonConfigPanel.cxx
         RasterMonDefaultConfig.cxx
-        RasterMonConfigInfo.cxx)
+        RasterMonConfigInfo.cxx
+        RasterScalerBank.cxx)
 
 add_library(RasterLib SHARED ${SOURCE_FILES} RasterLib_dict.cxx)
 
@@ -112,5 +123,5 @@ add_executable(RasterMon RasterMon.cxx)
 target_link_libraries(RasterMon RasterLib )
 
 install(TARGETS RasterLib  LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
-install(FILES ${PROJECT_BINARY_DIR}/libRasterLib_dict_rdict.pcm  DESTINATION lib)
+install(FILES ${PROJECT_BINARY_DIR}/libRasterLib_rdict.pcm  DESTINATION lib)
 install(TARGETS RasterMon DESTINATION bin)
