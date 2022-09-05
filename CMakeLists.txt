@@ -122,6 +122,9 @@ endif()
 add_executable(RasterMon RasterMon.cxx)
 target_link_libraries(RasterMon RasterLib )
 
+add_executable(parse_test ParseTest.cxx)
+target_link_libraries(parse_test RasterLib)
+
 install(TARGETS RasterLib  LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 install(FILES ${PROJECT_BINARY_DIR}/libRasterLib_rdict.pcm  DESTINATION lib)
 install(TARGETS RasterMon DESTINATION bin)

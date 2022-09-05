@@ -10,6 +10,7 @@
 #include <FADCdata.h>
 #include <Leaf.h>
 #include "RasterMonEventInfo.h"
+#include "RasterScalerBank.h"
 #include "CircularBuffer.h"
 #include <mutex>
 
@@ -46,7 +47,7 @@ struct EvioBank_t {
    EvioBank_t(Bank *parent, unsigned short tag, unsigned short slot, unsigned short channel, unsigned short data_index){
       string name = "Bank_" + to_string(tag);
       bank = parent->AddBank(name, tag, 0, "FADC Crate");
-      TI = bank->AddLeaf<unsigned int>(name + "_TI", 57610, 9, name +" Trigger bank.");
+      TI = bank->AddLeaf<unsigned int>(name + "_TI", 57610, 0, name +" Trigger bank.");
       FADC = bank->AddLeaf<FADCdata>(name+"_FADC", 57601, 0, name+" FADC data");
       slots.emplace_back(slot, channel, data_index);
    }
@@ -93,9 +94,11 @@ public:
    // Setup the data for the EVIO parsing.
    //
    // Note on mem: The memory will be managed by TObjArray. So no delete to be called. No unique_ptr etc.
-   Leaf<unsigned int>  *fEvioHead = nullptr;  // EvioHead is tag=49152 and is always there.
+   Leaf<unsigned int>  *fEvioHead = nullptr;  // EvioHead is tag=49152 and is always there for physics events, but not scaler.
    unsigned long fMostRecentEventNumber=0;      // Number of last actual event that was read.
-   RasterMonEventInfo *fRasterHead = nullptr; // RasterHead is tag=
+   RasterMonEventInfo *fEventInfo = nullptr; // EventInfo bank.
+   StruckScalerBank *fStruckScaler = nullptr;
+   RasterScalerBank *fScaler = nullptr;
 
    size_t fAdcBufferSize = 5000;
    std::vector<EvioBank_t> fEvioBanks;
@@ -104,6 +107,7 @@ public:
    std::vector< CircularBuffer<double> > fAdcAverageBuf;
    unsigned int fLastEventNumber = 0;
    unsigned int fLastRunNumber = 0;
+   unsigned long fLastTimeStamp = 0;
 
    std::mutex fFileLock;    // Because the Next() has a next file build in.
    std::mutex fBufferLock;  // Guard against buffer size changes.
@@ -126,14 +130,15 @@ public:
       else return(0);
    }
    unsigned int GetLastEventNumber(){return fLastEventNumber;}
-   unsigned int GetRunNumber() const {return fRasterHead->GetRunNumber();}
+   unsigned int GetRunNumber() const {return fEventInfo->GetRunNumber();}
    unsigned int GetLastRunNumber() const {return fLastRunNumber;}
-   unsigned int GetTimeStamp() const {return fRasterHead->GetTimeStamp();}
-   unsigned long GetTrigger() const {return fRasterHead->GetTrigger();}
-   unsigned long GetTrigger_low() const {return fRasterHead->GetTrigger_low();}
-   unsigned long GetTrigger_high() const {return fRasterHead->GetTrigger_high();}
+   unsigned long GetTimeStamp() const {return fEventInfo->GetTimeStamp();}
+   unsigned long GetLastTimeStamp() const {return fLastTimeStamp; }
+   unsigned long GetTrigger() const {return fEventInfo->GetTrigger();}
+   unsigned long GetTrigger_low() const {return fEventInfo->GetTrigger_low();}
+   unsigned long GetTrigger_high() const {return fEventInfo->GetTrigger_high();}
    unsigned long GetTimeCrate(unsigned short i=0) const {
-      if(fEvioBanks.size()>i){ // Assume first crate is raster
+      if(i < fEvioBanks.size()){ // Assume first crate is raster
          return fEvioBanks[i].GetRefTime();
       }
       else return 0;

@@ -10,11 +10,13 @@ RasterEvioTool::RasterEvioTool(string infile) : EvioTool(infile){
 
    fAutoAdd = false;  // Do not add every bank in the file automatically.
    fChop_level = 1;   // Top level bank is chopped.
-   tags = {0x80};      // Only get the physics event banks.  The 31 tag is EPICS.
-   tag_masks = {0x80}; // Any event with bit 6 set  2<<6
+   tags = {0x80, 31};      // Only get the physics event banks.  The 31 tag is EPICS.
+   tag_masks = {0x80, 31}; // Any event with bit 6 set  2<<6
    // EVIO Data structure unpack:
    fEvioHead = AddLeaf<unsigned int>("fEvioHead", 49152, 0, "Evio Event Header Info");
-   fRasterHead =  new RasterMonEventInfo(this);  // Calls AddBank internally.
+   fEventInfo =  new RasterMonEventInfo(this);  // Calls AddBank internally.
+   fStruckScaler = new StruckScalerBank(this);
+   fScaler = new RasterScalerBank(this);
    fETWaitMode = ET_SLEEP;
    fEtReadChunkSize = 10;
 }
@@ -115,37 +117,43 @@ int RasterEvioTool::Next() {
       }
    }
 
-   fLastRunNumber = GetRunNumber();      // These are only updated on actual good data.
-   fLastEventNumber = GetEventNumber();
+   if(this_tag & 0x0080) {
+      // These are only updated on actual good data. The tag=31 data is scalars, which do not have the same headers.
+      // So we keep the old event number, and we do not need to process any of the other banks.
+      fLastRunNumber = GetRunNumber();
+      fLastEventNumber = GetEventNumber();
+      fLastTimeStamp = GetTimeStamp();
 
-   fNEventsProcessed++;
+      fNEventsProcessed++;
 
-   // We loop through the EVIO Banks in fEvioBank. If they were in the data and had an FADC bank, then we will
-   // find this in b.FADC.
-   // We compare the b.FADC against the slot, channel information from our fEvioBanks tree, and when matchted,
-   // store the *average* FADC in the appropriate fChannelAverage slot.
-   //
-   // The following multi loop sort is fairly fast because the loops are small.
-   // TODO: Investigate if under small loop conditions, an std::map lookup is (still) faster than this algorith.
-   for(auto &b: fEvioBanks){
-      for(int i_fadc=0; i_fadc< b.FADC->size(); ++i_fadc){
-         for(auto &slot: b.slots){
-            if( b.FADC->GetData(i_fadc).GetSlot() == slot.slot ) {
-               for (int j = 0; j < slot.channels.size(); ++j) {
-                  if (b.FADC->GetData(i_fadc).GetChan() == slot.channels[j]) {
-                     double sum = 0.;
-                     int n_samples = b.FADC->GetData(i_fadc).GetSampleSize();
-                     for (int k = 0; k < n_samples; ++k) {
-                        sum += (double) b.FADC->GetData(i_fadc).GetSample(k);
-                     }
-                     sum = sum / (double) n_samples;
-                     int buf_index = slot.data_index[j];
-                     fChannelAverage[buf_index] = sum;
-                     double time = FADC_TIME_CONVERSION*(double)b.FADC->GetData(i_fadc).GetRefTime(); // Convert to second
-                     if(time>0) { // If time == 0, then this is not data so skip it.
-                        std::lock_guard<std::mutex> _lck(fBufferLock);
-                        fTimeBuf[buf_index].push_back(time);
-                        fAdcAverageBuf[buf_index].push_back(sum);
+      // We loop through the EVIO Banks in fEvioBank. If they were in the data and had an FADC bank, then we will
+      // find this in b.FADC.
+      // We compare the b.FADC against the slot, channel information from our fEvioBanks tree, and when matchted,
+      // store the *average* FADC in the appropriate fChannelAverage slot.
+      //
+      // The following multi loop sort is fairly fast because the loops are small.
+      // TODO: Investigate if under small loop conditions, an std::map lookup is (still) faster than this algorith.
+      for (auto &b: fEvioBanks) {
+         for (int i_fadc = 0; i_fadc < b.FADC->size(); ++i_fadc) {
+            for (auto &slot: b.slots) {
+               if (b.FADC->GetData(i_fadc).GetSlot() == slot.slot) {
+                  for (int j = 0; j < slot.channels.size(); ++j) {
+                     if (b.FADC->GetData(i_fadc).GetChan() == slot.channels[j]) {
+                        double sum = 0.;
+                        int n_samples = b.FADC->GetData(i_fadc).GetSampleSize();
+                        for (int k = 0; k < n_samples; ++k) {
+                           sum += (double) b.FADC->GetData(i_fadc).GetSample(k);
+                        }
+                        sum = sum / (double) n_samples;
+                        int buf_index = slot.data_index[j];
+                        fChannelAverage[buf_index] = sum;
+                        double time =
+                              FADC_TIME_CONVERSION * (double) b.FADC->GetData(i_fadc).GetRefTime(); // Convert to second
+                        if (time > 0) { // If time == 0, then this is not data so skip it.
+                           std::lock_guard<std::mutex> _lck(fBufferLock);
+                           fTimeBuf[buf_index].push_back(time);
+                           fAdcAverageBuf[buf_index].push_back(sum);
+                        }
                      }
                   }
                }
