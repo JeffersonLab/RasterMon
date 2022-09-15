@@ -73,6 +73,7 @@ int main(int argc, char **argv) {
 
       int n_combine = 100;
       int istruckscaler = 0;
+      unsigned long first_timestamp=0;
       std::vector<double> times;
       std::vector<double> beam_charge_asymmetry;
       std::vector<double> beam_charge_asymmetry_gated;
@@ -107,12 +108,15 @@ int main(int argc, char **argv) {
          if( evio->fStruckScaler->fIntegrate->size() > 0){   // Struck scaler data is available in this event.
             h_dt_stscaler->Fill( 4.e-6*(evio->GetTimeStamp() - last_struck_scaler_time));
             last_struck_scaler_time = evio->GetTimeStamp();
+            if(istruckscaler == 0){
+               first_timestamp = evio->fStruckScaler->GetTimeStamp();
+            }
             if( istruckscaler%n_combine == 0 && istruckscaler>0 ){
-               times.push_back(evio->fStruckScaler->GetTimeStamp());
+               times.push_back((evio->fStruckScaler->GetTimeStamp() - first_timestamp)*4.e-9);
                double assym =  0;
                ScalerInfo_t &ptr = evio->fStruckScaler->fInfo[I_FCUP_UNGATED];
                if( (ptr.plus_integrated + ptr.minus_integrated) > 0) {
-                  assym = (double(ptr.plus_integrated) - double(ptr.minus_integrated)) /
+                  assym = 100.*(double(ptr.plus_integrated) - double(ptr.minus_integrated)) /
                                  double(ptr.plus_integrated + ptr.minus_integrated);
                }else{
                   assym = 0;
@@ -120,7 +124,7 @@ int main(int argc, char **argv) {
                beam_charge_asymmetry.push_back(assym);
                ptr = evio->fStruckScaler->fInfo[I_FCUP_GATED];
                if( (ptr.plus_integrated + ptr.minus_integrated) > 0) {
-                  assym = (double(ptr.plus_integrated) - double(ptr.minus_integrated)) /
+                  assym = 100.*(double(ptr.plus_integrated) - double(ptr.minus_integrated)) /
                           double(ptr.plus_integrated + ptr.minus_integrated);
                }else{
                   assym = 0;
@@ -128,7 +132,7 @@ int main(int argc, char **argv) {
                beam_charge_asymmetry_gated.push_back(assym);
                ptr = evio->fStruckScaler->fInfo[I_CLOCK_UNGATED];
                if( (ptr.plus_integrated + ptr.minus_integrated) > 0) {
-                  assym = (double(ptr.plus_integrated) - double(ptr.minus_integrated)) /
+                  assym = 100.*(double(ptr.plus_integrated) - double(ptr.minus_integrated)) /
                           double(ptr.plus_integrated + ptr.minus_integrated);
                }else{
                   assym = 0;
@@ -136,7 +140,7 @@ int main(int argc, char **argv) {
                clock_asymmetry.push_back(assym);
                ptr = evio->fStruckScaler->fInfo[I_CLOCK_GATED];
                if( (ptr.plus_integrated + ptr.minus_integrated) > 0) {
-                  assym = (double(ptr.plus_integrated) - double(ptr.minus_integrated)) /
+                  assym = 100.*(double(ptr.plus_integrated) - double(ptr.minus_integrated)) /
                           double(ptr.plus_integrated + ptr.minus_integrated);
                }else{
                   assym = 0;
@@ -157,14 +161,18 @@ int main(int argc, char **argv) {
 
       }
 
-      auto gr_bc_assym = new TGraph(times.size(), times.data(), beam_charge_asymmetry.data() );
-      gr_bc_assym->Write("BeamChargeAssym");
-      auto gr_bc_assym_g = new TGraph(times.size(), times.data(), beam_charge_asymmetry_gated.data() );
-      gr_bc_assym_g->Write("BeamChargeAssymGated");
-      auto gr_cl_assym = new TGraph(times.size(), times.data(), clock_asymmetry.data() );
-      gr_cl_assym->Write("ClockAssym");
-      auto gr_cl_assym_g = new TGraph(times.size(), times.data(), clock_asymmetry_gated.data() );
-      gr_cl_assym_g->Write("ClockAssymGated");
+      auto gr_bc_asym = new TGraph(times.size(), times.data(), beam_charge_asymmetry.data() );
+      gr_bc_asym->SetTitle("Beam Charge Asymmetry");
+      gr_bc_asym->Write("BeamChargeAsym");
+      auto gr_bc_asym_g = new TGraph(times.size(), times.data(), beam_charge_asymmetry_gated.data() );
+      gr_bc_asym_g->SetTitle("Beam Charge Asymmetry Gated");
+      gr_bc_asym_g->Write("BeamChargeAsymGated");
+      auto gr_cl_asym = new TGraph(times.size(), times.data(), clock_asymmetry.data() );
+      gr_cl_asym->SetTitle("Clock Tick Asymmetry");
+      gr_cl_asym->Write("ClockAsym");
+      auto gr_cl_asym_g = new TGraph(times.size(), times.data(), clock_asymmetry_gated.data() );
+      gr_cl_asym_g->SetTitle("Clock Tick Asymmetry Gated");
+      gr_cl_asym_g->Write("ClockAsymGated");
 
       output->Write();
       output->Close();
