@@ -182,8 +182,10 @@ void StruckScalerBank::CallBack(){
              ((ptr->At(2).time_interval ^ fTimeMarkerFlipped) == 1 && // Should be the 500µs period.
               (ptr->At(2).scaler_value > 2000))) {                    // But it isn't so it is flipped.
             // Seems that the definition of time period flipped.
-            std::cout << "fGatedStruckScalers -- Time period marker flipped sign, i= " << i;
-            std::cout << " event = " << GetEventNumber() << " Timestamp = " << GetTimeStamp() << endl;
+            if(fDebug & 0x01 == 0x01) {
+               std::cout << "fGatedStruckScalers -- Time period marker flipped sign, i= " << i;
+               std::cout << " event = " << GetEventNumber() << " Timestamp = " << GetTimeStamp() << endl;
+            }
             fTimeMarkerFlipped = !fTimeMarkerFlipped;
          }
 
