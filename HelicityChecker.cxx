@@ -157,6 +157,11 @@ int main(int argc, char **argv) {
 
          if(evio->GetEventNumber()>0 && evio->GetTimeStamp() > 0) {
             ++icount;
+            if(debug > 0){
+               if( (icount % 100000) == 0){
+                  printf("I: %7lu  Event: %7d \n", icount, evio->GetEventNumber());
+               }
+            }
          }
 
       }
