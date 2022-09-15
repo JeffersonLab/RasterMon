@@ -108,8 +108,32 @@ public:
       else return 0;
    }
 
+   bool GetHelicity() const {
+      if(RHead1 && RHead1->size() >= 7) {
+         return (RHead2->GetData(5)>>1) & 0x01;
+      }else return false;
+   }
 
-  ClassDef(RasterMonEventInfo, 1);
+   bool GetHelicityValid() const {
+      if(RHead1 && RHead1->size() >= 7) {
+         return RHead2->GetData(5) & 0x01;
+      }else{
+         return false;
+      }
+   }
+
+   int GetHelicity3() const {
+      // 3-state version of the helicity.
+      if(RHead1 && RHead1->size() >= 7) {
+         if(RHead2->GetData(5) & 0x01){
+            return ((RHead2->GetData(5)>>1) & 0x01)?1:-1;
+         }else
+            return 0;
+      }else return 0;
+   }
+
+
+ClassDef(RasterMonEventInfo, 1);
 };
 
 #endif /* Headbank_h */

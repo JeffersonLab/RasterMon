@@ -11,6 +11,7 @@
 #include <Leaf.h>
 #include "RasterMonEventInfo.h"
 #include "RasterScalerBank.h"
+#include "RasterHelicity.h"
 #include "CircularBuffer.h"
 #include <mutex>
 
@@ -26,17 +27,43 @@ struct EvioSlot_t {
       channels.push_back(channel);
       data_index.push_back(i_dat);
    }
+   int GetChannelIndex(unsigned int channel){
+      auto p = std::find(channels.begin(), channels.end(), channel);
+      if( p == channels.end() ) return(-1);
+      return std::distance(channels.begin(), p);
+   }
+
+   int GetChannelDataIndex(unsigned int channel){
+      int idx = GetChannelIndex(channel);
+      if( idx>=0 ) return data_index[idx];
+      else return -1;
+   }
+
+   bool HasChannel(unsigned int channel){
+      auto p = std::find(channels.begin(), channels.end(), channel);
+      return p != channels.end();
+   }
    bool AddChannel(unsigned int channel, unsigned int i_dat){
-      for(auto &c: channels){
-         if(c == channel){ // Channel already exists. Don't add again.
-            return false;
-         }
-      }
+      if( HasChannel(channel)) return false;
       // If we get here, the channel does not yet exist.
       channels.push_back(channel);
       data_index.push_back(i_dat);
       return true;
    }
+
+   inline bool operator==(const EvioSlot_t& rhs){
+      return slot == rhs.slot;
+   }
+   inline bool operator!=(const EvioSlot_t& rhs){
+      return slot != rhs.slot;
+   }
+   inline bool operator==(const unsigned short rhs){
+      return slot == rhs;
+   }
+   inline bool operator!=(const unsigned short rhs){
+      return slot != rhs;
+   }
+
 };
 
 struct EvioBank_t {
@@ -51,17 +78,39 @@ struct EvioBank_t {
       FADC = bank->AddLeaf<FADCdata>(name+"_FADC", 57601, 0, name+" FADC data");
       slots.emplace_back(slot, channel, data_index);
    }
+   int GetSlotIndex(unsigned short slot){
+      auto p = std::find(slots.begin(), slots.end(), slot);
+      if( p != slots.end()) return std::distance(slots.begin(), p);
+      else return -1;
+   }
+
+   bool HasSlot(unsigned short slot){
+      return std::find(slots.begin(), slots.end(), slot) != slots.end();
+   }
+
+   int GetDataIndex(unsigned short slot, unsigned short channel){
+      int idx = GetSlotIndex(slot);
+      if( idx < 0) return -1;
+      return slots[idx].GetChannelDataIndex(channel);
+   }
+
    bool AddSlot(unsigned short slot, unsigned short channel, unsigned short data_index){
-      // Check if slot exists.
-      for(auto &s: slots){
-         if(s.slot == slot){  // Found it.
-            bool stat = s.AddChannel(channel, data_index);
-            return(stat);
-         }
+      // Check if slot exists by getting the index.
+
+      int idx = GetSlotIndex(slot);
+      if( idx >= 0 ){
+         return slots[idx].AddChannel(channel, data_index);
+      }else {
+//      for(auto &s: slots){
+//         if(s.slot == slot){  // Found it.
+//            bool stat = s.AddChannel(channel, data_index);
+//            return(stat);
+//         }
+//      }
+//      // Not found, so add it.
+         slots.emplace_back(slot, channel, data_index);
+         return true;
       }
-      // Not found, so add it.
-      slots.emplace_back(slot, channel, data_index);
-      return true;
    }
    unsigned long GetRefTime() const{
       if(TI && TI->size()>3)
@@ -74,6 +123,21 @@ struct EvioBank_t {
          // This seems not activated (labelled optional) in clonbanks.xml : +  ((unsigned long) (TI->GetData(3) & 0xffff0000) << 16);
       else
          return 0;
+   }
+
+   inline bool operator==(const EvioBank_t &rhs){
+      return bank->tags == rhs.bank->tags;
+   }
+   inline bool operator!=(const EvioBank_t &rhs){
+      return bank->tags != rhs.bank->tags;
+   }
+
+   inline bool operator==(unsigned short rhs){
+      // return std::find(bank->tags.begin(), bank->tags.end(), rhs) != bank->tags.end();
+      return bank->CheckTag(rhs);
+   }
+   inline bool operator!=(unsigned short rhs){
+      return !bank->CheckTag(rhs);
    }
 };
 
@@ -99,10 +163,13 @@ public:
    RasterMonEventInfo *fEventInfo = nullptr; // EventInfo bank.
    StruckScalerBank *fStruckScaler = nullptr;
    RasterScalerBank *fScaler = nullptr;
+   Bank *fBank38 = nullptr;
+   RasterHelicity *fHelicity;
 
    size_t fAdcBufferSize = 5000;
    std::vector<EvioBank_t> fEvioBanks;
    std::vector<double> fChannelAverage;
+   std::vector<double> fChannelTime;
    std::vector< CircularBuffer<double> > fTimeBuf;
    std::vector< CircularBuffer<double> > fAdcAverageBuf;
    unsigned int fLastEventNumber = 0;
@@ -119,6 +186,8 @@ public:
    };
 
    int AddChannel(unsigned short bank_tag, unsigned short slot, unsigned short channel);
+   int GetBankIndex(unsigned short bank_tag);
+   int GetDataIndex(unsigned short bank_tag, unsigned short slot, unsigned short channel);
 
    void AddFile(const string &file){
       fInputFiles.push_back(file);
@@ -137,6 +206,9 @@ public:
    unsigned long GetTrigger() const {return fEventInfo->GetTrigger();}
    unsigned long GetTrigger_low() const {return fEventInfo->GetTrigger_low();}
    unsigned long GetTrigger_high() const {return fEventInfo->GetTrigger_high();}
+   bool GetHelicity() const {return fEventInfo->GetHelicity(); }
+   bool GetHelicityValid() const {return fEventInfo->GetHelicityValid(); }
+   int  GetHelicity3() const {return fEventInfo->GetHelicity3();}
    unsigned long GetTimeCrate(unsigned short i=0) const {
       if(i < fEvioBanks.size()){ // Assume first crate is raster
          return fEvioBanks[i].GetRefTime();

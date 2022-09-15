@@ -17,8 +17,26 @@ RasterEvioTool::RasterEvioTool(string infile) : EvioTool(infile){
    fEventInfo =  new RasterMonEventInfo(this);  // Calls AddBank internally.
    fStruckScaler = new StruckScalerBank(this);
    fScaler = new RasterScalerBank(this);
+   fBank38 = AddBank("RasterHelicity", 38, 0, "Bank containing helicity data.");
+   fHelicity = new RasterHelicity(fBank38);
+
    fETWaitMode = ET_SLEEP;
    fEtReadChunkSize = 10;
+}
+
+int RasterEvioTool::GetBankIndex(unsigned short bank_tag){
+   // return the index of the bank with bank_tag, or -1 if not found.
+   auto p = std::find(fEvioBanks.begin(), fEvioBanks.end(), bank_tag);
+   if( p == fEvioBanks.end()) return -1;
+   else return std::distance(fEvioBanks.begin(), p);
+}
+
+int RasterEvioTool::GetDataIndex(unsigned short bank_tag, unsigned short slot, unsigned short channel){
+   // Return the data index of the bank_tag, slot, channel combination, or -1 if not found.
+   int bank_idx = GetBankIndex(bank_tag);
+   if(bank_idx < 0 ) return -1;
+   int data_idx = fEvioBanks[bank_idx].GetDataIndex(slot, channel);
+   return data_idx;
 }
 
 int RasterEvioTool::AddChannel(unsigned short bank_tag, unsigned short slot, unsigned short channel){
@@ -42,33 +60,39 @@ int RasterEvioTool::AddChannel(unsigned short bank_tag, unsigned short slot, uns
    }
    if(stat) {  // Data was actually added, so reserve space for it.
       fChannelAverage.push_back(0.);
+      fChannelTime.push_back(0.);
       fTimeBuf.emplace_back(fAdcBufferSize);
       fAdcAverageBuf.emplace_back(fAdcBufferSize);
       return(fChannelAverage.size()-1);
    }else{  // Data was not added, so search for it in the tree.
-      for(int i_t=0; i_t < fEvioBanks.size(); ++i_t) {
-         if (fEvioBanks[i_t].bank->CheckTag(bank_tag)) {  // Bank tag maches.
-            for (int i_s = 0; i_s < fEvioBanks[i_t].slots.size(); ++i_s) {
-               if( fEvioBanks[i_t].slots[i_s].slot == slot) { // Slot matches
-                  for (int i_c = 0; i_c < fEvioBanks[i_t].slots[i_s].channels.size(); ++i_c) {
-                     if(fEvioBanks[i_t].slots[i_s].channels[i_c] == channel ){ // Channel matches, we have a match.
-                        return fEvioBanks[i_t].slots[i_s].data_index[i_c];  // return the index.
-                     }
-                  }
-               }
-            }
-         }
-      }
-      cout << "RasterEvioTool::AddChannel - Uh oh, I did not add the channel, but I could not find it either.\n";
-      return -1;  //
+      int data_index = GetDataIndex(bank_tag, slot, channel);
+//      for(int i_t=0; i_t < fEvioBanks.size(); ++i_t) {
+//         if (fEvioBanks[i_t].bank->CheckTag(bank_tag)) {  // Bank tag maches.
+//            for (int i_s = 0; i_s < fEvioBanks[i_t].slots.size(); ++i_s) {
+//               if( fEvioBanks[i_t].slots[i_s].slot == slot) { // Slot matches
+//                  for (int i_c = 0; i_c < fEvioBanks[i_t].slots[i_s].channels.size(); ++i_c) {
+//                     if(fEvioBanks[i_t].slots[i_s].channels[i_c] == channel ){ // Channel matches, we have a match.
+//                        if(data_index != fEvioBanks[i_t].slots[i_s].data_index[i_c]){
+//                           std::cout << "By Itzamna! You cannot calculate the index!\n";
+//                        }
+//                        return fEvioBanks[i_t].slots[i_s].data_index[i_c];  // return the index.
+//                     }
+//                  }
+//               }
+//            }
+//         }
+//      }
+//      cout << "RasterEvioTool::AddChannel - Uh oh, I did not add the channel, but I could not find it either.\n";
+//      return -1;  //
+      return data_index;
    }
-
 }
 
 void RasterEvioTool::Clear(Option_t *opt) {
    // Clears the entire data structures.
    // Here we clear the *local* data copy, then call the parent Clear to clear the rest.
    fChannelAverage.assign(fChannelAverage.size(), 0);
+   fChannelTime.assign(fChannelTime.size(), 0);
    EvioTool::Clear(opt);
 }
 
@@ -147,8 +171,8 @@ int RasterEvioTool::Next() {
                         sum = sum / (double) n_samples;
                         int buf_index = slot.data_index[j];
                         fChannelAverage[buf_index] = sum;
-                        double time =
-                              FADC_TIME_CONVERSION * (double) b.FADC->GetData(i_fadc).GetRefTime(); // Convert to second
+                        double time = FADC_TIME_CONVERSION * (double) b.FADC->GetData(i_fadc).GetRefTime(); // Convert to second
+                        fChannelTime[buf_index] = time;
                         if (time > 0) { // If time == 0, then this is not data so skip it.
                            std::lock_guard<std::mutex> _lck(fBufferLock);
                            fTimeBuf[buf_index].push_back(time);

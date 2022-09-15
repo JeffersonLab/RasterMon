@@ -97,7 +97,8 @@ set(SOURCE_FILES
         RasterMonConfigPanel.cxx
         RasterMonDefaultConfig.cxx
         RasterMonConfigInfo.cxx
-        RasterScalerBank.cxx)
+        RasterScalerBank.cxx
+        RasterHelicity.cxx)
 
 add_library(RasterLib SHARED ${SOURCE_FILES} RasterLib_dict.cxx)
 

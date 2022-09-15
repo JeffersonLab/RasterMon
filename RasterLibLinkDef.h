@@ -24,6 +24,8 @@
 #pragma link C++ function Default_Setup_Helicity;
 #pragma link C++ function Default_Initialize_Histograms;
 
+#pragma link C++ class RasterHelicity+;
+#pragma link C++ class HelicityRegister+;
 #pragma link C++ class RasterScalerBank+;
 #pragma link C++ class StruckScalerBank+;
 #pragma link C++ struct Scaler_t;

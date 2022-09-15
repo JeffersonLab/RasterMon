@@ -6,6 +6,7 @@
 #define RASTERMON_RASTERSCALERBANK_H
 
 #include <ostream>
+#include <iomanip>
 #include "EvioTool.h"
 #include "Bank.h"
 #include "Leaf.h"
@@ -26,6 +27,7 @@ class RasterScalerBank: public Bank {
 
 public:
    EvioTool *fMother;
+   int fDebug = 0;
    unsigned int fLastEvioEvent = 0;
    unsigned long fLastEventTimeStamp = 0;
    unsigned long fUnixTimestamp = 0;    // Offset corrected timestamp
@@ -60,42 +62,75 @@ ClassDef(RasterScalerBank, 1);
 #pragma clang diagnostic pop
 };
 
+struct ScalerInfo_t {
+   unsigned long integrated0 = 0;
+   unsigned long integrated = 0;
+   unsigned long plus = 0;
+   unsigned long minus = 0;
+   unsigned long plus_integrated = 0;
+   unsigned long minus_integrated = 0;
+   unsigned long timestamp = 0;
+   void Clear(){
+      integrated0 = integrated;
+      integrated=0;
+      plus_integrated=0;
+      minus_integrated=0;
+   }
+   friend std::ostream& operator<<(std::ostream& os, ScalerInfo_t s);
+};
+
+enum ScalerInfo_indexes {
+   I_FCUP = 0,
+   I_CLOCK = 2,
+   I_FCUP_SETTLE = 4,
+   I_CLOCK_SETTLE = 6,
+   I_FCUP_GATED = 0,
+   I_FCUP_UNGATED = 1,
+   I_CLOCK_GATED = 2,
+   I_CLOCK_UNGATED = 3,
+   I_FCUP_GATED_SETTLE = 4,
+   I_FCUP_UNGATED_SETTLE = 5,
+   I_CLOCK_GATED_SETTLE = 6,
+   I_CLOCK_UNGATED_SETTLE = 7,
+   I_NUM_SCALERINFO = 8
+};
+
 class StruckScalerBank : public Bank {
 
 public:
+   int fDebug = 0;
    Leaf<unsigned int> *fHeader;
    Leaf<unsigned int> *fIntegrate;
-   Leaf<Scaler_t> *fHelicity1; // Slot 1
-   Leaf<Scaler_t> *fHelicity0; // Slot 0 + catchall
+   unsigned long fIntegrate_timestamp=0;
+   Leaf<Scaler_t> *fUngatedScalers; // Slot 1
+   Leaf<Scaler_t> *fGatedScalers;   // Slot 0 + catchall
+   std::vector<Leaf<Scaler_t> *> fScalers;   // Convenience vector contains the two above.
+   std::vector<unsigned long> fScalersTimestamps; // Timestamps of last fills.
+   bool fTimeMarkerFlipped = false;
+   // Computed values.
+   double fCupSlope = 29.9046;   // beam_stop_atten*(scalerS2b - fcup_offset)/906.2 = FCup charge, but this is for 1 second.
+   double fCupOffset = 4.6;      // These numbers are for 0.033ms, so 906.2*0.033 and 140*0.033.
+   double fTimeStampScale = 4.e-6;
+
+   std::vector<ScalerInfo_t> fInfo;
 
 public:
-   StruckScalerBank(EvioTool *mother): Bank("Bank64", 64, 0, "Scalers bank"){
-      mother->AddBank(this);
-      fHeader = AddLeaf<unsigned int>("header",57610, 0, "bank info");
-      // Bank 57621 ('0xe115') "DSC2 Scalers raw format" aka "Integrating Scalers", Has 72 items:
-      // •	block header,
-      //•	event header,
-      //•	scaler header,
-      //•	16 TRG gated scaler values,
-      //•	16 TDC gated scaler values,
-      //•	16 TRG ungated scaler values,
-      //•	16 TDC ungated scaler values,
-      //•	gated reference,
-      //•	ungated reference,
-      //•	DSC2 filler (always 0),
-      //•	VME filler,
-      //•	bock trailer.
-      // For each [TRG gated, TDC gated,  TRG ungated, TDC ungated ] the first 3 are fcup, slm and clock
-      fIntegrate = AddLeaf<unsigned int>("integrate", 0xe115, 0, "Integration scalers" );
-      // Bank 57637 ('0xe125') "Helicity Scalers", [31]: helicity, [30]: quartet, [29]: time interval, [28-24]: chan id
-      //                                           [23:0] value.
-      // Slot = 0 for Gated.
-      // Slot = 1 for UnGated.
-      // Channel 0/1/2 are fcup/slm/clock for
-      fHelicity1 = AddLeaf<Scaler_t>("helicity1", 0xe125, 1, "Helicity scalers ungated" );  // Slot 1
-      fHelicity0 = AddLeaf<Scaler_t>("helicity0", 0xe125, 0, "Helicity scalers gated" );  // Slot 0 + catch all.
-   };
+   StruckScalerBank(EvioTool *mother);
 
+   virtual void CallBack() override;
+   void Print(const Option_t *option) const override;
+   size_t DataSize() const { return fUngatedScalers->size() + fGatedScalers->size();}
+   unsigned long GetTimeStamp(){
+      if( fHeader->size() > 3){
+         return ((unsigned long) fHeader->data[2]) + (((unsigned long)(fHeader->data[3] & 0x0000FFFF)) << 32);
+      }else return 0;
+   }
+   unsigned long GetEventNumber(){
+      if( fHeader->size() > 3){
+         return ((unsigned long) fHeader->data[1]) + (((unsigned long)(fHeader->data[3] & 0xFFFF0000)) << 16);
+      }else return 0;
+
+   }
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Winconsistent-missing-override"
 ClassDef(StruckScalerBank, 1);
