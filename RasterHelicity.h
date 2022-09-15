@@ -7,6 +7,7 @@
 
 #include <ostream>
 #include <iomanip>
+#include <bitset>
 #include "EvioTool.h"
 #include "Bank.h"
 #include "Leaf.h"
