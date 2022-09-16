@@ -75,10 +75,16 @@ int main(int argc, char **argv) {
       int istruckscaler = 0;
       unsigned long first_timestamp=0;
       std::vector<double> times;
+      const int ASSYM_ALLOC_SIZE = 6500;
+      times.reserve(ASSYM_ALLOC_SIZE);
       std::vector<double> beam_charge_asymmetry;
+      beam_charge_asymmetry.reserve(ASSYM_ALLOC_SIZE);
       std::vector<double> beam_charge_asymmetry_gated;
+      beam_charge_asymmetry_gated.reserve(ASSYM_ALLOC_SIZE);
       std::vector<double> clock_asymmetry;
+      clock_asymmetry.reserve(ASSYM_ALLOC_SIZE);
       std::vector<double> clock_asymmetry_gated;
+      clock_asymmetry_gated.reserve(ASSYM_ALLOC_SIZE);
 
 
 
@@ -95,7 +101,7 @@ int main(int argc, char **argv) {
                   h_sync_delay->Fill(4.e-6 * (last_struck_scaler_time - last_sync_time));
                }
                h_dt_sync->Fill(4.e-6 * (evio->GetTimeStamp() - last_sync_time));
-               if(  4.e-6 * (evio->GetTimeStamp() - last_sync_time) > 50. ) {
+               if(debug > 1 &&  4.e-6 * (evio->GetTimeStamp() - last_sync_time) > 50. ) {
                   std::cout << "Sync flip too late!! icount = " << icount << "  evt: " << evio->GetEventNumber() << " time: " << evio->GetTimeStamp();
                   std::cout << " sync: " << sync_signal;
                   std::cout << " delay: " << 4.e-6 * (evio->GetTimeStamp() - last_sync_time) << endl;
@@ -159,7 +165,8 @@ int main(int argc, char **argv) {
             ++icount;
             if(debug > 0){
                if( (icount % 100000) == 0){
-                  printf("I: %7lu  Event: %7d \n", icount, evio->GetEventNumber());
+                  printf("I: %7lu  Event: %7d  Beam Charge Assym: %9.7f\n", icount, evio->GetEventNumber(),
+                         beam_charge_asymmetry_gated.back());
                }
             }
          }
