@@ -189,27 +189,33 @@ void StruckScalerBank::CallBack(){
             fTimeMarkerFlipped = !fTimeMarkerFlipped;
          }
 
-         for (int signal_offset=0; signal_offset < ptr->size(); signal_offset += 32) {
+         for (int isignal=0; isignal < ptr->size(); ++isignal) {
             int storage_offset = 0;
-            if( (ptr->At(signal_offset).time_interval ^ fTimeMarkerFlipped) ) { // Is the 500µs period?
+            if( (ptr->At(isignal).time_interval ^ fTimeMarkerFlipped) ) { // Is the 500µs period?
                storage_offset = I_FCUP_SETTLE;
             } else {
                storage_offset = I_FCUP;
             }
-            if (ptr->At(signal_offset).helicity_signal) {   // PLUS polarity helicity.
-               fInfo[I_FCUP + i + storage_offset].plus = ptr->At(signal_offset).scaler_value;
-               fInfo[I_FCUP + i + storage_offset].minus = 0;
-               fInfo[I_FCUP + i + storage_offset].plus_integrated += ptr->At(signal_offset).scaler_value;
-               fInfo[I_CLOCK + i + storage_offset].plus = ptr->At(signal_offset + 2).scaler_value;
-               fInfo[I_CLOCK + i + storage_offset].minus = 0;
-               fInfo[I_CLOCK + i + storage_offset].plus_integrated += ptr->At(signal_offset + 2).scaler_value;
-            } else {
-               fInfo[I_FCUP + i + storage_offset].plus = 0;
-               fInfo[I_FCUP + i + storage_offset].minus = ptr->At(signal_offset).scaler_value;
-               fInfo[I_FCUP + i + storage_offset].minus_integrated += ptr->At(signal_offset).scaler_value;
-               fInfo[I_CLOCK + i + storage_offset].plus = 0;
-               fInfo[I_CLOCK + i + storage_offset].minus = ptr->At(signal_offset + 2).scaler_value;
-               fInfo[I_CLOCK + i + storage_offset].minus_integrated += ptr->At(signal_offset + 2).scaler_value;
+            if (ptr->At(isignal).helicity_signal) {   // PLUS polarity helicity.
+               if( ptr->At(isignal).channel_id == 0 ) {  // FCUP
+                  fInfo[I_FCUP + i + storage_offset].plus = ptr->At(isignal).scaler_value;
+                  fInfo[I_FCUP + i + storage_offset].minus = 0;
+                  fInfo[I_FCUP + i + storage_offset].plus_integrated += ptr->At(isignal).scaler_value;
+               }else if( ptr->At(isignal).channel_id == 2) {  // CLOCK
+                  fInfo[I_CLOCK + i + storage_offset].plus = ptr->At(isignal).scaler_value;
+                  fInfo[I_CLOCK + i + storage_offset].minus = 0;
+                  fInfo[I_CLOCK + i + storage_offset].plus_integrated += ptr->At(isignal).scaler_value;
+               }
+            } else {                                        // Negative polarity
+               if( ptr->At(isignal).channel_id == 0 ) {  // FCUP
+                  fInfo[I_FCUP + i + storage_offset].plus = 0;
+                  fInfo[I_FCUP + i + storage_offset].minus = ptr->At(isignal).scaler_value;
+                  fInfo[I_FCUP + i + storage_offset].minus_integrated += ptr->At(isignal).scaler_value;
+               }else if( ptr->At(isignal).channel_id == 2) {  // CLOCK
+                  fInfo[I_CLOCK + i + storage_offset].plus = 0;
+                  fInfo[I_CLOCK + i + storage_offset].minus = ptr->At(isignal).scaler_value;
+                  fInfo[I_CLOCK + i + storage_offset].minus_integrated += ptr->At(isignal).scaler_value;
+               }
             }
             fInfo[I_CLOCK + i + storage_offset].timestamp = GetTimeStamp();
          }
