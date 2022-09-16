@@ -174,7 +174,7 @@ void StruckScalerBank::CallBack(){
       }
    }
 
-   for( int i=0; i<2; ++i) {
+   for( int i=0; i<2; ++i) {  // 0 = UNGATED  1 = GATED
       auto ptr = fScalers[i];
       if (ptr->size() > 0) {
          if (((ptr->At(2).time_interval ^ fTimeMarkerFlipped) == 0 &&  // Should be the 33ms period.

@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
       long last_sync_time = 0;
       long last_struck_scaler_time = 0;
 
-      int n_combine = 100;
+      int n_combine = 120;   // 30 Hz, so this should be about 4s.
       int istruckscaler = 0;
       unsigned long first_timestamp=0;
       std::vector<double> times;
