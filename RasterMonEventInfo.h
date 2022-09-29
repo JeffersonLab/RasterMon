@@ -109,13 +109,13 @@ public:
    }
 
    bool GetHelicity() const {
-      if(RHead1 && RHead1->size() >= 7) {
+      if(RHead2 && RHead2->size() >= 6) {
          return (RHead2->GetData(5)>>1) & 0x01;
       }else return false;
    }
 
    bool GetHelicityValid() const {
-      if(RHead1 && RHead1->size() >= 7) {
+      if(RHead2 && RHead2->size() >= 6) {
          return RHead2->GetData(5) & 0x01;
       }else{
          return false;
@@ -123,8 +123,8 @@ public:
    }
 
    int GetHelicity3() const {
-      // 3-state version of the helicity.
-      if(RHead1 && RHead1->size() >= 7) {
+      // 3-state version of the helicity. [-1,1] with 0 for invalid state.
+      if(RHead2 && RHead2->size() >= 6) {
          if(RHead2->GetData(5) & 0x01){
             return ((RHead2->GetData(5)>>1) & 0x01)?1:-1;
          }else

@@ -65,12 +65,24 @@ ClassDef(RasterScalerBank, 1);
 struct ScalerInfo_t {
    unsigned long integrated0 = 0;
    unsigned long integrated = 0;
-   unsigned long plus = 0;
-   unsigned long minus = 0;
+   unsigned long value = 0;
    unsigned long plus_integrated = 0;
    unsigned long minus_integrated = 0;
    unsigned long timestamp = 0;
+   bool helicity = 0;
+   bool helicity_valid = 1;
+   bool helicity_raw = 0;
+
    void Clear(){
+      integrated = 0;
+      value = 0;
+      timestamp = 0;
+      helicity = 0;
+      helicity_valid = 0;
+      helicity_raw = 0;
+   }
+
+   void ZeroIntegrators(){
       integrated0 = integrated;
       integrated=0;
       plus_integrated=0;
@@ -99,6 +111,7 @@ class StruckScalerBank : public Bank {
 
 public:
    int fDebug = 0;
+   EvioTool *fMother = nullptr;
    Leaf<unsigned int> *fHeader;
    Leaf<unsigned int> *fIntegrate;
    unsigned long fIntegrate_timestamp=0;

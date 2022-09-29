@@ -25,6 +25,7 @@
 #pragma link C++ function Default_Initialize_Histograms;
 
 #pragma link C++ class RasterHelicity+;
+#pragma link C++ class HelicityDecoder+;
 #pragma link C++ class HelicityRegister+;
 #pragma link C++ class RasterScalerBank+;
 #pragma link C++ class StruckScalerBank+;

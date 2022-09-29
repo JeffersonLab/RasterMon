@@ -121,8 +121,8 @@ void RasterScalerBank::Print(const Option_t *option) const{
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-StruckScalerBank::StruckScalerBank(EvioTool *mother) : Bank("Bank64", 64, 0, "Scalers bank"){
-   mother->AddBank(this);
+StruckScalerBank::StruckScalerBank(EvioTool *mother) : Bank("Bank64", 64, 0, "Scalers bank"), fMother(mother){
+   fMother->AddBank(this);
    // Bank 57610 ('0xe10a') -- TI Hardware Data [???, event number, timestamp, evt num high [31:16] + time stamp high [15:0]
    fHeader = AddLeaf<unsigned int>("header",57610, 0, "bank info");
    // Bank 57621 ('0xe115') "DSC2 Scalers raw format" aka "Integrating Scalers", Has 72 items:
@@ -141,7 +141,7 @@ StruckScalerBank::StruckScalerBank(EvioTool *mother) : Bank("Bank64", 64, 0, "Sc
    // For each [TRG gated, TDC gated,  TRG ungated, TDC ungated ] the first 3 are fcup, slm and clock
    fIntegrate = AddLeaf<unsigned int>("integrate", 0xe115, 0, "Integration scalers" );
 
-   // Bank 57637 ('0xe125') "Helicity Scalers", [31]: helicity, [30]: quartet, [29]: time interval, [28-24]: chan id
+   // Bank 57637 ('0xe125') "Helicity Scalers", [31]: helicity, [30]: quartet, [29]: t_settle/t_stable, [28-24]: chan id
    //                                           [23:0] value.
    // Slot = 0 for Gated.
    // Slot = 1 for UnGated.
@@ -158,6 +158,9 @@ StruckScalerBank::StruckScalerBank(EvioTool *mother) : Bank("Bank64", 64, 0, "Sc
 };
 
 void StruckScalerBank::CallBack(){
+
+   for(int i=0; i< fInfo.size(); ++i) fInfo[i].Clear();
+
    if(fIntegrate->size() >= 38) { // Should be 0 or 72
       fInfo[I_FCUP_GATED].integrated = fIntegrate->At(3);
       fInfo[I_FCUP_GATED].timestamp = GetTimeStamp();
@@ -177,17 +180,17 @@ void StruckScalerBank::CallBack(){
    for( int i=0; i<2; ++i) {  // 0 = UNGATED  1 = GATED
       auto ptr = fScalers[i];
       if (ptr->size() > 0) {
-         if (((ptr->At(2).time_interval ^ fTimeMarkerFlipped) == 0 &&  // Should be the 33ms period.
-              (ptr->At(2).scaler_value < 2000)) ||                   // But it isn't so it is flipped.
-             ((ptr->At(2).time_interval ^ fTimeMarkerFlipped) == 1 && // Should be the 500µs period.
-              (ptr->At(2).scaler_value > 2000))) {                    // But it isn't so it is flipped.
-            // Seems that the definition of time period flipped.
-            if( (fDebug & 0x01) == 0x01) {
-               std::cout << "fGatedStruckScalers -- Time period marker flipped sign, i= " << i;
-               std::cout << " event = " << GetEventNumber() << " Timestamp = " << GetTimeStamp() << endl;
-            }
-            fTimeMarkerFlipped = !fTimeMarkerFlipped;
-         }
+//         if (((ptr->At(2).time_interval ^ fTimeMarkerFlipped) == 0 &&  // Should be the 33ms period.
+//              (ptr->At(2).scaler_value < 2000)) ||                   // But it isn't so it is flipped.
+//             ((ptr->At(2).time_interval ^ fTimeMarkerFlipped) == 1 && // Should be the 500µs period.
+//              (ptr->At(2).scaler_value > 2000))) {                    // But it isn't so it is flipped.
+//            // Seems that the definition of time period flipped.
+//            if( (fDebug & 0x01) == 0x01) {
+//               std::cout << "fGatedStruckScalers -- Time period marker flipped sign, i= " << i;
+//               std::cout << " event = " << GetEventNumber() << " Timestamp = " << GetTimeStamp() << endl;
+//            }
+//            fTimeMarkerFlipped = !fTimeMarkerFlipped;
+//         }
 
          for (int isignal=0; isignal < ptr->size(); ++isignal) {
             int storage_offset = 0;
@@ -196,28 +199,35 @@ void StruckScalerBank::CallBack(){
             } else {
                storage_offset = I_FCUP;
             }
-            if (ptr->At(isignal).helicity_signal) {   // PLUS polarity helicity.
+
+            bool helicity = dynamic_cast<RasterEvioTool *>(fMother)->GetHelicity();
+            bool helicity_valid = dynamic_cast<RasterEvioTool *>(fMother)->GetHelicityValid();
+            fInfo[I_FCUP + i + storage_offset].helicity = helicity;
+            fInfo[I_FCUP + i + storage_offset].helicity_valid = helicity_valid;
+            fInfo[I_CLOCK + i + storage_offset].helicity = helicity;
+            fInfo[I_CLOCK + i + storage_offset].helicity_valid = helicity_valid;
+
+            fInfo[I_FCUP + i + storage_offset].helicity_raw = ptr->At(isignal).helicity_signal;
+            fInfo[I_CLOCK + i + storage_offset].helicity_raw = ptr->At(isignal).helicity_signal;
+            fInfo[I_FCUP + i + storage_offset].timestamp = GetTimeStamp();
+            fInfo[I_CLOCK + i + storage_offset].timestamp = GetTimeStamp();
+            if (helicity) {   // PLUS polarity helicity.
                if( ptr->At(isignal).channel_id == 0 ) {  // FCUP
-                  fInfo[I_FCUP + i + storage_offset].plus = ptr->At(isignal).scaler_value;
-                  fInfo[I_FCUP + i + storage_offset].minus = 0;
+                  fInfo[I_FCUP + i + storage_offset].value = ptr->At(isignal).scaler_value;
                   fInfo[I_FCUP + i + storage_offset].plus_integrated += ptr->At(isignal).scaler_value;
                }else if( ptr->At(isignal).channel_id == 2) {  // CLOCK
-                  fInfo[I_CLOCK + i + storage_offset].plus = ptr->At(isignal).scaler_value;
-                  fInfo[I_CLOCK + i + storage_offset].minus = 0;
+                  fInfo[I_CLOCK + i + storage_offset].value = ptr->At(isignal).scaler_value;
                   fInfo[I_CLOCK + i + storage_offset].plus_integrated += ptr->At(isignal).scaler_value;
                }
             } else {                                        // Negative polarity
                if( ptr->At(isignal).channel_id == 0 ) {  // FCUP
-                  fInfo[I_FCUP + i + storage_offset].plus = 0;
-                  fInfo[I_FCUP + i + storage_offset].minus = ptr->At(isignal).scaler_value;
+                  fInfo[I_FCUP + i + storage_offset].value = ptr->At(isignal).scaler_value;
                   fInfo[I_FCUP + i + storage_offset].minus_integrated += ptr->At(isignal).scaler_value;
                }else if( ptr->At(isignal).channel_id == 2) {  // CLOCK
-                  fInfo[I_CLOCK + i + storage_offset].plus = 0;
-                  fInfo[I_CLOCK + i + storage_offset].minus = ptr->At(isignal).scaler_value;
+                  fInfo[I_CLOCK + i + storage_offset].value = ptr->At(isignal).scaler_value;
                   fInfo[I_CLOCK + i + storage_offset].minus_integrated += ptr->At(isignal).scaler_value;
                }
             }
-            fInfo[I_CLOCK + i + storage_offset].timestamp = GetTimeStamp();
          }
       }
    }
@@ -260,7 +270,7 @@ std::ostream& operator<<(std::ostream& os, Scaler_t s){
 
 std::ostream& operator<<(std::ostream& os, ScalerInfo_t s){
    os << "I0:" << std::setw(12) << s.integrated0 << " I:" << std::setw(12) << s.integrated;
-   os << " H+:" << std::setw(6)  << s.plus  << " H-:" << std::setw(6) << s.minus;
+   os << " V:" << std::setw(6)  << s.value  << " H:" << std::setw(6) << s.helicity << "  HR: " << s.helicity_raw;
    os << " ΣH+:" << std::setw(10) << s.plus_integrated << " ΣH-:" << std::setw(10) << s.minus_integrated;
    os << " T:" << std::setw(14) << s.timestamp;
    return os;

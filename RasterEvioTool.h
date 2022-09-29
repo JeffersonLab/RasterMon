@@ -163,7 +163,6 @@ public:
    RasterMonEventInfo *fEventInfo = nullptr; // EventInfo bank.
    StruckScalerBank *fStruckScaler = nullptr;
    RasterScalerBank *fScaler = nullptr;
-   Bank *fBank38 = nullptr;
    RasterHelicity *fHelicity;
 
    size_t fAdcBufferSize = 5000;
@@ -179,6 +178,8 @@ public:
    std::mutex fFileLock;    // Because the Next() has a next file build in.
    std::mutex fBufferLock;  // Guard against buffer size changes.
 
+   std::vector<std::function<void(void)>> fNotifyCalls;  // Vector of references to void functions.
+
 public:
    explicit RasterEvioTool(string infile="");
    ~RasterEvioTool() override{
@@ -192,6 +193,10 @@ public:
    void AddFile(const string &file){
       fInputFiles.push_back(file);
    }
+
+   void AddNotify(std::function<void(void)> func){ fNotifyCalls.push_back(func);};
+   void ProcessChannels();
+
    int Next() override;
    void Clear(Option_t*opt) override;
    unsigned int GetEventNumber() const {
