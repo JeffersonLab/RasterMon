@@ -1,7 +1,7 @@
 #ifndef RasterMon_h
 #define RasterMon_h
 
-#define RASTERMON_VERSION "1.5"
+#define RASTERMON_VERSION "1.6"
 #undef ET_DEFAULT_STATION
 #define ET_DEFAULT_STATION "RasterMon"
 
