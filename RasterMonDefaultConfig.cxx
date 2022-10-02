@@ -14,7 +14,7 @@ void Default_Setup_Raster_Tab(RasterHists *r, const string &Name, unsigned long 
 
 
    r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 1,
-                          Name+"_x", Name+" Pos x;x[cm]", 400, -12., 12.);
+                          Name+"_x", Name+" Pos x;x[cm]", 400, -1.2, 1.2);
    r->fTabs.back().hists.push_back(r->fHists.size()-1);
    r->fTabs.back().hist_pads.push_back(4); // Show on pad 4.
    r->fHists.back().scale_x = gX_Scale;
@@ -22,7 +22,7 @@ void Default_Setup_Raster_Tab(RasterHists *r, const string &Name, unsigned long 
    r->fHists.back().trigger_bits = bits;
    TH1D *x_ref = r->fHists.back().GetHist();
    r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 3,
-                          Name+"_y", Name+" Pos y;y[cm]", 400, -12., 12.);
+                          Name+"_y", Name+" Pos y;y[cm]", 400, -1.2, 1.2);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
    r->fTabs.back().hist_pads.push_back(1); // Show on pad 1.
    r->fHists.back().scale_x = gY_Scale;    // Note this is the Y scale and offset.
@@ -30,7 +30,7 @@ void Default_Setup_Raster_Tab(RasterHists *r, const string &Name, unsigned long 
    r->fHists.back().trigger_bits = bits;
    TH1D *y_ref = r->fHists.back().GetHist();
    r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 1,  RASTER_CRATE, RASTER_SLOT, 3,
-                          Name+"_xy", Name+" Pos y vs x;x[cm];y[cm]", 400, -12., 12.,  400, -12., 12.);
+                          Name+"_xy", Name+" Pos y vs x;x[cm];y[cm]", 400, -1.2, 1.2,  400, -1.2, 1.2);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
    r->fTabs.back().hist_pads.push_back(2); // Show on pad 2.
    r->fHists.back().scale_x = gX_Scale;
@@ -41,7 +41,7 @@ void Default_Setup_Raster_Tab(RasterHists *r, const string &Name, unsigned long 
    r->fHists.back().draw_opt = "colz";
    r->fHists.back().hist->SetStats(false);
 
-   r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 1, Name+"_r", Name+" Radius;r[cm]", 400, 0., 15.);
+   r->fHists.emplace_back(RASTER_CRATE, RASTER_SLOT, 1, Name+"_r", Name+" Radius;r[cm]", 400, 0., 1.5);
    r->fTabs.back().hists.push_back( r->fHists.size()-1);
    r->fTabs.back().hist_pads.push_back(3); // Show on pad 3.
    // Special case - 2 inputs but a 1-D histogram
@@ -248,9 +248,9 @@ void Default_Setup_Helicity(RasterHists *r){
    r->fHelicity_stack->Add(r->fHists.back().GetHist());
    r->fHelicity_legend->AddEntry(r->fHists.back().GetHist(), "Quartet");
 
-   r->fGraphs.emplace_back(19, 19, 0, "Helicity Assymmetry", "Helicity;t (s)", "H", kRed+1, 2, true);
-   r->fTabs.back().graphs.push_back(r->fGraphs.size() - 1);
-   r->fTabs.back().graph_pads.push_back(3); // Show on pad 3.
+//   r->fGraphs.emplace_back(19, 19, 0, "Helicity Assymmetry", "Helicity;t (s)", "H", kRed+1, 2, true);
+//   r->fTabs.back().graphs.push_back(r->fGraphs.size() - 1);
+//   r->fTabs.back().graph_pads.push_back(3); // Show on pad 3.
 
 }
 
